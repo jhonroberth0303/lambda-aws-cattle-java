@@ -1,0 +1,778 @@
+{
+  "info": {
+    "_postman_id": "7f73cd0f-995d-409b-b046-3dac7b6676d1",
+    "name": "learning-IA",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "1131914"
+  },
+  "item": [
+    {
+      "name": "gemini-2.5-flash-model",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"contents\":[{\"parts\":[{\"text\":\"Hola IA\"}]}] }",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=AIzaSyDY-gMIJKNpfdIdHxvoDQN7-1JiNCxIb-c",
+          "protocol": "https",
+          "host": [
+            "generativelanguage",
+            "googleapis",
+            "com"
+          ],
+          "path": [
+            "v1",
+            "models",
+            "gemini-2.5-flash:generateContent"
+          ],
+          "query": [
+            {
+              "key": "key",
+              "value": "AIzaSyDY-gMIJKNpfdIdHxvoDQN7-1JiNCxIb-c"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "gemini-2.5-flash-model",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"contents\":[{\"parts\":[{\"text\":\"Hola IA\"}]}] }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=AIzaSyDY-gMIJKNpfdIdHxvoDQN7-1JiNCxIb-c",
+              "protocol": "https",
+              "host": [
+                "generativelanguage",
+                "googleapis",
+                "com"
+              ],
+              "path": [
+                "v1",
+                "models",
+                "gemini-2.5-flash:generateContent"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "AIzaSyDY-gMIJKNpfdIdHxvoDQN7-1JiNCxIb-c"
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=UTF-8"
+            },
+            {
+              "key": "Vary",
+              "value": "Origin"
+            },
+            {
+              "key": "Vary",
+              "value": "X-Origin"
+            },
+            {
+              "key": "Vary",
+              "value": "Referer"
+            },
+            {
+              "key": "Content-Encoding",
+              "value": "gzip"
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 26 Jan 2026 23:04:31 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "scaffolding on HTTPServer2"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "0"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Server-Timing",
+              "value": "gfet4t7; dur=1170"
+            },
+            {
+              "key": "Alt-Svc",
+              "value": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"candidates\": [\n        {\n            \"content\": {\n                \"parts\": [\n                    {\n                        \"text\": \"¡Hola! ¿En qué puedo ayudarte hoy?\"\n                    }\n                ],\n                \"role\": \"model\"\n            },\n            \"finishReason\": \"STOP\",\n            \"index\": 0\n        }\n    ],\n    \"usageMetadata\": {\n        \"promptTokenCount\": 2,\n        \"candidatesTokenCount\": 10,\n        \"totalTokenCount\": 37,\n        \"promptTokensDetails\": [\n            {\n                \"modality\": \"TEXT\",\n                \"tokenCount\": 2\n            }\n        ],\n        \"thoughtsTokenCount\": 25\n    },\n    \"modelVersion\": \"gemini-2.5-flash\",\n    \"responseId\": \"__J3acCJHbGmqtsP7qPlyA4\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "https://api.deepseek.com/chat/completions",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer sk-5f3a5df8a2ad4718bcf04468cb806764"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n        \"model\": \"deepseek-chat\",\n        \"messages\": [{\"role\": \"user\", \"content\": \"hola, que es un microservicio?\"}]\n      }",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://api.deepseek.com/chat/completions",
+          "protocol": "https",
+          "host": [
+            "api",
+            "deepseek",
+            "com"
+          ],
+          "path": [
+            "chat",
+            "completions"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "https://api.deepseek.com/chat/completions",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer sk-5f3a5df8a2ad4718bcf04468cb806764"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n        \"model\": \"deepseek-chat\",\n        \"messages\": [{\"role\": \"user\", \"content\": \"hola, que es un microservicio?\"}]\n      }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://api.deepseek.com/chat/completions",
+              "protocol": "https",
+              "host": [
+                "api",
+                "deepseek",
+                "com"
+              ],
+              "path": [
+                "chat",
+                "completions"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 26 Jan 2026 23:05:04 GMT"
+            },
+            {
+              "key": "Server",
+              "value": "elb"
+            },
+            {
+              "key": "Content-Encoding",
+              "value": "br"
+            },
+            {
+              "key": "vary",
+              "value": "origin, access-control-request-method, access-control-request-headers"
+            },
+            {
+              "key": "access-control-allow-credentials",
+              "value": "true"
+            },
+            {
+              "key": "x-ds-trace-id",
+              "value": "fba6c45ba152615cea3f0c14e77ebbe1"
+            },
+            {
+              "key": "Strict-Transport-Security",
+              "value": "max-age=31536000; includeSubDomains; preload"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Cache",
+              "value": "Miss from cloudfront"
+            },
+            {
+              "key": "Via",
+              "value": "1.1 238d89810e18fb75ff791293fe216cd4.cloudfront.net (CloudFront)"
+            },
+            {
+              "key": "X-Amz-Cf-Pop",
+              "value": "BOG50-P2"
+            },
+            {
+              "key": "X-Amz-Cf-Id",
+              "value": "CRqhtYw5PxJzJzEiPvdBym0QIJlu0p1cxpuG5o_jWC2sWGzJ5llgYg=="
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"id\": \"4439f78b-b315-4f67-82ca-97f973deb2f6\",\n    \"object\": \"chat.completion\",\n    \"created\": 1769468704,\n    \"model\": \"deepseek-chat\",\n    \"choices\": [\n        {\n            \"index\": 0,\n            \"message\": {\n                \"role\": \"assistant\",\n                \"content\": \"¡Hola! Un **microservicio** es un estilo de arquitectura de software en el que una aplicación se construye como un conjunto de **servicios pequeños, independientes y autónomos**, cada uno enfocado en una función o tarea específica del negocio.\\n\\n### Características principales:\\n1. **Independencia**: Cada microservicio se desarrolla, despliega y escala de forma autónoma.\\n2. **Especialización**: Cada uno maneja una única capacidad del negocio (ej: autenticación, pagos, catálogo de productos).\\n3. **Comunicación ligera**: Se comunican entre sí mediante APIs (generalmente HTTP/REST, gRPC o mensajería).\\n4. **Base de datos propia**: Cada servicio puede tener su propia base de datos, evitando dependencias directas.\\n\\n### Ejemplo práctico:\\nEn una plataforma de e-commerce:\\n- **Microservicio de usuarios**: Gestiona registro, login y perfiles.\\n- **Microservicio de productos**: Maneja catálogo, precios e inventario.\\n- **Microservicio de pedidos**: Procesa compras y facturación.\\n- **Microservicio de pagos**: Encargado de transacciones financieras.\\n\\n### Ventajas:\\n- **Escalabilidad selectiva**: Puedes escalar solo los servicios con mayor demanda.\\n- **Flexibilidad tecnológica**: Cada equipo puede usar diferentes lenguajes o tecnologías.\\n- **Resiliencia**: Un fallo en un servicio no necesariamente colapsa todo el sistema.\\n- **Despliegue continuo**: Se actualizan servicios sin redeployar toda la aplicación.\\n\\n### Desventajas:\\n- **Complejidad operativa**: Mayor dificultad en monitoreo, logging y despliegue.\\n- **Latencia en comunicación**: La red entre servicios añade overhead.\\n- **Consistencia eventual**: Manejo más complejo de transacciones distribuidas.\\n\\n### Contraste con arquitectura monolítica:\\n- **Monolito**: Una sola aplicación grande donde todos los módulos están acoplados.\\n- **Microservicios**: Múltiples servicios desacoplados que colaboran.\\n\\nEsta arquitectura es popular en aplicaciones cloud, DevOps y entornos que requieren alta escalabilidad y velocidad de desarrollo (ej: Netflix, Amazon, Uber). ¿Te gustaría profundizar en algún aspecto específico?\"\n            },\n            \"logprobs\": null,\n            \"finish_reason\": \"stop\"\n        }\n    ],\n    \"usage\": {\n        \"prompt_tokens\": 14,\n        \"completion_tokens\": 511,\n        \"total_tokens\": 525,\n        \"prompt_tokens_details\": {\n            \"cached_tokens\": 0\n        },\n        \"prompt_cache_hit_tokens\": 0,\n        \"prompt_cache_miss_tokens\": 14\n    },\n    \"system_fingerprint\": \"fp_eaab8d114b_prod0820_fp8_kvcache\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "https://xqzklhcpea.execute-api.us-east-1.amazonaws.com/Prod/api/chat/message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"userMessage\": \"Hola si soy agricultor e ingeniero de sistemas como podria independisarme y crear mi propio negocio\", \"conversationId\": \"conv-001\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/api/chat/message",
+          "protocol": "https",
+          "host": [
+            "44xpamzadd",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "Prod",
+            "api",
+            "chat",
+            "message"
+          ]
+        },
+        "description": "Generated from cURL: curl -X POST https://xqzklhcpea.execute-api.us-east-1.amazonaws.com/Prod/api/chat/message \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\"userMessage\": \"Hola chatbot\", \"conversationId\": \"conv-001\"}'"
+      },
+      "response": [
+        {
+          "name": "https://xqzklhcpea.execute-api.us-east-1.amazonaws.com/Prod/api/chat/message",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"userMessage\": \"Hola si soy agricultor e ingeniero de sistemas como podria independisarme y crear mi propio negocio\", \"conversationId\": \"conv-001\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/api/chat/message",
+              "protocol": "https",
+              "host": [
+                "44xpamzadd",
+                "execute-api",
+                "us-east-1",
+                "amazonaws",
+                "com"
+              ],
+              "path": [
+                "Prod",
+                "api",
+                "chat",
+                "message"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Date",
+              "value": "Mon, 26 Jan 2026 23:06:00 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Content-Length",
+              "value": "1950"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "x-amzn-RequestId",
+              "value": "ebf10e17-c3c7-493f-8801-5e9c34eee565"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "0"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-RateLimit-Remaining",
+              "value": "99"
+            },
+            {
+              "key": "x-amz-apigw-id",
+              "value": "X0Lz6HdEIAMEEfQ="
+            },
+            {
+              "key": "Vary",
+              "value": "Origin"
+            },
+            {
+              "key": "Vary",
+              "value": "Access-Control-Request-Method"
+            },
+            {
+              "key": "Vary",
+              "value": "Access-Control-Request-Headers"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, max-age=0, must-revalidate"
+            },
+            {
+              "key": "X-RateLimit-Limit",
+              "value": "100"
+            },
+            {
+              "key": "Expires",
+              "value": "0"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Amzn-Trace-Id",
+              "value": "Root=1-6977f34b-72694ba80ead9f476d1d36bb;Parent=6d0c5996833cc632;Sampled=0;Lineage=1:d3ad9aa2:0"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"response\": \"Estimado usuario, como asistente virtual especializado en gestión ganadera, le proporcionaré algunas recomendaciones que pueden ser útiles para que usted, como agricultor e ingeniero de sistemas, pueda independizarse y crear su propio negocio.\\n\\nDado el contexto de la finca que me ha proporcionado, con un total de 5 bovinos y sin potreros disponibles, le sugiero considerar las siguientes opciones:\\n\\n1. Producción lechera a pequeña escala: Aunque la información indica que actualmente no hay producción de leche, con un hato de 5 bovinos podría iniciar una pequeña operación de producción lechera. Esto le permitiría generar ingresos a través de la venta de leche cruda o procesada (quesos, yogures, etc.).\\n\\n2. Diversificación de la finca: Dado que no cuenta con potreros disponibles, podría considerar la incorporación de otras actividades productivas, como la cría de pequeños rumiantes (cabras o ovejas), la producción de huevos o la implementación de un huerto o invernadero para cultivos de hortalizas y frutas. Esto le ayudaría a diversificar sus fuentes de ingresos.\\n\\n3. Valor agregado a los productos: Otra opción sería la de procesar y comercializar los productos obtenidos en su finca, como la elaboración de quesos, yogures, embutidos o conservas. Esto le permitiría aumentar el valor de sus productos y obtener mayores márgenes de ganancia.\\n\\n4. Integración vertical y comercialización directa: Puede considerar la posibilidad de vender sus productos directamente al consumidor final, ya sea a través de ferias locales, mercados de agricultores o plataformas de comercio electrónico. Esto le permitiría obtener mejores precios y tener un mayor control sobre la cadena de valor.\\n\\n5. Incorporación de tecnología y eficiencia: Como ingeniero de sistemas, usted cuenta con habilidades que le pueden\",\n    \"intent\": \"GENERAL_QUERY\",\n    \"durationMs\": 6996,\n    \"timestamp\": [\n        2026,\n        1,\n        26,\n        23,\n        6,\n        0,\n        286005616\n    ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "cattle-lambda-function-chat",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"userMessage\": \"obtener detalle de bovinos en una tabla\", \"conversationId\": \"conv-001\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/api/chat/message",
+          "protocol": "https",
+          "host": [
+            "44xpamzadd",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "Prod",
+            "api",
+            "chat",
+            "message"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "cattle-lambda-function-chat",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"userMessage\": \"obtener detalle de bovinos en una tabla\", \"conversationId\": \"conv-001\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/api/chat/message",
+              "protocol": "https",
+              "host": [
+                "44xpamzadd",
+                "execute-api",
+                "us-east-1",
+                "amazonaws",
+                "com"
+              ],
+              "path": [
+                "Prod",
+                "api",
+                "chat",
+                "message"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Date",
+              "value": "Mon, 26 Jan 2026 23:10:45 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Content-Length",
+              "value": "932"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "x-amzn-RequestId",
+              "value": "cd4e72e8-c756-4000-8544-36aacf43cf83"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "0"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-RateLimit-Remaining",
+              "value": "97"
+            },
+            {
+              "key": "x-amz-apigw-id",
+              "value": "X0Mh3GIPIAMEXBg="
+            },
+            {
+              "key": "Vary",
+              "value": "Origin"
+            },
+            {
+              "key": "Vary",
+              "value": "Access-Control-Request-Method"
+            },
+            {
+              "key": "Vary",
+              "value": "Access-Control-Request-Headers"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, max-age=0, must-revalidate"
+            },
+            {
+              "key": "X-RateLimit-Limit",
+              "value": "100"
+            },
+            {
+              "key": "Expires",
+              "value": "0"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Amzn-Trace-Id",
+              "value": "Root=1-6977f471-2db9d8f04ee7ae5215bdb04a;Parent=525072d9132ac3a1;Sampled=0;Lineage=1:d3ad9aa2:0"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"response\": \"Claro, con gusto te presento la información de los bovinos de la finca en una tabla:\\n\\n| ID | Nombre | Género | Estado | Raza | Edad (meses) |\\n|----|--------|--------|--------|------|--------------|\\n| 167 | Rosita | Hembra | Lactando | Jersey | 40 |\\n| 170 | Arequipe | Macho | Abierto | Jersey | 19 |\\n| 171 | Bambi | Macho | Abierto | Jersey | 12 |\\n| 168 | Estrella | Hembra | Abierto | Holstein | 20 |\\n| 169 | Tormento | Hembra | Abierto | Angus | 20 |\\n\\nEsta tabla resume la información clave de cada uno de los 5 bovinos de la finca, incluyendo su ID, nombre, género, estado reproductivo, raza y edad en meses.\\n\\nEspero que esta información detallada y organizada en formato de tabla te sea útil. Por favor, no dudes en hacer más preguntas si necesitas cualquier otra información sobre el manejo de la finca.\",\n    \"intent\": \"LIST_ALL_BOVINES\",\n    \"durationMs\": 3564,\n    \"timestamp\": [\n        2026,\n        1,\n        26,\n        23,\n        10,\n        45,\n        548428019\n    ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "cattle-lambda-knowledge-base",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmYXJtSWQiOiJGQVJNIzAwMSIsInVzZXJJZCI6InRlc3QtdXNlciIsIm5hbWUiOiJKdWFuIiwiaWF0IjoxNzY5NDY2OTI2LCJleHAiOjE3Njk0NzA1MjZ9.L3eCvY99PkRYGDdQu4PA5fxAAVuSsqgLx0P9y7aM5mA"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"question\": \"¿Cuáles son las buenas prácticas de producción láctea?\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/api/chat/knowledge",
+          "protocol": "https",
+          "host": [
+            "44xpamzadd",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "Prod",
+            "api",
+            "chat",
+            "knowledge"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "cattle-lambda-knowledge-base",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmYXJtSWQiOiJGQVJNIzAwMSIsInVzZXJJZCI6InRlc3QtdXNlciIsIm5hbWUiOiJKdWFuIiwiaWF0IjoxNzY5NDY2OTI2LCJleHAiOjE3Njk0NzA1MjZ9.L3eCvY99PkRYGDdQu4PA5fxAAVuSsqgLx0P9y7aM5mA"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"question\": \"¿Cuáles son las buenas prácticas de producción láctea?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/api/chat/knowledge",
+              "protocol": "https",
+              "host": [
+                "44xpamzadd",
+                "execute-api",
+                "us-east-1",
+                "amazonaws",
+                "com"
+              ],
+              "path": [
+                "Prod",
+                "api",
+                "chat",
+                "knowledge"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Date",
+              "value": "Mon, 26 Jan 2026 23:09:32 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Content-Length",
+              "value": "9467"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "x-amzn-RequestId",
+              "value": "3a20b68a-847f-46e7-bc5b-e6f5c7330f0e"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "0"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "X-RateLimit-Remaining",
+              "value": "98"
+            },
+            {
+              "key": "x-amz-apigw-id",
+              "value": "X0MWZGpWoAMEtrw="
+            },
+            {
+              "key": "Vary",
+              "value": "Origin"
+            },
+            {
+              "key": "Vary",
+              "value": "Access-Control-Request-Method"
+            },
+            {
+              "key": "Vary",
+              "value": "Access-Control-Request-Headers"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, max-age=0, must-revalidate"
+            },
+            {
+              "key": "X-RateLimit-Limit",
+              "value": "100"
+            },
+            {
+              "key": "Expires",
+              "value": "0"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-Amzn-Trace-Id",
+              "value": "Root=1-6977f428-7a388f277f5b92e16e992879;Parent=0cdea799ab336539;Sampled=0;Lineage=1:d3ad9aa2:0"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"answer\": \"Algunas buenas prácticas de producción láctea incluyen: - Realizar análisis de suelo y encalar las praderas regularmente para mantener un pH adecuado y la disponibilidad de nutrientes.\\n- Implementar un protocolo de vigilancia nocturna durante el período de partos para asistir a las vacas y evitar pérdidas de crías.\\n- Ofrecer sales minerales específicas para cada categoría animal (terneros vs vacas en producción) para cubrir sus requerimientos.\\n- Monitorear signos respiratorios y de enfermedad en el ganado, aislar a los animales enfermos y llamar al veterinario si es necesario.\\n- Prevenir y tratar adecuadamente la fiebre de leche (hipocalcemia) en el postparto.\",\n    \"citations\": [\n        {\n            \"text\": \"kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated PAS-001,SOP: Encalado con cal dolomita en praderas (cálculo por área),Pasticultura,Suelo - Encalado,\\\"Cuando hay sospecha de acidez, pasto lento, malezas indicadoras, o nunca se ha encalado\\\",Kikuyo lento; suelos ácidos sospechados; historial sin encalar; hongos en pastos,pH bajo; baja disponibilidad de nutrientes; microbiología del suelo deprimida,1) Medir área (m²). 2) Definir dosis (kg/ha) idealmente con análisis. 3) Convertir a kg totales. 4) Aplicar con EPP. 5) Registrar evento.,Hacer análisis de suelo anual; encalar antes de siembras estratégicas; manejo de drenaje,EPP; condiciones sin viento fuerte; humedad moderada; distribución uniforme,\\\"Evento PRADERA:\",\n            \"documentUri\": \"s3://udemy-bucket-virginia/bedrock-virginia/03_kb_pasticultura.csv\",\n            \"page\": null\n        },\n        {\n            \"text\": \"kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated LES-001,Lección aprendida: Parto nocturno sin atención (pérdida de cría),Lecciones,Reproducción/Operación,Cuando se acerca fecha de parto y hay riesgo de parto nocturno,Historial de parto nocturno; poca vigilancia; falta de kit,No había monitoreo; no hubo atención inmediata,Implementar protocolo de vigilancia nocturna + checklist y kit; asignar turnos,Planificar 15 días antes; alarmas; contacto vet,Turnos; kit listo; corral; luz; registro de chequeos,\\\"Eventos: preparto (inicio vigilancia), chequeos nocturnos, parto (hora), asistencia\\\",Cero pérdidas de crías; calostro temprano; respuesta rápida,En cada vaca preñada (ventana -15 a +3 días),Si se omite vigilancia se repite el riesgo de\",\n            \"documentUri\": \"s3://udemy-bucket-virginia/bedrock-virginia/07_kb_lecciones_aprendidas.csv\",\n            \"page\": null\n        },\n        {\n            \"text\": \"bruscas; contaminación; demora en calostro/atención,\\\"parto,preparto,calostro,checklist,vigilancia_nocturna\\\",Contexto finca: cría anterior murió por falta de atención nocturna; objetivo: manejo profesional.,v1.0,2026-01-21 SAN-003,Guía: Signos respiratorios y descargas (moco/saliva) - triage básico,Sanidad,Respiratorio,\\\"Cuando hay moco excesivo, babeo anormal, tos, fiebre o decaimiento\\\",\\\"Moco nasal persistente, tos, fiebre, babeo; baja apetito/rumia\\\",Infecciones respiratorias; irritantes; estrés; parásitos; cambios bruscos de clima,1) Tomar temperatura. 2) Aislar si es contagioso. 3) Ofrecer agua/alimento. 4) Llamar vet si hay fiebre o empeora.,\\\"Ventilación, evitar hacinamiento, minimizar estrés, vacunación según plan local\\\",Temp; frecuencia respiratoria; moco; apetito; rumia,\\\"Evento SALUD: signos, temperatura, fecha, acciones; seguimiento 24–48h\\\",Mejora en 24–48h; sin fiebre;\",\n            \"documentUri\": \"s3://udemy-bucket-virginia/bedrock-virginia/01_kb_sanidad.csv\",\n            \"page\": null\n        },\n        {\n            \"text\": \"kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated SAN-001,Protocolo: Fiebre de leche (hipocalcemia) - prevención y respuesta,Sanidad,Metabólicas,Postparto (0–72h) o vaca de alta producción; debilidad postparto,\\\"Debilidad, temblores, orejas frías, baja rumia, se echa y no se levanta\\\",Demanda alta de Ca al inicio de lactancia; desbalance mineral preparto; transición mal manejada,1) Aislar y mantener abrigada. 2) Llamar veterinario. 3) Seguir indicación profesional para calcio y monitoreo.,Plan de transición: dieta/ minerales preparto; vigilancia estrecha 72h postparto,Teléfono vet; lugar seco; observar rumia; temperatura periférica; capacidad de pararse,Evento SALUD: sospecha/diagnóstico; tratamiento (según vet); fecha/hora; respuesta clínica;\",\n            \"documentUri\": \"s3://udemy-bucket-virginia/bedrock-virginia/01_kb_sanidad.csv\",\n            \"page\": null\n        },\n        {\n            \"text\": \"kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated PAS-001,SOP: Encalado con cal dolomita en praderas (cálculo por área),Pasticultura,Suelo - Encalado,\\\"Cuando hay sospecha de acidez, pasto lento, malezas indicadoras, o nunca se ha encalado\\\",Kikuyo lento; suelos ácidos sospechados; historial sin encalar; hongos en pastos,pH bajo; baja disponibilidad de nutrientes; microbiología del suelo deprimida,1) Medir área (m²). 2) Definir dosis (kg/ha) idealmente con análisis. 3) Convertir a kg totales. 4) Aplicar con EPP. 5) Registrar evento.,Hacer análisis de suelo anual; encalar antes de siembras estratégicas; manejo de drenaje,EPP; condiciones sin viento fuerte; humedad moderada; distribución uniforme,\\\"Evento PRADERA:\",\n            \"documentUri\": \"s3://udemy-bucket-virginia/bedrock-virginia/03_kb_pasticultura.csv\",\n            \"page\": null\n        },\n        {\n            \"text\": \"kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated LES-001,Lección aprendida: Parto nocturno sin atención (pérdida de cría),Lecciones,Reproducción/Operación,Cuando se acerca fecha de parto y hay riesgo de parto nocturno,Historial de parto nocturno; poca vigilancia; falta de kit,No había monitoreo; no hubo atención inmediata,Implementar protocolo de vigilancia nocturna + checklist y kit; asignar turnos,Planificar 15 días antes; alarmas; contacto vet,Turnos; kit listo; corral; luz; registro de chequeos,\\\"Eventos: preparto (inicio vigilancia), chequeos nocturnos, parto (hora), asistencia\\\",Cero pérdidas de crías; calostro temprano; respuesta rápida,En cada vaca preñada (ventana -15 a +3 días),Si se omite vigilancia se repite el riesgo de\",\n            \"documentUri\": \"s3://udemy-bucket-virginia/bedrock-virginia/07_kb_lecciones_aprendidas.csv\",\n            \"page\": null\n        },\n        {\n            \"text\": \"bruscas; contaminación; demora en calostro/atención,\\\"parto,preparto,calostro,checklist,vigilancia_nocturna\\\",Contexto finca: cría anterior murió por falta de atención nocturna; objetivo: manejo profesional.,v1.0,2026-01-21 SAN-003,Guía: Signos respiratorios y descargas (moco/saliva) - triage básico,Sanidad,Respiratorio,\\\"Cuando hay moco excesivo, babeo anormal, tos, fiebre o decaimiento\\\",\\\"Moco nasal persistente, tos, fiebre, babeo; baja apetito/rumia\\\",Infecciones respiratorias; irritantes; estrés; parásitos; cambios bruscos de clima,1) Tomar temperatura. 2) Aislar si es contagioso. 3) Ofrecer agua/alimento. 4) Llamar vet si hay fiebre o empeora.,\\\"Ventilación, evitar hacinamiento, minimizar estrés, vacunación según plan local\\\",Temp; frecuencia respiratoria; moco; apetito; rumia,\\\"Evento SALUD: signos, temperatura, fecha, acciones; seguimiento 24–48h\\\",Mejora en 24–48h; sin fiebre;\",\n            \"documentUri\": \"s3://udemy-bucket-virginia/bedrock-virginia/01_kb_sanidad.csv\",\n            \"page\": null\n        },\n        {\n            \"text\": \"kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated SAN-001,Protocolo: Fiebre de leche (hipocalcemia) - prevención y respuesta,Sanidad,Metabólicas,Postparto (0–72h) o vaca de alta producción; debilidad postparto,\\\"Debilidad, temblores, orejas frías, baja rumia, se echa y no se levanta\\\",Demanda alta de Ca al inicio de lactancia; desbalance mineral preparto; transición mal manejada,1) Aislar y mantener abrigada. 2) Llamar veterinario. 3) Seguir indicación profesional para calcio y monitoreo.,Plan de transición: dieta/ minerales preparto; vigilancia estrecha 72h postparto,Teléfono vet; lugar seco; observar rumia; temperatura periférica; capacidad de pararse,Evento SALUD: sospecha/diagnóstico; tratamiento (según vet); fecha/hora; respuesta clínica;\",\n            \"documentUri\": \"s3://udemy-bucket-virginia/bedrock-virginia/01_kb_sanidad.csv\",\n            \"page\": null\n        }\n    ],\n    \"sources\": [\n        \"s3://udemy-bucket-virginia/bedrock-virginia/03_kb_pasticultura.csv\",\n        \"s3://udemy-bucket-virginia/bedrock-virginia/07_kb_lecciones_aprendidas.csv\",\n        \"s3://udemy-bucket-virginia/bedrock-virginia/01_kb_sanidad.csv\"\n    ],\n    \"durationMs\": 4081,\n    \"timestamp\": [\n        2026,\n        1,\n        26,\n        23,\n        9,\n        32,\n        698849417\n    ]\n}"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+curl --location 'https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/api/chat/message' \
+--header 'Content-Type: application/json' \
+--data '{"userMessage": "obtener detalle de bovinos en una tabla", "conversationId": "conv-001"}' 
+
+respuesta: {
+    "response": "Claro, con gusto te presento la información de los bovinos de la finca en una tabla:\n\n| ID | Nombre | Género | Estado | Raza | Edad (meses) |\n|----|--------|--------|--------|------|--------------|\n| 167 | Rosita | Hembra | Lactando | Jersey | 40 |\n| 170 | Arequipe | Macho | Abierto | Jersey | 19 |\n| 171 | Bambi | Macho | Abierto | Jersey | 12 |\n| 168 | Estrella | Hembra | Abierto | Holstein | 20 |\n| 169 | Tormento | Hembra | Abierto | Angus | 20 |\n\nEsta tabla resume la información clave de cada uno de los 5 bovinos de la finca, incluyendo su ID, nombre, género, estado reproductivo, raza y edad en meses.\n\nEspero que esta información detallada y organizada en formato de tabla te sea útil. Por favor, no dudes en hacer más preguntas si necesitas cualquier otra información sobre el manejo de la finca.",
+    "intent": "LIST_ALL_BOVINES",
+    "durationMs": 3564,
+    "timestamp": [
+        2026,
+        1,
+        26,
+        23,
+        10,
+        45,
+        548428019
+    ]
+}
+
+--------------------------------------------------------------------------------------------------------
+
+curl --location 'https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/api/chat/knowledge' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmYXJtSWQiOiJGQVJNIzAwMSIsInVzZXJJZCI6InRlc3QtdXNlciIsIm5hbWUiOiJKdWFuIiwiaWF0IjoxNzY5NDY2OTI2LCJleHAiOjE3Njk0NzA1MjZ9.L3eCvY99PkRYGDdQu4PA5fxAAVuSsqgLx0P9y7aM5mA' \
+--data '{
+    "question": "¿Cuáles son las buenas prácticas de producción láctea?"
+}'
+
+respuesta:
+{
+    "answer": "Algunas buenas prácticas de producción láctea incluyen: - Realizar análisis de suelo y encalar las praderas regularmente para mantener un pH adecuado y la disponibilidad de nutrientes.\n- Implementar un protocolo de vigilancia nocturna durante el período de partos para asistir a las vacas y evitar pérdidas de crías.\n- Ofrecer sales minerales específicas para cada categoría animal (terneros vs vacas en lactancia) para cubrir sus requerimientos nutricionales.\n- Monitorear signos respiratorios y de enfermedad en el ganado, aislar a los animales enfermos y llamar al veterinario si es necesario.\n- Prevenir y tratar adecuadamente la fiebre de leche (hipocalcemia) en el postparto.",
+    "citations": [
+        {
+            "text": "kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated PAS-001,SOP: Encalado con cal dolomita en praderas (cálculo por área),Pasticultura,Suelo - Encalado,\"Cuando hay sospecha de acidez, pasto lento, malezas indicadoras, o nunca se ha encalado\",Kikuyo lento; suelos ácidos sospechados; historial sin encalar; hongos en pastos,pH bajo; baja disponibilidad de nutrientes; microbiología del suelo deprimida,1) Medir área (m²). 2) Definir dosis (kg/ha) idealmente con análisis. 3) Convertir a kg totales. 4) Aplicar con EPP. 5) Registrar evento.,Hacer análisis de suelo anual; encalar antes de siembras estratégicas; manejo de drenaje,EPP; condiciones sin viento fuerte; humedad moderada; distribución uniforme,\"Evento PRADERA:",
+            "documentUri": "s3://udemy-bucket-virginia/bedrock-virginia/03_kb_pasticultura.csv",
+            "page": null
+        },
+        {
+            "text": "kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated LES-001,Lección aprendida: Parto nocturno sin atención (pérdida de cría),Lecciones,Reproducción/Operación,Cuando se acerca fecha de parto y hay riesgo de parto nocturno,Historial de parto nocturno; poca vigilancia; falta de kit,No había monitoreo; no hubo atención inmediata,Implementar protocolo de vigilancia nocturna + checklist y kit; asignar turnos,Planificar 15 días antes; alarmas; contacto vet,Turnos; kit listo; corral; luz; registro de chequeos,\"Eventos: preparto (inicio vigilancia), chequeos nocturnos, parto (hora), asistencia\",Cero pérdidas de crías; calostro temprano; respuesta rápida,En cada vaca preñada (ventana -15 a +3 días),Si se omite vigilancia se repite el riesgo de",
+            "documentUri": "s3://udemy-bucket-virginia/bedrock-virginia/07_kb_lecciones_aprendidas.csv",
+            "page": null
+        },
+        {
+            "text": "bruscas; contaminación; demora en calostro/atención,\"parto,preparto,calostro,checklist,vigilancia_nocturna\",Contexto finca: cría anterior murió por falta de atención nocturna; objetivo: manejo profesional.,v1.0,2026-01-21 SAN-003,Guía: Signos respiratorios y descargas (moco/saliva) - triage básico,Sanidad,Respiratorio,\"Cuando hay moco excesivo, babeo anormal, tos, fiebre o decaimiento\",\"Moco nasal persistente, tos, fiebre, babeo; baja apetito/rumia\",Infecciones respiratorias; irritantes; estrés; parásitos; cambios bruscos de clima,1) Tomar temperatura. 2) Aislar si es contagioso. 3) Ofrecer agua/alimento. 4) Llamar vet si hay fiebre o empeora.,\"Ventilación, evitar hacinamiento, minimizar estrés, vacunación según plan local\",Temp; frecuencia respiratoria; moco; apetito; rumia,\"Evento SALUD: signos, temperatura, fecha, acciones; seguimiento 24–48h\",Mejora en 24–48h; sin fiebre;",
+            "documentUri": "s3://udemy-bucket-virginia/bedrock-virginia/01_kb_sanidad.csv",
+            "page": null
+        },
+        {
+            "text": "kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated SAN-001,Protocolo: Fiebre de leche (hipocalcemia) - prevención y respuesta,Sanidad,Metabólicas,Postparto (0–72h) o vaca de alta producción; debilidad postparto,\"Debilidad, temblores, orejas frías, baja rumia, se echa y no se levanta\",Demanda alta de Ca al inicio de lactancia; desbalance mineral preparto; transición mal manejada,1) Aislar y mantener abrigada. 2) Llamar veterinario. 3) Seguir indicación profesional para calcio y monitoreo.,Plan de transición: dieta/ minerales preparto; vigilancia estrecha 72h postparto,Teléfono vet; lugar seco; observar rumia; temperatura periférica; capacidad de pararse,Evento SALUD: sospecha/diagnóstico; tratamiento (según vet); fecha/hora; respuesta clínica;",
+            "documentUri": "s3://udemy-bucket-virginia/bedrock-virginia/01_kb_sanidad.csv",
+            "page": null
+        },
+        {
+            "text": "kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated PAS-001,SOP: Encalado con cal dolomita en praderas (cálculo por área),Pasticultura,Suelo - Encalado,\"Cuando hay sospecha de acidez, pasto lento, malezas indicadoras, o nunca se ha encalado\",Kikuyo lento; suelos ácidos sospechados; historial sin encalar; hongos en pastos,pH bajo; baja disponibilidad de nutrientes; microbiología del suelo deprimida,1) Medir área (m²). 2) Definir dosis (kg/ha) idealmente con análisis. 3) Convertir a kg totales. 4) Aplicar con EPP. 5) Registrar evento.,Hacer análisis de suelo anual; encalar antes de siembras estratégicas; manejo de drenaje,EPP; condiciones sin viento fuerte; humedad moderada; distribución uniforme,\"Evento PRADERA:",
+            "documentUri": "s3://udemy-bucket-virginia/bedrock-virginia/03_kb_pasticultura.csv",
+            "page": null
+        },
+        {
+            "text": "kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated LES-001,Lección aprendida: Parto nocturno sin atención (pérdida de cría),Lecciones,Reproducción/Operación,Cuando se acerca fecha de parto y hay riesgo de parto nocturno,Historial de parto nocturno; poca vigilancia; falta de kit,No había monitoreo; no hubo atención inmediata,Implementar protocolo de vigilancia nocturna + checklist y kit; asignar turnos,Planificar 15 días antes; alarmas; contacto vet,Turnos; kit listo; corral; luz; registro de chequeos,\"Eventos: preparto (inicio vigilancia), chequeos nocturnos, parto (hora), asistencia\",Cero pérdidas de crías; calostro temprano; respuesta rápida,En cada vaca preñada (ventana -15 a +3 días),Si se omite vigilancia se repite el riesgo de",
+            "documentUri": "s3://udemy-bucket-virginia/bedrock-virginia/07_kb_lecciones_aprendidas.csv",
+            "page": null
+        },
+        {
+            "text": "bruscas; contaminación; demora en calostro/atención,\"parto,preparto,calostro,checklist,vigilancia_nocturna\",Contexto finca: cría anterior murió por falta de atención nocturna; objetivo: manejo profesional.,v1.0,2026-01-21 SAN-003,Guía: Signos respiratorios y descargas (moco/saliva) - triage básico,Sanidad,Respiratorio,\"Cuando hay moco excesivo, babeo anormal, tos, fiebre o decaimiento\",\"Moco nasal persistente, tos, fiebre, babeo; baja apetito/rumia\",Infecciones respiratorias; irritantes; estrés; parásitos; cambios bruscos de clima,1) Tomar temperatura. 2) Aislar si es contagioso. 3) Ofrecer agua/alimento. 4) Llamar vet si hay fiebre o empeora.,\"Ventilación, evitar hacinamiento, minimizar estrés, vacunación según plan local\",Temp; frecuencia respiratoria; moco; apetito; rumia,\"Evento SALUD: signos, temperatura, fecha, acciones; seguimiento 24–48h\",Mejora en 24–48h; sin fiebre;",
+            "documentUri": "s3://udemy-bucket-virginia/bedrock-virginia/01_kb_sanidad.csv",
+            "page": null
+        },
+        {
+            "text": "kb_id,titulo,categoria,subcategoria,aplica_cuando_trigger,senales_indicadores,causas_probables,pasos_accion,prevencion,checklist_campo,que_registrar_evento,kpi_indicadores_exito,frecuencia_seguimiento,riesgos_si_se_hace_mal,tags,fuentes_notas,version,last_updated SAN-001,Protocolo: Fiebre de leche (hipocalcemia) - prevención y respuesta,Sanidad,Metabólicas,Postparto (0–72h) o vaca de alta producción; debilidad postparto,\"Debilidad, temblores, orejas frías, baja rumia, se echa y no se levanta\",Demanda alta de Ca al inicio de lactancia; desbalance mineral preparto; transición mal manejada,1) Aislar y mantener abrigada. 2) Llamar veterinario. 3) Seguir indicación profesional para calcio y monitoreo.,Plan de transición: dieta/ minerales preparto; vigilancia estrecha 72h postparto,Teléfono vet; lugar seco; observar rumia; temperatura periférica; capacidad de pararse,Evento SALUD: sospecha/diagnóstico; tratamiento (según vet); fecha/hora; respuesta clínica;",
+            "documentUri": "s3://udemy-bucket-virginia/bedrock-virginia/01_kb_sanidad.csv",
+            "page": null
+        }
+    ],
+    "sources": [
+        "s3://udemy-bucket-virginia/bedrock-virginia/03_kb_pasticultura.csv",
+        "s3://udemy-bucket-virginia/bedrock-virginia/07_kb_lecciones_aprendidas.csv",
+        "s3://udemy-bucket-virginia/bedrock-virginia/01_kb_sanidad.csv"
+    ],
+    "durationMs": 5303,
+    "timestamp": [
+        2026,
+        2,
+        5,
+        20,
+        20,
+        0,
+        65715245
+    ]
+}

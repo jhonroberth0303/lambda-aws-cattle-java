@@ -1,0 +1,14 @@
+{
+ "PK": "BOVINE#172",
+ "SK": "PREG#2025-02-22",
+ "calvingDate": "2025-11-27",
+ "confirmationMethod": "palpation",
+ "createdAt": "2025-02-22",
+ "expectedDueDate": "2025-11-27",
+ "GSI1PK": "PREG#CLOSE",
+ "GSI1SK": "2025-11-27#BOVINE#174",
+ "notes": "\"Preñada por toro comun, preñez normal y parto sin complicaciones\"",
+ "serviceDate": "2025-02-22",
+ "status": "CLOSE",
+ "updatedAt": "2025-01-29"
+}

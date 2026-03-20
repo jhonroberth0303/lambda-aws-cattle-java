@@ -1,0 +1,212 @@
+{
+  "info": {
+    "_postman_id": "e9e13127-39b1-410e-8fc7-71921c91de15",
+    "name": "CattleServices",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "1131914"
+  },
+  "item": [
+    {
+      "name": "bovinesById",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/bovines/167",
+          "protocol": "https",
+          "host": [
+            "44xpamzadd",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "Prod",
+            "bovines",
+            "167"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "AllBovines",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/bovines",
+          "protocol": "https",
+          "host": [
+            "44xpamzadd",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "Prod",
+            "bovines"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "saveBovines",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Orion\",\r\n  \"gender\": \"female\",\r\n  \"bornDate\": \"2024-01-25\",\r\n  \"breed\": \"Angus\",\r\n  \"color\": \"Negro\",\r\n  \"category\": \"heifer\",\r\n  \"fatherId\": \"250JE1834\",\r\n  \"fatherNameSnapshot\": \"JEUSAM67823718\",\r\n  \"motherId\": \"064\",\r\n  \"motherNameSnapshot\": \"033-San-Angel\",\r\n  \"currentLactationNumber\": 0,\r\n  \"currentPregnancyId\": \"NA\",\r\n  \"farmId\": \"FARM#001\",\r\n  \"notes\": \"Esto es una prueba\",\r\n  \"photoUrl\": \"orion.jpg\",\r\n  \"status\": \"INACTIVE\",\r\n  \"origin\": \"bought\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/bovines",
+          "protocol": "https",
+          "host": [
+            "44xpamzadd",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "dev",
+            "bovines"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "postMilking",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "    {\r\n        \"bovineId\": 169,\r\n        \"date\": \"2025-09-12\",\r\n        \"shift\": \"PM\",\r\n        \"liters\": 4.0,\r\n        \"status\": \"completo\",\r\n        \"observations\": \"Normal\",\r\n        \"recordedBy\": \"jhonroberth\"\r\n    }",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/milking",
+          "protocol": "https",
+          "host": [
+            "44xpamzadd",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "dev",
+            "milking"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "getMilking",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/milking/169",
+          "protocol": "https",
+          "host": [
+            "44xpamzadd",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "dev",
+            "milking",
+            "169"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "updateBovine",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"bovineId\": 174,\r\n    \"name\": \"Orion\",\r\n    \"gender\": \"female\",\r\n    \"breed\": \"Angus\",\r\n    \"bornDate\": \"2024-01-25\",\r\n    \"color\": \"Colorado\",\r\n    \"age\": \"1 años, 7 meses, 23 días\",\r\n    \"enabled\": true,\r\n    \"category\": \"heifer\",\r\n    \"origin\": \"bought\",\r\n    \"notes\": \"Esto es una prueba\",\r\n    \"photoUrl\": \"orion.jpg\",\r\n    \"fatherId\": \"250JE1834\",\r\n    \"fatherNameSnapshot\": \"JEUSAM67823718\",\r\n    \"motherId\": \"064\",\r\n    \"motherNameSnapshot\": \"033-San-Angel\",\r\n    \"farmId\": \"FARM#001\",\r\n    \"status\": \"INACTIVE\",\r\n    \"currentLactationNumber\": 0,\r\n    \"currentPregnancyId\": \"NA\",\r\n    \"createdAt\": \"2025-09-17T03:34:17.990239241Z\",\r\n    \"updatedAt\": \"2025-09-17T03:34:17.990308569Z\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/bovines/174",
+          "protocol": "https",
+          "host": [
+            "44xpamzadd",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "dev",
+            "bovines",
+            "174"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "pasturesQuery",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://44xpamzadd.execute-api.us-east-1.amazonaws.com/Prod/farms/F001/pastures",
+          "protocol": "https",
+          "host": [
+            "44xpamzadd",
+            "execute-api",
+            "us-east-1",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "dev",
+            "farms",
+            "F001",
+            "pastures"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

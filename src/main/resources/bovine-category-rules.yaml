@@ -1,0 +1,93 @@
+farms:
+  # Farm with ID FARM#001 - Main farm
+  "FARM#001":
+    # LifeStage rules: 100% derivable from age (months)
+    lifeStage:
+      - minAge: 0
+        maxAge: 1
+        stage: NEWBORN
+      - minAge: 1
+        maxAge: 6
+        stage: CALF
+      - minAge: 6
+        maxAge: 9
+        stage: WEANED
+      - minAge: 9
+        maxAge: 24
+        stage: GROWER
+      - minAge: 24
+        maxAge: 999
+        stage: ADULT
+
+    # BovineCategory rules: derived from age + sex
+    female:
+      - minAge: 0
+        maxAge: 6
+        category: CALF
+      - minAge: 6
+        maxAge: 24
+        category: HEIFER
+      - minAge: 24
+        maxAge: 999
+        category: COW
+
+    male:
+      - minAge: 0
+        maxAge: 6
+        category: CALF
+      - minAge: 6
+        maxAge: 24
+        category: YOUNG_BULL
+      - minAge: 24
+        maxAge: 999
+        category: BULL
+
+    # OX: derived from castration event, not age
+    ox:
+      castrated: true
+      category: OX
+
+  # Default rules for farms without specific configuration
+  default:
+    lifeStage:
+      - minAge: 0
+        maxAge: 1
+        stage: NEWBORN
+      - minAge: 1
+        maxAge: 6
+        stage: CALF
+      - minAge: 6
+        maxAge: 9
+        stage: WEANED
+      - minAge: 9
+        maxAge: 24
+        stage: GROWER
+      - minAge: 24
+        maxAge: 999
+        stage: ADULT
+
+    female:
+      - minAge: 0
+        maxAge: 6
+        category: CALF
+      - minAge: 6
+        maxAge: 24
+        category: HEIFER
+      - minAge: 24
+        maxAge: 999
+        category: COW
+
+    male:
+      - minAge: 0
+        maxAge: 6
+        category: CALF
+      - minAge: 6
+        maxAge: 24
+        category: YOUNG_BULL
+      - minAge: 24
+        maxAge: 999
+        category: BULL
+
+    ox:
+      castrated: true
+      category: OX

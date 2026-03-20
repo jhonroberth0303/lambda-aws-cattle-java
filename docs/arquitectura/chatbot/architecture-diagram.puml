@@ -1,0 +1,457 @@
+@startuml Cattle-Bedrock-C4-System
+title Cattle-Bedrock System Architecture (C4 Level 1)
+caption AWS Serverless Spring Boot 3 API with Amazon Bedrock
+
+rectangle "AWS Cloud" {
+    rectangle "API Layer" {
+        card apigw [
+            🌐 API Gateway
+            ---
+            REST API
+            Proxy Pattern {proxy+}
+        ]
+    }
+
+    rectangle "Compute" {
+        card lambda [
+            λ AWS Lambda
+            ---
+            Java 21
+            512MB
+            30 seconds
+        ]
+    }
+
+    rectangle "Data Layer" {
+        card dynamodb [
+            💾 DynamoDB
+            ---
+            Bovines
+            Milking
+            Pastures
+            Tasks
+            Plans
+        ]
+    }
+
+    rectangle "AI & ML" {
+        card bedrock [
+            🤖 Amazon Bedrock
+            ---
+            Claude 3 Haiku
+            anthropic.claude-3-haiku
+            v1:0
+        ]
+    }
+
+    rectangle "Monitoring" {
+        card cw [
+            📊 CloudWatch
+            ---
+            Logs
+            Metrics
+            Events
+        ]
+    }
+
+    rectangle "Security" {
+        card iam [
+            🔐 IAM Role
+            ---
+            cattle-bedrock-lambda-role
+            Bedrock + DynamoDB
+        ]
+    }
+}
+
+rectangle "Client" {
+    actor client as "REST Client"
+}
+
+client --> apigw : HTTP Request\nPOST /chat
+apigw --> lambda : Invoke
+iam -.-> lambda : AssumeRole
+lambda --> dynamodb : Query/Update
+lambda --> bedrock : InvokeModel
+lambda --> cw : Logs & Metrics
+apigw <-- lambda : Response
+client <-- apigw : HTTP 200 OK
+
+@enduml
+
+@enduml
+
+@startuml Cattle-Bedrock-C4-Containers
+title Cattle-Bedrock Container Architecture (C4 Level 2)
+caption Lambda Function with Spring Boot Components
+
+rectangle "AWS Lambda Container" {
+    rectangle "Handler Layer" {
+        package "entry" {
+            component StreamLambdaHandler as handler
+        }
+    }
+
+    rectangle "Spring Boot Layer" {
+        package "spring" {
+            component SpringBootApplication as springApp
+            component CorsConfig as cors
+            component RepositoryConfig as repoConfig
+        }
+    }
+
+    rectangle "Web Layer (MVC)" {
+        package "controllers" {
+            component ChatbotController as controller
+        }
+    }
+
+    rectangle "Business Logic Layer" {
+        package "services" {
+            component ChatbotService as service
+            component EventBuilder as builder
+        }
+    }
+
+    rectangle "Data Access Layer" {
+        package "repositories" {
+            component BovineRepository as bovRepo
+            component MilkingRepository as milkRepo
+            component PastureRepository as pastRepo
+        }
+    }
+
+    rectangle "Transfer Objects" {
+        package "dtos" {
+            component ChatDTO as chatDto
+            component BovineDTO as bovDto
+            component MilkingDTO as milkDto
+        }
+    }
+}
+
+rectangle "External Services" {
+    component "💾 DynamoDB" as dynamodb
+    component "🤖 Amazon Bedrock" as bedrock
+    component "📊 CloudWatch" as cw
+}
+
+handler --> springApp : Initialize
+springApp --> cors : Configure
+springApp --> repoConfig : Configure
+springApp --> controller : Route
+
+controller --> service : Call
+service --> builder : Build Prompts
+service --> bovRepo : Query Data
+service --> milkRepo : Query Data
+service --> pastRepo : Query Data
+
+bovRepo --> dynamodb : CRUD
+milkRepo --> dynamodb : CRUD
+pastRepo --> dynamodb : CRUD
+
+service --> chatDto : Transform
+service --> bedrock : InvokeModel
+
+service --> cw : Emit Logs
+dynamodb --> cw : Emit Metrics
+
+@enduml
+
+@enduml
+
+@startuml Cattle-Bedrock-Sequence
+title Chat Request Processing Flow
+
+actor Client
+participant "API Gateway" as apigw
+participant "Lambda Handler" as handler
+participant "Spring Boot" as spring
+participant "ChatbotController" as ctrl
+participant "ChatbotService" as svc
+participant "Repositories" as repo
+participant "DynamoDB" as db
+participant "Amazon Bedrock" as bedrock
+participant "CloudWatch" as cw
+
+Client ->> apigw: POST /chat\n{userMessage, context}
+apigw ->> handler: Invoke Lambda
+handler ->> spring: Initialize Context
+spring ->> ctrl: Route Request
+ctrl ->> svc: processMessage(request)
+
+svc ->> repo: Query Bovines/Milking/Pastures
+repo ->> db: Scan/Query
+db -->> repo: Return Data
+repo -->> svc: Return Domain Objects
+
+svc ->> svc: Transform to DTOs
+svc ->> svc: Build AI Prompt
+
+svc ->> bedrock: InvokeModel\n(Claude 3 Haiku)
+bedrock -->> svc: AI Generated Response
+
+svc ->> svc: Parse Response
+svc ->> svc: Build Response DTO
+
+svc ->> cw: Emit Log Entry
+svc ->> cw: Emit Metrics
+
+svc -->> ctrl: Return ResponseDTO
+ctrl -->> apigw: HTTP 200 OK
+apigw -->> Client: {responseMessage, metadata}
+
+cw ->> cw: Store Logs
+
+@enduml
+
+@startuml Cattle-Bedrock-Components
+title Component Diagram - Internal Architecture
+
+package "Application Layer" {
+    component [StreamLambdaHandler]
+    component [Application]
+}
+
+package "Controller Layer" {
+    component [ChatbotController]
+}
+
+package "Service Layer" {
+    component [ChatbotService]
+    component [EventBuilder]
+    component [PastureBuilder]
+    component [TaskBuilder]
+}
+
+package "Repository Layer" {
+    component [BovineRepository]
+    component [MilkingRepository]
+    component [PastureRepository]
+}
+
+package "Transfer Objects" {
+    component [ChatDTO]
+    component [BovineDTO]
+    component [MilkingDTO]
+    component [ResponseDTO]
+}
+
+package "Configuration" {
+    component [CorsConfig]
+    component [RepositoryConfig]
+    component [LambdaContext]
+}
+
+package "Domain Model" {
+    component [Bovine Entity]
+    component [Milking Entity]
+    component [Pasture Entity]
+}
+
+[StreamLambdaHandler] --> [Application]
+[Application] --> [CorsConfig]
+[Application] --> [RepositoryConfig]
+[CorsConfig] --> [ChatbotController]
+[ChatbotController] --> [ChatbotService]
+[ChatbotService] --> [BovineRepository]
+[ChatbotService] --> [MilkingRepository]
+[ChatbotService] --> [PastureRepository]
+[ChatbotService] --> [EventBuilder]
+[ChatbotService] --> [ChatbotDTO]
+[BovineRepository] --> [Bovine Entity]
+[MilkingRepository] --> [Milking Entity]
+[PastureRepository] --> [Pasture Entity]
+
+@enduml
+
+@startuml Cattle-Bedrock-Class-Diagram
+title Class Diagram - Key Classes
+
+class StreamLambdaHandler {
+    - handler: SpringBootLambdaContainerHandler
+    + handleRequest(input, context): ApiGatewayResponse
+}
+
+class Application {
+    - main(args: String[]): void
+}
+
+class ChatbotController {
+    - chatbotService: ChatbotService
+    + chat(request: ChatDTO): ResponseEntity<ResponseDTO>
+    + health(): ResponseEntity<HealthDTO>
+}
+
+class ChatbotService {
+    - bovineRepository: BovineRepository
+    - milkingRepository: MilkingRepository
+    - pastureRepository: PastureRepository
+    - bedrockClient: BedrockRuntimeClient
+    + processMessage(chatDTO): ResponseDTO
+    - buildPrompt(context): String
+    - invokeBedrockModel(prompt): String
+    - parseResponse(response): String
+}
+
+class BovineRepository {
+    - dynamoDbClient: DynamoDbClient
+    + findAll(): List<Bovine>
+    + findById(id): Bovine
+    + save(bovine): Bovine
+}
+
+class ChatDTO {
+    - userMessage: String
+    - context: Map<String, Object>
+}
+
+class ResponseDTO {
+    - responseMessage: String
+    - metadata: Map<String, Object>
+    - timestamp: LocalDateTime
+}
+
+class CorsConfig {
+    + corsConfigurationSource(): CorsConfigurationSource
+}
+
+class RepositoryConfig {
+    + dynamoDbClient(): DynamoDbClient
+    + bedrockClient(): BedrockRuntimeClient
+}
+
+StreamLambdaHandler --> Application
+Application --> ChatbotController
+ChatbotController --> ChatbotService
+ChatbotController --> ChatDTO
+ChatbotController --> ResponseDTO
+ChatbotService --> BovineRepository
+ChatbotService --> "3" Repository
+ChatbotService -.-> BedrockRuntimeClient : uses
+BovineRepository -.-> Bovine : manages
+RepositoryConfig --> DynamoDbClient
+RepositoryConfig --> BedrockRuntimeClient
+
+@enduml
+
+@startuml Cattle-Bedrock-Deployment
+title Deployment Process Flow
+
+rectangle "Development" {
+    (Source Code) as src
+    (Maven/Gradle) as build
+    (JAR File) as jar
+}
+
+rectangle "Packaging" {
+    (SAM CLI) as sam
+    (template.yml) as template
+}
+
+rectangle "Cloud Deployment" {
+    (S3 Artifact Store) as s3
+    (CloudFormation) as cf
+    (AWS Resources) as resources
+}
+
+rectangle "Production" {
+    (Lambda Function) as lambda
+    (API Gateway) as apigw
+    (DynamoDB) as ddb
+    (Bedrock) as bedrock
+    (CloudWatch) as cw
+}
+
+src --> build: Compile
+build --> jar: Package JAR
+jar --> sam: Prepare Package
+sam --> template: Build Artifact
+template --> s3: Upload
+s3 --> cf: Create Stack
+cf --> resources: Provision
+resources --> lambda
+resources --> apigw
+resources --> ddb
+resources --> bedrock
+resources --> cw
+
+@enduml
+
+@startuml Cattle-Bedrock-IAM-Permissions
+title IAM Permissions Matrix
+
+rectangle "IAM Role: cattle-bedrock-lambda-role" {
+    rectangle "Bedrock Permissions" {
+        (bedrock:InvokeModel) as p1
+        (bedrock:ListFoundationModels) as p2
+    }
+
+    rectangle "DynamoDB Permissions" {
+        (dynamodb:GetItem) as p3
+        (dynamodb:PutItem) as p4
+        (dynamodb:UpdateItem) as p5
+        (dynamodb:Query) as p6
+        (dynamodb:Scan) as p7
+    }
+
+    rectangle "Marketplace Permissions" {
+        (aws-marketplace:ViewSubscriptions) as p8
+        (aws-marketplace:Subscribe) as p9
+    }
+
+    rectangle "CloudWatch Logs" {
+        (logs:CreateLogGroup) as p10
+        (logs:CreateLogStream) as p11
+        (logs:PutLogEvents) as p12
+    }
+}
+
+rectangle "Resources" {
+    (foundation-model/anthropic.claude-3-haiku-*) as r1
+    (arn:aws:dynamodb:*:*:table/*) as r2
+}
+
+p1 --> r1
+p3 --> r2
+p4 --> r2
+p5 --> r2
+p6 --> r2
+p7 --> r2
+
+@enduml
+
+@startuml Cattle-Bedrock-API-Endpoints
+title REST API Endpoints
+
+rectangle "ChatbotController" {
+    rectangle "POST /chat" {
+        (Request: ChatDTO) as req1
+        (userMessage: String) as param1
+        (context: Map<Object>) as param2
+        (Response: ResponseDTO) as resp1
+        (responseMessage: String) as resp_param1
+        (metadata: Map<Object>) as resp_param2
+    }
+
+    rectangle "GET /health" {
+        (Request: No Body) as req2
+        (Response: HealthStatus) as resp2
+        (status: UP) as health_status
+        (timestamp: ISO-8601) as timestamp
+    }
+
+    rectangle "GET /models" {
+        (Request: No Body) as req3
+        (Response: ModelList) as resp3
+        (availableModels: List<String>) as models
+    }
+
+    rectangle "ANY {proxy+}" {
+        (Request: Any) as req4
+        (Proxy Pattern) as proxy_desc
+    }
+}
+
+@enduml

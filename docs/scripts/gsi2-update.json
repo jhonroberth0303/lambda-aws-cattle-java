@@ -1,0 +1,12 @@
+[
+    {
+        "Create": {
+            "IndexName": "GSI2-bovine-lactation-index",
+            "KeySchema": [
+                {"AttributeName": "gsi2pk", "KeyType": "HASH"},
+                {"AttributeName": "gsi2sk", "KeyType": "RANGE"}
+            ],
+            "Projection": {"ProjectionType": "ALL"}
+        }
+    }
+]

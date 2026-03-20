@@ -1,0 +1,55 @@
+{
+ "id": 169,
+ "gender": "female",
+ "bornDate": "2024-04-31",
+ "breed": "unknown",
+ "color": "Black",
+ "enabled": true,
+ "father": "unknown",
+ "mother": "unknown",
+ "name": "Tormento"
+}
+{
+ "id": 170,
+ "gender": "male",
+ "bornDate": "2024-06-26",
+ "breed": "unknown",
+ "color": "Marron",
+ "enabled": true,
+ "father": "Sturgis 250JE1834 JEUSA000173774063",
+ "mother": "064-La-Martina",
+ "name": "Arequipe"
+}
+{
+ "id": 168,
+ "gender": "female",
+ "bornDate": "2024-04-28",
+ "breed": "unknown",
+ "color": "Black",
+ "enabled": true,
+ "father": "unknown",
+ "mother": "unknown",
+ "name": "Estrella"
+}
+{
+ "id": 171,
+ "gender": "male",
+ "bornDate": "2025-01-25",
+ "breed": "Jersey",
+ "color": "bambi",
+ "enabled": true,
+ "father": "Whistler 0200JE01140 JEUSAM67823718",
+ "mother": "033-La-Martina",
+ "name": "Bambi"
+}
+{
+ "id": 167,
+ "gender": "female",
+ "bornDate": "2022-08-31",
+ "breed": "Jersey",
+ "color": "Colorado",
+ "enabled": true,
+ "father": "Whistler 0200JE01140 JEUSAM67823718",
+ "mother": "032-La-Martina",
+ "name": "Rosita"
+}

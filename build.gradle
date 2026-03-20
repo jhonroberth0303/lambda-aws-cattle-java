@@ -1,0 +1,137 @@
+apply plugin: 'java'
+apply plugin: 'jacoco'
+
+repositories {
+  mavenLocal()
+  mavenCentral()
+  maven {url "https://repo.spring.io/milestone"}
+  maven {url "https://repo.spring.io/snapshot"}
+}
+
+dependencies {
+  implementation (
+          'org.springframework.boot:spring-boot-starter-web:3.4.5',
+          'org.springframework.boot:spring-boot-starter-validation:3.4.5',
+          'com.amazonaws.serverless:aws-serverless-java-container-springboot3:[2.0-SNAPSHOT,)',
+          'software.amazon.awssdk:dynamodb:2.32.16',
+          'software.amazon.awssdk:dynamodb-enhanced:2.32.16',
+          'software.amazon.awssdk:apache-client:2.32.16',
+          'software.amazon.awssdk:sns:2.32.16',
+          'software.amazon.awssdk:bedrockruntime:2.29.6',
+          'software.amazon.awssdk:bedrockagentruntime:2.32.16',
+          'com.google.code.gson:gson:2.11.0'
+  )
+
+  implementation 'org.apache.logging.log4j:log4j-api:2.20.0'
+  implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
+  runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl:2.20.0'
+
+  // OpenAPI / Swagger documentación
+  implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+  // Spring Security & JWT
+  implementation 'org.springframework.boot:spring-boot-starter-security:3.4.5'
+  implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+  implementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
+  implementation 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+  
+  // Guava para Rate Limiting
+  implementation 'com.google.guava:guava:33.0.0-jre'
+
+  implementation 'org.mapstruct:mapstruct:1.5.2.Final'
+  annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.2.Final'
+
+  annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+  compileOnly 'org.projectlombok:lombok:1.18.34'
+  annotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+  testCompileOnly 'org.projectlombok:lombok:1.18.34'
+  testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+  testImplementation("com.amazonaws.serverless:aws-serverless-java-container-core:[2.0-SNAPSHOT,):tests")
+  testImplementation("org.apache.httpcomponents.client5:httpclient5:5.5")
+  testImplementation(platform("org.junit:junit-bom:5.13.1"))
+  testImplementation("org.junit.jupiter:junit-jupiter")
+  testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.11.0-M2'
+  testImplementation 'org.mockito:mockito-core:5.2.0'
+  testImplementation 'net.bytebuddy:byte-buddy:1.14.12'
+  
+  // TestContainers para LocalStack
+  testImplementation 'org.testcontainers:testcontainers:1.19.3'
+  testImplementation 'org.testcontainers:localstack:1.19.3'
+  testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
+  
+  // AssertJ para assertions fluidas
+  testImplementation 'org.assertj:assertj-core:3.24.2'
+  
+  // Mockito JUnit Jupiter integration
+  testImplementation 'org.mockito:mockito-junit-jupiter:5.2.0'
+  
+  // Spring Test
+  testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.5'
+}
+
+task buildZip(type: Zip) {
+  from compileJava
+  from processResources
+  into('lib') {
+    from(configurations.compileClasspath) {
+      exclude 'tomcat-embed-*'
+    }
+  }
+}
+
+test {
+  useJUnitPlatform()
+  finalizedBy jacocoTestReport
+  
+  // Skip tests if SAM build is running
+  onlyIf {
+    !project.hasProperty('skipTests')
+  }
+}
+
+jacoco {
+  toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+  dependsOn test
+  reports {
+    xml.required = true
+    html.required = true
+    csv.required = false
+  }
+  
+  afterEvaluate {
+    classDirectories.setFrom(files(classDirectories.files.collect {
+      fileTree(dir: it, exclude: [
+        // Excluir repositorios de perfiles (wrappers simples de DynamoDB)
+        //'com/cattle/repository/ProfileLifecycleRepository.class',
+        //'com/cattle/repository/ProfileReproductiveRepository.class',
+        //'com/cattle/repository/ProfilePregnancyRepository.class',
+        //'com/cattle/repository/ProfileLactancyRepository.class',
+        //'com/cattle/repository/BovineSummaryRepository.class',
+        // Excluir clases generadas por MapStruct
+        'com/cattle/mapper/*Impl.class',
+        // Excluir Application main
+        'com/cattle/Application.class',
+        'com/cattle/StreamLambdaHandler.class',
+        // Excluir DTOs (solo getters/setters generados por Lombok)
+        'com/cattle/dtos/*.class',
+        'com/cattle/dtos/**/*.class',
+        // Excluir entidades (solo getters/setters generados por Lombok)
+        'com/cattle/entities/*.class',
+        // Excluir enums (no contienen lógica)
+        'com/cattle/enums/**/*.class'
+      ])
+    }))
+  }
+}
+
+tasks.withType(JavaCompile) {
+  options.compilerArgs << "-parameters"
+}
+
+build.dependsOn buildZip
