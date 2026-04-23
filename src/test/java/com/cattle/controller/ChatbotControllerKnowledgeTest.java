@@ -3,17 +3,21 @@ package com.cattle.controller;
 import com.cattle.config.LambdaContext;
 import com.cattle.dtos.knowledge.KnowledgeRequestDTO;
 import com.cattle.dtos.knowledge.KnowledgeResponseDTO;
+import com.cattle.security.FarmUserPrincipal;
 import com.cattle.services.AuditLoggingService;
 import com.cattle.services.InputValidationService;
 import com.cattle.services.RateLimitingService;
 import com.cattle.services.chatbot.ChatbotService;
 import com.cattle.services.knowledge.KnowledgeBaseService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -54,10 +58,11 @@ class ChatbotControllerKnowledgeTest {
     private AuditLoggingService auditLoggingService;
 
     private ChatbotController chatbotController;
+    private AutoCloseable mocks;
 
     @BeforeEach
     void setUp() {
-        openMocks(this);
+        mocks = openMocks(this);
         chatbotController = new ChatbotController(
                 chatbotService,
                 knowledgeBaseService,
@@ -66,6 +71,17 @@ class ChatbotControllerKnowledgeTest {
                 inputValidationService,
                 auditLoggingService
         );
+
+        FarmUserPrincipal principal = new FarmUserPrincipal("farm-test-001", "user-test-001");
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null, List.of())
+        );
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        SecurityContextHolder.clearContext();
+        mocks.close();
     }
 
     // ==================== queryKnowledge Tests ====================

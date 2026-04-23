@@ -12,6 +12,7 @@ import com.cattle.services.InputValidationService;
 import com.cattle.services.RateLimitingService;
 import com.cattle.services.chatbot.ChatbotService;
 import com.cattle.services.knowledge.KnowledgeBaseService;
+import com.google.common.base.Strings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -85,6 +86,15 @@ public class ChatbotController {
         String farmId = getFarmIdFromSecurityContext();
         String userId = getUserIdFromSecurityContext();
         
+        // Validar que farmId y userId no estén vacíos
+        if (Strings.isNullOrEmpty(farmId) || Strings.isNullOrEmpty(userId)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ChatResponseDTO.builder()
+                            .response("Credenciales inválidas. FarmId o UserId no disponibles.")
+                            .intent("UNAUTHORIZED")
+                            .build());
+        }
+
         lambdaContext.logInfo(LogType.CONTROLLER, "Received chat message from farmId: " + farmId);
         
         try {
@@ -181,6 +191,14 @@ public class ChatbotController {
         String farmId = getFarmIdFromSecurityContext();
         String userId = getUserIdFromSecurityContext();
         
+        // Validar que farmId y userId no estén vacíos
+        if (Strings.isNullOrEmpty(farmId) || Strings.isNullOrEmpty(userId)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(KnowledgeResponseDTO.builder()
+                            .answer("Credenciales inválidas. FarmId o UserId no disponibles.")
+                            .build());
+        }
+
         lambdaContext.logInfo(LogType.CONTROLLER, "Received knowledge query from farmId: " + farmId);
         
         try {
@@ -237,35 +255,40 @@ public class ChatbotController {
                             .build());
         }
     }
-    
+
+    /**
+     * Extrae un valor del principal autenticado de forma genérica.
+     *
+     * @param fieldName nombre del campo a extraer (para mensaje de error)
+     * @param fieldExtractor función que extrae el valor del principal
+     * @return valor extraído del principal
+     * @throws IllegalArgumentException si el valor no está disponible
+     */
+    private String extractFromSecurityContext(String fieldName, java.util.function.Function<FarmUserPrincipal, String> fieldExtractor) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.getPrincipal() instanceof FarmUserPrincipal) {
+            FarmUserPrincipal principal = (FarmUserPrincipal) authentication.getPrincipal();
+            String value = fieldExtractor.apply(principal);
+            if (!Strings.isNullOrEmpty(value)) {
+                return value;
+            }
+        }
+        return null;
+    }
+
     /**
      * Extrae el farmId del SecurityContext.
      * El farmId fue inyectado por JwtAuthenticationFilter después de validar el token.
      */
     private String getFarmIdFromSecurityContext() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (authentication != null && authentication.getPrincipal() instanceof FarmUserPrincipal) {
-            FarmUserPrincipal principal = (FarmUserPrincipal) authentication.getPrincipal();
-            return principal.getFarmId();
-        }
-        
-        // Fallback para desarrollo/testing sin autenticación
-        log.warn("No FarmUserPrincipal found in SecurityContext, using default farmId");
-        return "FARM#001";
+        return extractFromSecurityContext("FarmId", FarmUserPrincipal::getFarmId);
     }
-    
+
     /**
      * Extrae el userId del SecurityContext.
      */
     private String getUserIdFromSecurityContext() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (authentication != null && authentication.getPrincipal() instanceof FarmUserPrincipal) {
-            FarmUserPrincipal principal = (FarmUserPrincipal) authentication.getPrincipal();
-            return principal.getUserId();
-        }
-        
-        return "UNKNOWN";
+        return extractFromSecurityContext("UserId", FarmUserPrincipal::getUserId);
     }
 }
