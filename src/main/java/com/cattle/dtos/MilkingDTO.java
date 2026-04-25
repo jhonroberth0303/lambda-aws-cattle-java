@@ -55,7 +55,8 @@ public class MilkingDTO {
                 + "-liters:" + liters
                 + "-status:" + status
                 + "-observations:" + observations
-                + "-recordedBy:" + recordedBy;
+                + "-recordedBy:" + recordedBy
+                + "-lactationNumber:" + lactationNumber;
     }
 
 }
