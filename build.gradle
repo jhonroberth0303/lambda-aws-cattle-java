@@ -1,78 +1,105 @@
 apply plugin: 'java'
 apply plugin: 'jacoco'
 
+group = 'com.cattle'
+version = '1.0.0'
+
+def versions = [
+  springBoot        : '3.4.5',
+  awsServerlessJava : '2.1.4',
+  awsSdk            : '2.32.16',
+  bedrockRuntime    : '2.29.6',
+  gson              : '2.11.0',
+  log4j             : '2.20.0',
+  springdoc         : '2.3.0',
+  jjwt              : '0.12.5',
+  guava             : '33.0.0-jre',
+  mapstruct         : '1.5.2.Final',
+  lombok            : '1.18.34',
+  lombokMapstruct   : '0.2.0',
+  httpclient5       : '5.5',
+  junitBom          : '5.13.1',
+  mockito           : '5.2.0',
+  byteBuddy         : '1.14.12',
+  testcontainers    : '1.19.3',
+  assertj           : '3.24.2'
+]
+
 repositories {
-  mavenLocal()
   mavenCentral()
-  maven {url "https://repo.spring.io/milestone"}
-  maven {url "https://repo.spring.io/snapshot"}
+}
+
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(21)
+  }
 }
 
 dependencies {
   implementation (
-          'org.springframework.boot:spring-boot-starter-web:3.4.5',
-          'org.springframework.boot:spring-boot-starter-validation:3.4.5',
-          'com.amazonaws.serverless:aws-serverless-java-container-springboot3:[2.0-SNAPSHOT,)',
-          'software.amazon.awssdk:dynamodb:2.32.16',
-          'software.amazon.awssdk:dynamodb-enhanced:2.32.16',
-          'software.amazon.awssdk:apache-client:2.32.16',
-          'software.amazon.awssdk:sns:2.32.16',
-          'software.amazon.awssdk:bedrockruntime:2.29.6',
-          'software.amazon.awssdk:bedrockagentruntime:2.32.16',
-          'com.google.code.gson:gson:2.11.0'
+          "org.springframework.boot:spring-boot-starter-web:${versions.springBoot}",
+          "org.springframework.boot:spring-boot-starter-validation:${versions.springBoot}",
+          "com.amazonaws.serverless:aws-serverless-java-container-springboot3:${versions.awsServerlessJava}",
+          "software.amazon.awssdk:dynamodb:${versions.awsSdk}",
+          "software.amazon.awssdk:dynamodb-enhanced:${versions.awsSdk}",
+          "software.amazon.awssdk:apache-client:${versions.awsSdk}",
+          "software.amazon.awssdk:sns:${versions.awsSdk}",
+          "software.amazon.awssdk:bedrockruntime:${versions.bedrockRuntime}",
+          "software.amazon.awssdk:bedrockagentruntime:${versions.awsSdk}",
+          "com.google.code.gson:gson:${versions.gson}"
   )
 
-  implementation 'org.apache.logging.log4j:log4j-api:2.20.0'
-  implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
-  runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl:2.20.0'
+  implementation "org.apache.logging.log4j:log4j-api:${versions.log4j}"
+  implementation "org.apache.logging.log4j:log4j-core:${versions.log4j}"
+  runtimeOnly "org.apache.logging.log4j:log4j-slf4j-impl:${versions.log4j}"
 
   // OpenAPI / Swagger documentación
-  implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+  implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${versions.springdoc}"
 
   // Spring Security & JWT
-  implementation 'org.springframework.boot:spring-boot-starter-security:3.4.5'
-  implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
-  implementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
-  implementation 'io.jsonwebtoken:jjwt-jackson:0.12.5'
-  
+  implementation "org.springframework.boot:spring-boot-starter-security:${versions.springBoot}"
+  implementation "io.jsonwebtoken:jjwt-api:${versions.jjwt}"
+  implementation "io.jsonwebtoken:jjwt-impl:${versions.jjwt}"
+  implementation "io.jsonwebtoken:jjwt-jackson:${versions.jjwt}"
+
   // Guava para Rate Limiting
-  implementation 'com.google.guava:guava:33.0.0-jre'
+  implementation "com.google.guava:guava:${versions.guava}"
 
-  implementation 'org.mapstruct:mapstruct:1.5.2.Final'
-  annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.2.Final'
+  implementation "org.mapstruct:mapstruct:${versions.mapstruct}"
+  annotationProcessor "org.mapstruct:mapstruct-processor:${versions.mapstruct}"
 
-  annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
-  compileOnly 'org.projectlombok:lombok:1.18.34'
-  annotationProcessor 'org.projectlombok:lombok:1.18.34'
+  annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${versions.lombokMapstruct}"
+  compileOnly "org.projectlombok:lombok:${versions.lombok}"
+  annotationProcessor "org.projectlombok:lombok:${versions.lombok}"
 
-  testCompileOnly 'org.projectlombok:lombok:1.18.34'
-  testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+  testCompileOnly "org.projectlombok:lombok:${versions.lombok}"
+  testAnnotationProcessor "org.projectlombok:lombok:${versions.lombok}"
 
-  testImplementation("com.amazonaws.serverless:aws-serverless-java-container-core:[2.0-SNAPSHOT,):tests")
-  testImplementation("org.apache.httpcomponents.client5:httpclient5:5.5")
-  testImplementation(platform("org.junit:junit-bom:5.13.1"))
+  testImplementation("com.amazonaws.serverless:aws-serverless-java-container-core:${versions.awsServerlessJava}:tests")
+  testImplementation("org.apache.httpcomponents.client5:httpclient5:${versions.httpclient5}")
+  testImplementation(platform("org.junit:junit-bom:${versions.junitBom}"))
   testImplementation("org.junit.jupiter:junit-jupiter")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-  testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.11.0-M2'
-  testImplementation 'org.mockito:mockito-core:5.2.0'
-  testImplementation 'net.bytebuddy:byte-buddy:1.14.12'
-  
+  testImplementation "org.mockito:mockito-core:${versions.mockito}"
+  testImplementation "net.bytebuddy:byte-buddy:${versions.byteBuddy}"
+
   // TestContainers para LocalStack
-  testImplementation 'org.testcontainers:testcontainers:1.19.3'
-  testImplementation 'org.testcontainers:localstack:1.19.3'
-  testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
-  
+  testImplementation "org.testcontainers:testcontainers:${versions.testcontainers}"
+  testImplementation "org.testcontainers:localstack:${versions.testcontainers}"
+  testImplementation "org.testcontainers:junit-jupiter:${versions.testcontainers}"
+
   // AssertJ para assertions fluidas
-  testImplementation 'org.assertj:assertj-core:3.24.2'
-  
+  testImplementation "org.assertj:assertj-core:${versions.assertj}"
+
   // Mockito JUnit Jupiter integration
-  testImplementation 'org.mockito:mockito-junit-jupiter:5.2.0'
-  
+  testImplementation "org.mockito:mockito-junit-jupiter:${versions.mockito}"
+
   // Spring Test
-  testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.5'
+  testImplementation "org.springframework.boot:spring-boot-starter-test:${versions.springBoot}"
 }
 
 task buildZip(type: Zip) {
+  archiveFileName = 'cattle-lambda-function.zip'
   from compileJava
   from processResources
   into('lib') {

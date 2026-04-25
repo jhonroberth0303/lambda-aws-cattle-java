@@ -107,7 +107,7 @@ public class MilkingProcessor {
         }
 
         entity.setLactationNumber(lactNum);
-        String lactNumStr = String.format("%02d", lactNum);
+        String lactNumStr = String.format("%03d", lactNum);
         entity.setGsi2pk(PK_PREFIX + bovineId + HASH_TAG + LACT_PREFIX + lactNumStr);
         entity.setGsi2sk(entity.getDate() + HASH_TAG + entity.getShift());
     }

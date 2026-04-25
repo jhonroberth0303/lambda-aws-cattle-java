@@ -16,6 +16,8 @@ Backend serverless para gestión ganadera con AWS Lambda, Spring Boot 3 y Amazon
 
 ## 🚀 Quick Start
 
+> **Build tool oficial:** este proyecto se construye y prueba únicamente con `Gradle Wrapper` (`./gradlew` / `gradlew.bat`). El archivo `pom.xml` ya no forma parte del flujo soportado.
+
 ### Pre-requisitos
 
 ```bash
@@ -131,10 +133,10 @@ cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:3000}
 
 | Documento | Descripción |
 |-----------|-------------|
-| [ARCHITECTURE.md](docs/bedrock-chatbot/ARCHITECTURE.md) | Diagramas C4 |
-| [HU-BEDROCK-001](docs/bedrock-chatbot/stories/HU-BEDROCK-001-IMPLEMENTACION.md) | Historia chatbot |
-| [HU-BEDROCK-003](docs/bedrock-chatbot/stories/HU-BEDROCK-003-SEGURIDAD.md) | Seguridad |
-| [Índice](docs/bedrock-chatbot/INDICE-DOCUMENTACION.md) | Navegación docs |
+| [ARCHITECTURE.md](docs/arquitectura/chatbot/ARCHITECTURE.md) | Diagramas C4 |
+| [HU-BEDROCK-001](docs/stories/bedrock/HU-BEDROCK-001-IMPLEMENTACION.md) | Historia chatbot |
+| [HU-BEDROCK-003](docs/stories/bedrock/HU-BEDROCK-003-SEGURIDAD.md) | Seguridad |
+| [Índice](docs/README.md) | Navegación docs |
 
 ## 🛠️ Comandos Útiles
 
