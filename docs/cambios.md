@@ -1,3 +1,9 @@
+
+## 2026-04-25
+
+- Se eliminó el `RoleName` fijo del recurso `CattleLambdaRole` en la plantilla SAM para evitar fallos de `sam deploy` cuando CloudFormation necesita reemplazar el rol IAM durante un update.
+- Motivo: con un nombre físico fijo, CloudFormation no puede crear el recurso de reemplazo mientras el rol anterior sigue existiendo en la cuenta, lo que provocaba rollback del stack.
+- Impacto esperado: el rol seguirá siendo administrado por el stack y la Lambda continuará referenciándolo por ARN dentro de la misma plantilla, sin depender de un nombre estático.
 # Pruebas unitarias MilkingProcessor
 
 Este documento describe la cobertura de pruebas unitarias para la clase `MilkingProcessor`.
