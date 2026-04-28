@@ -105,6 +105,62 @@ class MilkingRecordServiceTest {
         verify(milkingRepository, times(1)).getMilkingByPk(pk);
     }
 
+    @Test
+    void getMilkingByBovineAndLactation_validInput_returnsMilking() {
+        Integer bovineId = 1;
+        String lactationNumber = "002";
+        List<MilkingRecord> milkingRecords = List.of(
+                MilkingRecord.builder()
+                        .PK("BOVINE#1")
+                        .SK("MILKING#2026-01-20#AM")
+                        .bovineId(1)
+                        .date("2026-01-20")
+                        .shift("AM")
+                        .liters(20.5)
+                        .lactationNumber(2)
+                        .build()
+        );
+
+        when(milkingRepository.getMilkingByBovineAndLactation(bovineId, lactationNumber))
+                .thenReturn(Optional.of(milkingRecords));
+
+        Optional<List<MilkingRecord>> result = milkingService.getMilkingByBovineAndLactation(bovineId, lactationNumber);
+
+        assertTrue(result.isPresent());
+        assertEquals(1, result.get().size());
+        assertEquals(2, result.get().get(0).getLactationNumber());
+        verify(milkingRepository).getMilkingByBovineAndLactation(bovineId, lactationNumber);
+    }
+
+    @Test
+    void getMilkingByBovineAndLactation_withoutRecords_returnsEmpty() {
+        Integer bovineId = 1;
+        String lactationNumber = "002";
+        when(milkingRepository.getMilkingByBovineAndLactation(bovineId, lactationNumber))
+                .thenReturn(Optional.empty());
+
+        Optional<List<MilkingRecord>> result = milkingService.getMilkingByBovineAndLactation(bovineId, lactationNumber);
+
+        assertTrue(result.isEmpty());
+        verify(milkingRepository).getMilkingByBovineAndLactation(bovineId, lactationNumber);
+    }
+
+    @Test
+    void getMilkingByBovineAndLactation_repositoryFailure_throwsServiceException() {
+        Integer bovineId = 1;
+        String lactationNumber = "002";
+        when(milkingRepository.getMilkingByBovineAndLactation(bovineId, lactationNumber))
+                .thenThrow(new RepositoryException("GSI query failed"));
+
+        ServiceException exception = assertThrows(
+                ServiceException.class,
+                () -> milkingService.getMilkingByBovineAndLactation(bovineId, lactationNumber)
+        );
+
+        assertTrue(exception.getMessage().contains("milking by bovine and lactation"));
+        verify(milkingRepository).getMilkingByBovineAndLactation(bovineId, lactationNumber);
+    }
+
     // ==================== save Tests ====================
 
     @Test

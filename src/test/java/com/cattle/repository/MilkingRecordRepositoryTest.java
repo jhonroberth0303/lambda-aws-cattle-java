@@ -13,6 +13,7 @@ import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
+import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,12 @@ class MilkingRecordRepositoryTest {
 
     @Mock
     private Page<MilkingRecord> page;
+
+    @Mock
+    private DynamoDbIndex<MilkingRecord> index;
+
+    @Mock
+    private SdkIterable<Page<MilkingRecord>> pageResults;
 
     private MilkingRepository milkingRepository;
 
@@ -184,6 +191,60 @@ class MilkingRecordRepositoryTest {
 
         // Act & Assert
         assertThrows(RepositoryException.class, () -> milkingRepository.getMilkingBetweenDates(pk, skInit, skEnd));
+    }
+
+    // ==================== getMilkingByBovineAndLactation Tests ====================
+
+    @Test
+    void getMilkingByBovineAndLactation_validQuery_returnsList() {
+        Integer bovineId = 123;
+        String lactationNumber = "002";
+        List<MilkingRecord> milkingRecords = List.of(
+                createFarmMilking(bovineId, "2025-01-15", "AM"),
+                createFarmMilking(bovineId, "2025-01-15", "PM")
+        );
+        SdkIterable<Page<MilkingRecord>> gsiResults = () -> List.of(page).iterator();
+
+        when(table.index(anyString())).thenReturn(index);
+        when(index.query(any(java.util.function.Consumer.class))).thenReturn(gsiResults);
+        when(page.items()).thenReturn(milkingRecords);
+
+        Optional<List<MilkingRecord>> result = milkingRepository.getMilkingByBovineAndLactation(bovineId, lactationNumber);
+
+        assertTrue(result.isPresent());
+        assertEquals(2, result.get().size());
+        verify(table).index("GSI2-bovine-lactation-index");
+        verify(index).query(any(java.util.function.Consumer.class));
+        verify(lambdaContext, atLeastOnce()).logInfo(eq(LogType.REPOSITORY), contains("GSI2PK"));
+    }
+
+    @Test
+    void getMilkingByBovineAndLactation_missingIndex_returnsEmpty() {
+        Integer bovineId = 123;
+        String lactationNumber = "002";
+
+        when(table.index(anyString())).thenReturn(index);
+        when(index.query(any(java.util.function.Consumer.class)))
+                .thenThrow(ResourceNotFoundException.builder().message("Index not found").build());
+
+        Optional<List<MilkingRecord>> result = milkingRepository.getMilkingByBovineAndLactation(bovineId, lactationNumber);
+
+        assertTrue(result.isEmpty());
+        verify(lambdaContext).logException(eq(LogType.REPOSITORY), contains("index not found"), any(ResourceNotFoundException.class));
+    }
+
+    @Test
+    void getMilkingByBovineAndLactation_dynamoDbException_throwsRepositoryException() {
+        Integer bovineId = 123;
+        String lactationNumber = "002";
+
+        when(table.index(anyString())).thenReturn(index);
+        when(index.query(any(java.util.function.Consumer.class)))
+                .thenThrow(DynamoDbException.builder().message("GSI query error").build());
+
+        assertThrows(RepositoryException.class,
+                () -> milkingRepository.getMilkingByBovineAndLactation(bovineId, lactationNumber));
+        verify(lambdaContext).logException(eq(LogType.REPOSITORY), contains("Unexpected error getMilkingByBovineAndLactation"), any(DynamoDbException.class));
     }
 
     // ==================== Helper Methods ====================

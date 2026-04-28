@@ -233,6 +233,79 @@ class MilkingProcessorTest {
         ));
     }
 
+        @Test
+        void getCowsWithLactations_groupsByBovineAndSortsLactations() {
+        String siteId = "FARM#001";
+        ProfileLactancy lactation2 = ProfileLactancy.builder()
+            .pk("BOVINE#172")
+            .sk("LACT#002")
+            .lactationNumber("2")
+            .status("LACTATING")
+            .startDate("2026-01-10")
+            .build();
+        ProfileLactancy lactation1 = ProfileLactancy.builder()
+            .pk("BOVINE#172")
+            .sk("LACT#001")
+            .lactationNumber("1")
+            .status("CLOSED")
+            .startDate("2025-01-10")
+            .endDate("2025-10-10")
+            .build();
+        ProfileLactancy otherBovine = ProfileLactancy.builder()
+            .pk("BOVINE#200")
+            .sk("LACT#001")
+            .lactationNumber("1")
+            .status("LACTATING")
+            .startDate("2026-02-01")
+            .build();
+
+        when(profileLactancyRepository.findAllLactations(siteId))
+            .thenReturn(Optional.of(List.of(lactation2, lactation1, otherBovine)));
+
+        Optional<List<CowWithLactationsDTO>> result = milkingProcessor.getCowsWithLactations(siteId);
+
+        assertTrue(result.isPresent());
+        assertEquals(2, result.get().size());
+
+        CowWithLactationsDTO cow172 = result.get().stream()
+            .filter(cow -> Integer.valueOf(172).equals(cow.getBovineId()))
+            .findFirst()
+            .orElseThrow();
+
+        assertEquals(2, cow172.getLactations().size());
+        assertEquals("001", cow172.getLactations().get(0).getLactationNumber());
+        assertEquals("002", cow172.getLactations().get(1).getLactationNumber());
+        verify(profileLactancyRepository).findAllLactations(siteId);
+        }
+
+        @Test
+        void getCowsWithLactations_withoutRecords_returnsEmpty() {
+        String siteId = "FARM#001";
+        when(profileLactancyRepository.findAllLactations(siteId)).thenReturn(Optional.empty());
+
+        Optional<List<CowWithLactationsDTO>> result = milkingProcessor.getCowsWithLactations(siteId);
+
+        assertTrue(result.isEmpty());
+        verify(profileLactancyRepository).findAllLactations(siteId);
+        }
+
+        @Test
+        void getCowsWithLactations_ignoresInvalidPkEntries() {
+        String siteId = "FARM#001";
+        ProfileLactancy invalidPk = ProfileLactancy.builder()
+            .pk("INVALID#172")
+            .sk("LACT#001")
+            .status("LACTATING")
+            .build();
+
+        when(profileLactancyRepository.findAllLactations(siteId)).thenReturn(Optional.of(List.of(invalidPk)));
+
+        Optional<List<CowWithLactationsDTO>> result = milkingProcessor.getCowsWithLactations(siteId);
+
+        assertTrue(result.isEmpty());
+        verify(profileLactancyRepository).findAllLactations(siteId);
+        }
+
     @Test
     void getMilkingByLactation_normalizesInputToThreeDigits() {
         Integer bovineId = 167;
@@ -256,6 +329,53 @@ class MilkingProcessorTest {
 
         assertTrue(exception.getMessage().contains("lactancia"));
         verify(milkingService, never()).getMilkingByBovineAndLactation(anyInt(), anyString());
+    }
+
+    @Test
+    void getMilkingByLactation_withShiftFilter_returnsOnlyMatchingRecords() {
+        Integer bovineId = 167;
+        MilkingRecord amRecord = createFarmMilking(bovineId, "2026-04-25", "AM", 3.0);
+        MilkingRecord pmRecord = createFarmMilking(bovineId, "2026-04-25", "PM", 2.5);
+        MilkingDTO amDto = createMilkingDTO(bovineId, "2026-04-25", "AM", 3.0);
+
+        when(milkingService.getMilkingByBovineAndLactation(bovineId, "002"))
+                .thenReturn(Optional.of(List.of(amRecord, pmRecord)));
+        when(milkingMapper.toDTO(amRecord)).thenReturn(amDto);
+
+        Optional<List<MilkingDTO>> result = milkingProcessor.getMilkingByLactation(bovineId, "2", "AM");
+
+        assertTrue(result.isPresent());
+        assertEquals(1, result.get().size());
+        assertEquals("AM", result.get().get(0).getShift());
+        verify(milkingService).getMilkingByBovineAndLactation(bovineId, "002");
+        verify(milkingMapper, never()).toDTO(pmRecord);
+    }
+
+    @Test
+    void getMilkingByLactation_whenFilterRemovesAllRecords_returnsEmpty() {
+        Integer bovineId = 167;
+        MilkingRecord amRecord = createFarmMilking(bovineId, "2026-04-25", "AM", 3.0);
+
+        when(milkingService.getMilkingByBovineAndLactation(bovineId, "002"))
+                .thenReturn(Optional.of(List.of(amRecord)));
+
+        Optional<List<MilkingDTO>> result = milkingProcessor.getMilkingByLactation(bovineId, "2", "PM");
+
+        assertTrue(result.isEmpty());
+        verify(milkingMapper, never()).toDTO(any(MilkingRecord.class));
+    }
+
+    @Test
+    void getMilkingByLactation_whenServiceReturnsEmpty_returnsEmpty() {
+        Integer bovineId = 167;
+
+        when(milkingService.getMilkingByBovineAndLactation(bovineId, "002"))
+                .thenReturn(Optional.empty());
+
+        Optional<List<MilkingDTO>> result = milkingProcessor.getMilkingByLactation(bovineId, "2", null);
+
+        assertTrue(result.isEmpty());
+        verify(milkingService).getMilkingByBovineAndLactation(bovineId, "002");
     }
 
     // ==================== Helper Methods ====================
