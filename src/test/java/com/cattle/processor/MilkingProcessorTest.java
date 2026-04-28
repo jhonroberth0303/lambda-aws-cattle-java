@@ -204,6 +204,60 @@ class MilkingProcessorTest {
         ));
     }
 
+    @Test
+    void createMilking_formatsGsi2pkWithThreeDigits() {
+        MilkingDTO inputDTO = createMilkingDTO(167, "2026-04-25", "AM", 3.0);
+        MilkingRecord entity = createFarmMilking(167, "2026-04-25", "AM", 3.0);
+        MilkingRecord savedEntity = createFarmMilking(167, "2026-04-25", "AM", 3.0);
+        MilkingDTO outputDTO = createMilkingDTO(167, "2026-04-25", "AM", 3.0);
+        ProfileLactancy openLactation = ProfileLactancy.builder()
+                .pk("BOVINE#167")
+                .sk("LACT#002")
+                .lactationNumber("2")
+                .status("LACTATING")
+                .startDate("2026-01-01")
+                .build();
+        when(milkingMapper.toEntity(inputDTO)).thenReturn(entity);
+        when(profileLactancyRepository.findAllLactationsByBovine("BOVINE#167"))
+                .thenReturn(Optional.of(List.of(openLactation)));
+        when(milkingService.save(any(MilkingRecord.class))).thenReturn(Optional.of(savedEntity));
+        when(milkingMapper.toDTO(savedEntity)).thenReturn(outputDTO);
+
+        Optional<MilkingDTO> result = milkingProcessor.createMilking(inputDTO);
+
+        assertTrue(result.isPresent());
+        verify(milkingService).save(argThat(fm ->
+                "BOVINE#167#LACT#002".equals(fm.getGsi2pk())
+                        && "2026-04-25#AM".equals(fm.getGsi2sk())
+                        && Integer.valueOf(2).equals(fm.getLactationNumber())
+        ));
+    }
+
+    @Test
+    void getMilkingByLactation_normalizesInputToThreeDigits() {
+        Integer bovineId = 167;
+        MilkingRecord record = createFarmMilking(bovineId, "2026-04-25", "AM", 3.0);
+        MilkingDTO dto = createMilkingDTO(bovineId, "2026-04-25", "AM", 3.0);
+        when(milkingService.getMilkingByBovineAndLactation(bovineId, "002"))
+                .thenReturn(Optional.of(List.of(record)));
+        when(milkingMapper.toDTO(record)).thenReturn(dto);
+
+        Optional<List<MilkingDTO>> result = milkingProcessor.getMilkingByLactation(bovineId, "02", null);
+
+        assertTrue(result.isPresent());
+        assertEquals(1, result.get().size());
+        verify(milkingService).getMilkingByBovineAndLactation(bovineId, "002");
+    }
+
+    @Test
+    void getMilkingByLactation_invalidLactationNumber_throwsException() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> milkingProcessor.getMilkingByLactation(167, "LACT#02", null));
+
+        assertTrue(exception.getMessage().contains("lactancia"));
+        verify(milkingService, never()).getMilkingByBovineAndLactation(anyInt(), anyString());
+    }
+
     // ==================== Helper Methods ====================
 
     private MilkingRecord createFarmMilking(Integer bovineId, String date, String shift, Double liters) {
