@@ -18,6 +18,8 @@ Cada historia se evalúa en:
 
 **Fórmula**: Story Points = (Técnica + Testing + Riesgo + UI) / 2 + Dependencias
 
+**Nota de vigencia documental**: esta matriz conserva estimaciones históricas útiles, pero no todos los componentes marcados con `✓` representan implementación confirmada en el código actual. Para decisiones vigentes, contrastar con `docs/arquitectura/` y con las HUs ya normalizadas de esta carpeta.
+
 ---
 
 ## 📋 HISTÓRICO DETALLADO (25 HU)
@@ -37,12 +39,12 @@ STORY POINTS: 5
 HORAS: 40
 SPRINT: 1W1
 
-Componentes:
-  ✓ PastureEventController
-  ✓ PastureEventDTO
-  ✓ PastureService.applyEvent()
-  ✓ EventValidator
-  ✓ DynamoDB integration
+Componentes previstos en la estimación original:
+  - controlador REST de eventos de potreros
+  - DTO de eventos
+  - aplicación de eventos sobre dominio de pastures
+  - validación de eventos
+  - integración de persistencia
 
 Riesgos:
   - Timestamp consistency (DynamoDB)
@@ -394,11 +396,11 @@ STORY POINTS: 8
 HORAS: 64
 SPRINT: 3W1
 
-Componentes:
-  ✓ GET /events endpoint
-  ✓ EventFilter DTO
-  ✓ Pagination logic
-  ✓ Query optimization
+Componentes previstos en la estimación original:
+  - endpoint GET de historial de eventos
+  - DTO/filtro de eventos
+  - paginación
+  - optimización de consulta
 
 Riesgos:
   - Slow queries on large datasets
@@ -584,11 +586,11 @@ STORY POINTS: 8
 HORAS: 64
 SPRINT: 4W1
 
-Componentes:
-  ✓ EventPublisher (SNS)
-  ✓ PastureEventListener (SQS)
-  ✓ EventIdempotencyService
-  ✓ DLQ configuration
+Componentes previstos en la estimación original:
+  - publicador de eventos vía SNS
+  - listener/consumidor vía SQS
+  - control de idempotencia
+  - configuración de DLQ
 
 Riesgos:
   - AWS SDK learning curve ⚠️
@@ -657,11 +659,11 @@ STORY POINTS: 5
 HORAS: 40
 SPRINT: 3W2
 
-Componentes:
-  ✓ Entity.deletedAt, deletedBy fields
-  ✓ Service.softDelete() method
-  ✓ Repository soft delete filter
-  ✓ DELETE endpoint → 204 No Content
+Componentes previstos en la estimación original:
+  - campos lógicos de baja como `deletedAt` y `deletedBy`
+  - servicio de soft delete
+  - filtrado de registros retirados
+  - endpoint DELETE para potreros
 
 Riesgos:
   - Forgetting soft delete filter
@@ -755,11 +757,11 @@ STORY POINTS: 8
 HORAS: 64
 SPRINT: 4W1 (POST-LAUNCH)
 
-Componentes:
-  ✓ Redis configuration
-  ✓ @Cacheable annotations
-  ✓ @CacheEvict on updates
-  ✓ TTL configuration
+Componentes previstos en la estimación original:
+  - configuración Redis o caché local
+  - anotaciones o estrategia de caching
+  - invalidación en escrituras
+  - TTL configurable
 
 Riesgos:
   - Stale data in cache

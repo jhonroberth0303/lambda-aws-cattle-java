@@ -1,166 +1,109 @@
-# 🐄 Cattle Lambda Functions - Backend API Serverless
+# Cattle Lambda Functions - Backend API Serverless
 
-Backend serverless para gestión ganadera con AWS Lambda, Spring Boot 3 y Amazon Bedrock.
+Backend serverless del ecosistema Cattle para gestión de bovinos, ordeño, potreros y capacidades de chatbot con Amazon Bedrock.
 
-## 📋 Stack Tecnológico
+## Stack principal
 
-| Tecnología | Versión | Propósito |
-|------------|---------|-----------|
-| Java | 21 | Runtime |
-| Spring Boot | 3.4.5 | Framework web |
-| AWS Lambda | - | Compute serverless |
-| DynamoDB | - | Base de datos NoSQL |
-| Amazon Bedrock | Claude 3 Haiku | Chatbot IA |
-| Gradle | 8.x | Build tool |
-| SAM CLI | - | Deployment |
+| Tecnología | Uso |
+|---|---|
+| Java 21 | Runtime |
+| Spring Boot 3.4.5 | API y configuración |
+| AWS Lambda | Ejecución serverless |
+| API Gateway | Publicación HTTP |
+| DynamoDB Enhanced Client | Persistencia |
+| Amazon Bedrock | Chatbot y Knowledge Base |
+| Gradle Wrapper | Build y test |
+| AWS SAM | Empaquetado y despliegue |
 
-## 🚀 Quick Start
+## Quick start
 
-> **Build tool oficial:** este proyecto se construye y prueba únicamente con `Gradle Wrapper` (`./gradlew` / `gradlew.bat`). El archivo `pom.xml` ya no forma parte del flujo soportado.
-
-### Pre-requisitos
+### Prerrequisitos
 
 ```bash
-java -version    # Java 21+
-gradle -version  # Gradle 8+
-aws --version    # AWS CLI v2
-sam --version    # SAM CLI
+java -version
+aws --version
+sam --version
 ```
 
-### Build y Test
+### Build y tests
 
 ```bash
-# Clonar
-git clone <repo-url>
-cd cattle-lambda-function
-
-# Build
 ./gradlew clean build
-
-# Tests con cobertura
 ./gradlew test jacocoTestReport
-
-# Ver reporte
-start build/reports/jacoco/test/html/index.html
 ```
 
-### Deploy a AWS
+Reporte de cobertura:
+
+```text
+build/reports/jacoco/test/html/index.html
+```
+
+### Desarrollo local
 
 ```bash
 sam build
-sam deploy --guided  # Primera vez
-sam deploy           # Deploys posteriores
+sam local start-api
 ```
 
-## 📁 Estructura del Proyecto
-
-```
-src/main/java/com/cattle/
-├── controller/           # REST endpoints
-│   ├── BovinesController.java
-│   ├── MilkingController.java
-│   ├── PasturesController.java
-│   └── ChatbotController.java
-├── services/             # Lógica de negocio
-│   ├── chatbot/          # Integración Bedrock
-│   ├── InputValidationService.java
-│   ├── RateLimitingService.java
-│   └── AuditLoggingService.java
-├── repository/           # Acceso a DynamoDB
-├── security/             # JWT, autenticación
-│   ├── JwtTokenProvider.java
-│   ├── JwtAuthenticationFilter.java
-│   └── SecurityConfig.java
-├── dtos/                 # Data Transfer Objects
-├── entities/             # Entidades DynamoDB
-└── config/               # Configuración Spring
-```
-
-## 🔌 Endpoints Principales
+## Endpoints principales
 
 | Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/actuator/ping` | Health check |
-| GET | `/bovineIdentityItems` | Listar bovinos |
-| GET | `/bovineIdentityItems/{id}` | Obtener bovino |
-| POST | `/bovineIdentityItems` | Crear bovino |
-| PUT | `/bovineIdentityItems/{id}` | Actualizar bovino |
-| GET | `/milkingRecord/{idBovine}` | Historial ordeño |
-| POST | `/milkingRecord` | Registrar ordeño |
-| GET | `/farms/{farmId}/pastures` | Dashboard potreros |
-| POST | `/api/chat/message` | Chatbot IA |
-| GET | `/swagger-ui.html` | Documentación API |
+|---|---|---|
+| GET | `/actuator/ping` | Health check básico |
+| GET | `/bovines` | Listar bovinos |
+| GET | `/bovines/{id}` | Obtener bovino |
+| POST | `/bovines` | Crear bovino |
+| PUT | `/bovines/{id}` | Actualizar bovino |
+| GET | `/summary` | Listar resúmenes de bovinos |
+| GET | `/summary/{id}` | Obtener resumen |
+| PUT | `/summary/{id}/refresh` | Regenerar resumen |
+| POST | `/summary/refresh` | Regenerar todos los resúmenes |
+| GET | `/summary/categories` | Regenerar categorías |
+| POST | `/site/{siteId}/milking` | Registrar ordeño |
+| GET | `/site/{siteId}/milking` | Vacas con lactancias |
+| GET | `/site/{siteId}/milking/{idBovine}` | Historial de ordeño |
+| GET | `/site/{siteId}/milking/{idBovine}/lactation/{lactationNumber}` | Ordeño por lactancia |
+| GET | `/farms/{farmId}/pastures` | Estado de potreros |
+| POST | `/api/chat/message` | Chat sobre datos de finca |
+| POST | `/api/chat/knowledge` | Consulta a Knowledge Base |
+| GET | `/api/chat/health` | Health del módulo chatbot |
+| GET | `/swagger-ui.html` | Swagger UI |
+| GET | `/v3/api-docs` | OpenAPI |
 
-## 🔐 Seguridad
+## Seguridad y operación
 
-- **JWT Authentication**: Tokens validados en cada request
-- **Rate Limiting**: 100 requests/hora por finca
-- **Input Validation**: Sanitización contra SQL/NoSQL/Prompt injection
-- **CORS**: Orígenes configurables por ambiente
+- JWT configurable mediante `security.enabled`.
+- Rate limiting por finca.
+- Sanitización de input y auditoría para endpoints de chatbot.
+- CORS configurable por variable de entorno.
+- Swagger y endpoints de health públicos según configuración de seguridad actual.
 
-### Configuración de Seguridad
-
-```properties
-# application.properties
-security.enabled=${SECURITY_ENABLED:false}
-jwt.secret=${JWT_SECRET:...}
-rate.limit.requests.per.hour=100
-cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:3000}
-```
-
-## 🧪 Tests
-
-```bash
-# Ejecutar todos los tests
-./gradlew test
-
-# Tests con cobertura
-./gradlew test jacocoTestReport
-
-# Tests específicos
-./gradlew test --tests "*SecurityTest*"
-```
-
-**Cobertura actual**: ~85% (581 tests)
-
-## 📊 Métricas y Logs
-
-- **CloudWatch Logs**: Logs estructurados JSON
-- **Audit Logging**: Eventos de seguridad trazables
-- **Swagger UI**: Documentación interactiva en `/swagger-ui.html`
-
-## 📚 Documentación Adicional
-
-| Documento | Descripción |
-|-----------|-------------|
-| [ARCHITECTURE.md](docs/arquitectura/chatbot/ARCHITECTURE.md) | Diagramas C4 |
-| [HU-BEDROCK-001](docs/stories/bedrock/HU-BEDROCK-001-IMPLEMENTACION.md) | Historia chatbot |
-| [HU-BEDROCK-003](docs/stories/bedrock/HU-BEDROCK-003-SEGURIDAD.md) | Seguridad |
-| [Índice](docs/README.md) | Navegación docs |
-
-## 🛠️ Comandos Útiles
-
-```bash
-# Desarrollo local
-sam local start-api
-
-# Ver logs en CloudWatch
-aws logs tail /aws/lambda/cattle-function --follow
-
-# Invocar función localmente
-sam local invoke CattleFunction -e events/test-event.json
-```
-
-## 📋 Variables de Entorno (Producción)
+## Variables de entorno relevantes
 
 | Variable | Descripción |
-|----------|-------------|
-| `SECURITY_ENABLED` | Habilitar autenticación JWT |
-| `JWT_SECRET` | Clave secreta para JWT (256 bits) |
+|---|---|
 | `CORS_ALLOWED_ORIGINS` | Orígenes permitidos |
-| `RATE_LIMIT_PER_HOUR` | Límite de requests/hora |
+| `SECURITY_ENABLED` | Activa seguridad JWT |
+| `JWT_SECRET` | Secreto JWT |
+| `RATE_LIMIT_PER_HOUR` | Límite por hora |
+| `BEDROCK_MODEL_ID` | Modelo de Bedrock para chat |
+| `BEDROCK_KB_ID` | ID de Knowledge Base |
+| `BEDROCK_KB_MODEL_ARN` | Modelo usado por Knowledge Base |
+| `TABLE_BOVINES` | Tabla de bovinos |
+| `TABLE_FARM_MILKING` | Tabla de ordeño |
+| `TABLE_PASTURE` | Tabla de potreros |
+| `TABLE_PLAN` | Tabla de planes |
+| `TABLE_COUNTERS` | Tabla de contadores |
 
----
+## Documentación recomendada
 
-**Versión**: 1.0.0  
-**Última actualización**: Enero 2026
+- [Índice de documentación](docs/README.md)
+- [Índice de arquitectura](docs/arquitectura/index.md)
+- [Arquitectura base del backend](docs/arquitectura/architecture-cattle-lambda-function.md)
+- [Arquitectura del chatbot integrado](docs/arquitectura/chatbot/ARCHITECTURE.md)
+
+## Notas importantes
+
+- El chatbot Bedrock está integrado en este repositorio; no debe asumirse un proyecto activo separado para esa capacidad.
+- `template.yml` define la función Lambda y parte de la configuración, pero no documenta por sí solo toda la infraestructura necesaria del entorno.
+- La fuente documental vigente para arquitectura y gaps es `docs/arquitectura/`.
