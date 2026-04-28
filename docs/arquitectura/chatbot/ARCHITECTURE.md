@@ -136,5 +136,6 @@ Evidencia actual:
 ## Lectura recomendada
 
 1. Leer este documento para entender la arquitectura del módulo.
+2. Leer `../flujos/flujo-transversal-chatbot-frontend-backend.md` para el journey completo con la SPA.
 2. Revisar `../architecture-cattle-lambda-function.md` para el contexto backend completo.
 3. Usar `GUIA-INTEGRACION-CHATBOT-DYNAMODB.md` para estado de integración y pendientes reales.

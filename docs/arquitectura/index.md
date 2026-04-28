@@ -19,6 +19,19 @@ El documento principal resume:
 
 ## Artefactos relacionados
 
+### Componentes
+
+- [Componente summary de bovinos](./componente-summary-bovinos.md)
+
+### Flujos
+
+- [Flujo de negocio del backend](./flujos/flujo-negocio-lambda-aws-cattle-java.md)
+- [Flujo transversal de chatbot frontend-backend](./flujos/flujo-transversal-chatbot-frontend-backend.md)
+- [Flujo transversal de bovinos frontend-backend](./flujos/flujo-transversal-bovinos-frontend-backend.md)
+- [Flujo ejecutivo de potreros](./flujos/flujo-ejecutivo-potreros.md)
+- [Flujo transversal de potreros frontend-backend](./flujos/flujo-transversal-potreros-frontend-backend.md)
+- [Flujo transversal de ordeño frontend-backend](./flujos/flujo-transversal-ordeno-frontend-backend.md)
+
 ### Subarquitectura de chatbot
 
 - [Arquitectura del chatbot](./chatbot/ARCHITECTURE.md)

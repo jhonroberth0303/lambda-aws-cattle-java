@@ -93,6 +93,8 @@ Por evidencia del árbol y los imports de controladores, el backend usa processo
 
 Responsabilidad: coordinar reglas, consultas y escritura entre servicios y repositorios.
 
+Artefacto relacionado: `componente-summary-bovinos.md` documenta en detalle el componente especializado de proyección `SUMMARY`.
+
 ### 4. Servicios de dominio y transversales
 
 Servicios confirmados por código:
