@@ -1,263 +1,154 @@
-# 🔍 Guía de Verificación DoD - Proyecto Cattle
+# Guia de Verificacion de Pivotes DoD - Proyecto Cattle
 
-**Fecha**: 2026-01-09 | **Versión**: 1.0
+## Objetivo
 
-## 🎯 Objetivo
+Dar una secuencia practica para verificar pivotes DoD en cambios de frontend, backend o documentación técnica del proyecto.
 
-Guía práctica step-by-step para verificar que una tarea cumple Definition of Done.
+Esta guía usa solo validaciones y evidencia que sí son comprobables en el workspace actual.
 
----
+## Cómo usar esta guía
 
-## 📋 Tabla de Contenidos
+1. Identificar el tipo de cambio.
+2. Tomar los pivotes aplicables desde `pivotes-por-tipo.md`.
+3. Ejecutar la verificación mínima de esta guía.
+4. Registrar estado por pivote: `cumplido`, `cumplido con observación`, `pendiente` o `exceptuado`.
 
-1. [Pre-Merge Checklist](#pre-merge-checklist)
-2. [Code Review Checklist](#code-review-checklist)
-3. [QA Verification Checklist](#qa-verification-checklist)
-4. [Tech Lead Sign-Off Checklist](#tech-lead-sign-off-checklist)
-5. [Automation Checks](#automation-checks)
-6. [Manual Verification Guide](#manual-verification-guide)
-7. [Evidence Template](#evidence-template)
+## Verificación mínima por tipo de repositorio
 
----
+### Frontend
 
-## Pre-Merge Checklist
-
-**Para: Developer** (Antes de crear PR)
-
-### Step 1: Código Limpio
+Comandos o checks preferidos:
 
 ```bash
-# 1.1 Lint check
-npm run lint          # Frontend
-mvn checkstyle:check  # Backend
-
-# ✅ Esperado: 0 errors, 0 warnings
-
-# 1.2 Compilación
-npm run build         # Frontend
-mvn clean compile     # Backend
-
-# ✅ Esperado: BUILD SUCCESS
-
-# 1.3 Inspect código
-- [ ] Variables: camelCase
-- [ ] Funciones: clear names
-- [ ] Classes: PascalCase (Java)
-- [ ] Constants: UPPER_SNAKE_CASE
-- [ ] No secrets (grep para AWS_KEY, password, etc.)
-- [ ] No console.log en production code
-- [ ] No TODO/FIXME sin context
-
-Validación Rápida:
-grep -r "password\|secret\|api_key" src/
-# ✅ Esperado: No results
+npm run lint
+npm run build
 ```
 
-### Step 2: Tests Pasan
+Si el cambio es documental o fuera del alcance del lint, aceptar como mínimo:
+
+- revisión del diff
+- chequeo de errores del editor sobre archivos tocados
+- comprobación de que la documentación quedó alineada al código
+
+### Backend
+
+Comandos o checks preferidos:
 
 ```bash
-# 2.1 Run tests
-npm test          # Frontend
-mvn test          # Backend
-
-# ✅ Esperado: All tests pass, 0 skipped
-
-# 2.2 Coverage report
-npm test -- --coverage          # Frontend
-mvn jacoco:report               # Backend
-
-# ✅ Esperado: >= 75% coverage
-
-# 2.3 Inspect coverage
-- [ ] Critical paths: 100%
-- [ ] Error paths: tested
-- [ ] Edge cases: covered
-- [ ] No tests marked @Skip/@Ignore (except documented)
-
-Acceso:
-- Frontend: open coverage/lcov-report/index.html
-- Backend: open target/site/jacoco/index.html
+gradlew test
+gradlew build
+gradlew jacocoTestReport
 ```
 
-### Step 3: Functional Verification
+Si el cambio es documental o la validación ejecutable no aplica, aceptar como mínimo:
 
-```bash
-# 3.1 Manual testing en local
+- revisión del diff
+- chequeo de errores del editor sobre archivos tocados
+- coherencia con `build.gradle`, código y arquitectura documentada
 
-UI Features (si frontend):
-- [ ] Feature funciona como se espera
-- [ ] Casos error manejados (user feedback visible)
-- [ ] Mobile responsive (test en browser dev tools)
-- [ ] Accessibility (tab navigation, screen reader check)
+## Pivotes que siempre deben revisarse
 
-API Endpoints (si backend):
-- [ ] POST/GET/PUT/DELETE funcionan
-- [ ] Validación de inputs trabajando
-- [ ] Error responses correctas (400, 401, 404, 500)
-- [ ] Performance acceptable (<100ms)
+### 1. Alcance
 
-Db Changes (si aplica):
-- [ ] Schema creado correctamente
-- [ ] Migrations executables
-- [ ] Rollback funciona
-- [ ] No orphaned data
+Preguntas guía:
 
-# 3.2 Regresion testing
-- [ ] Ejecutó tests de módulos relacionados
-- [ ] No rompió funcionalidad anterior
-- [ ] App boots correctly
-- [ ] No console errors
+- ¿el cambio tiene intención clara?
+- ¿se entiende qué problema resuelve?
+- ¿el repositorio afectado está identificado?
 
-Verificación Rápida:
-npm start              # o java -jar app.jar
-# Observar logs: ¿algún ERROR?
-# ✅ Esperado: Clean logs, app responsive
+Evidencia aceptable:
+
+- mensaje de trabajo claro
+- documento asociado
+- descripción de PR
+
+### 2. Patrón técnico
+
+Preguntas guía:
+
+- ¿el cambio respeta el patrón existente del slice?
+- ¿se evitó introducir una arquitectura paralela?
+
+Verificación esperada:
+
+- frontend: dominio, componente, hook o servicio liviano coherente
+- backend: capas `Controller -> Processor -> Service -> Repository`
+
+### 3. Validación ejecutable
+
+Preguntas guía:
+
+- ¿se ejecutó la validación más cercana disponible?
+- ¿la validación es proporcional al riesgo?
+
+Si no hubo comando ejecutable, debe anotarse por qué.
+
+### 4. Riesgo residual
+
+Preguntas guía:
+
+- ¿queda alguna deuda técnica explícita?
+- ¿hay acoplamientos, variables, endpoints o gaps no resueltos?
+
+Debe quedar anotado al menos un resumen corto del riesgo cuando exista.
+
+### 5. Impacto documental
+
+Preguntas guía:
+
+- ¿cambió un endpoint, flujo, contrato, seguridad o configuración?
+- ¿eso obliga a actualizar `docs/`?
+
+Si la respuesta es sí, el pivote no debe cerrarse sin revisar documentación.
+
+## Guía operativa por rol
+
+### Para quien implementa
+
+Antes de cerrar el cambio:
+
+1. Confirmar el tipo de cambio.
+2. Ejecutar el comando de validación más cercano.
+3. Revisar si cambió comportamiento real o documentación derivada.
+4. Dejar anotado cualquier pivote exceptuado o pendiente.
+
+### Para quien revisa
+
+Durante review:
+
+1. Confirmar que el patrón técnico es coherente.
+2. Verificar que la validación ejecutable o el chequeo equivalente sí ocurrió.
+3. Buscar riesgos ocultos no mencionados.
+4. Comprobar si faltó actualización documental.
+
+## Plantilla corta de evidencia
+
+Usar este formato cuando convenga dejar trazabilidad breve:
+
+```md
+## Pivotes DoD
+
+- Tipo de cambio: <feature|bug|refactor|docs|config|integracion>
+- Alcance claro: <cumplido|cumplido con observación|pendiente|exceptuado>
+- Patrón técnico: <estado>
+- Validación ejecutable: <estado>
+- Riesgo residual: <estado>
+- Impacto documental: <estado>
+
+### Evidencia
+- Validación ejecutada: <comando o check>
+- Riesgos abiertos: <si/no + detalle>
+- Documentación actualizada: <si/no + archivos>
 ```
 
-### Step 4: Documentación Mínima
+## Cuándo rechazar el cierre
 
-```bash
-# 4.1 JSDoc/JavaDoc completo
+No debería darse por cerrado un cambio si ocurre alguno de estos casos:
 
-Verificación:
-for each function:
-  - [ ] @param documentado (tipo, descripción)
-  - [ ] @return documentado
-  - [ ] @throws documentado (si aplica)
-  - [ ] Ejemplo en comments (si no obvious)
-
-# Herramienta: ESLint rule "require-jsdoc"
-npm run lint          # Debería flagear missing docs
-
-# 4.2 Commit messages
-- [ ] Tipo correcto (feat, fix, refactor, etc.)
-- [ ] Scope definido: type(scope): message
-- [ ] Mensaje descriptivo (>20 caracteres)
-- [ ] Linked a issue (#ISSUE-XX)
-
-Verificación:
-git log --oneline -5
-# ✅ Esperado ejemplo:
-#   feat(bovineIdentityItems): add form validation for gender field
-#   fix(milkingRecord): correct persistency calculation
-#   docs: update README with setup instructions
-
-# 4.3 README actualizado (si aplica)
-- [ ] APIs documentadas (si nuevas)
-- [ ] Setup instrucciones (si cambios)
-- [ ] Breaking changes flagged (si aplica)
-- [ ] Examples accionables
-
-Verificación:
-cat README.md
-# Buscar sección relevante, verificar está updated
-```
-
-### Step 5: Security Check
-
-```bash
-# 5.1 Secrets scanning
-grep -r "password\|secret\|api_key\|AWS_\|DATABASE_" src/
-# ✅ Esperado: No matches (or only in config files)
-
-# 5.2 Inspect input validation
-Code Review Checklist:
-- [ ] User inputs validated (frontend AND backend)
-- [ ] No SQL injection possible (parameterized queries)
-- [ ] No XSS possible (escaped outputs)
-- [ ] Passwords hashed (if applicable)
-- [ ] APIs autenticadas (if private)
-
-# 5.3 Environment variables
-- [ ] Secrets en .env (not in .env.example)
-- [ ] .gitignore: includes .env
-- [ ] GitHub secrets configured (if CI/CD)
-- [ ] No hardcoded URLs (use env vars)
-```
-
-### Step 6: Git & Branching
-
-```bash
-# 6.1 Branch setup
-- [ ] Branch: feature/ISSUE-XX-description
-- [ ] Basado en: develop (git pull origin develop primero)
-- [ ] Commits: significativos (no 1 mega-commit)
-- [ ] History: limpio (no merge commits innecesarios)
-
-Verificación:
-git log --graph --oneline -10 origin/develop..HEAD
-# ✅ Esperado: 2-5 logical commits, no merge commits
-
-# 6.2 Pre-PR review
-- [ ] Fetch latest from develop
-git fetch origin develop
-git rebase origin/develop
-# (Si hay conflictos, resolver)
-
-- [ ] Tests pasan DESPUÉS de rebase
-npm test    o    mvn test
-
-- [ ] Linting limpio DESPUÉS de rebase
-npm run lint    o    mvn checkstyle:check
-```
-
-### ✅ Pre-Merge Checklist Template
-
-```markdown
-## Pre-Merge Self-Review
-
-### Code Quality
-- [ ] npm/mvn lint: 0 errors, 0 warnings
-- [ ] npm/mvn build: SUCCESS
-- [ ] npm/mvn test: all pass, >75% coverage
-- [ ] No secrets en código
-- [ ] No console.log en production code
-
-### Functionality
-- [ ] Feature completado y funcional
-- [ ] Casos error manejados
-- [ ] Mobile responsive (si UI)
-- [ ] Accessibility mínima (si UI)
-
-### Documentation
-- [ ] JSDoc/JavaDoc: completo
-- [ ] Commit messages: Conventional Commits format
-- [ ] README: actualizado (si aplica)
-- [ ] No TODO/FIXME sin contexto
-
-### Security
-- [ ] Validación de inputs presente
-- [ ] No secrets expuesto
-- [ ] Passwords hashed (si aplica)
-
-### Git
-- [ ] Branch: feature/ISSUE-XX-description
-- [ ] Rebase en origin/develop
-- [ ] Commits: significativos y limpios
-- [ ] Linked a JIRA issue
-
-**Status**: Ready for Code Review ✅
-```
-
----
-
-## Code Review Checklist
-
-**Para: Code Reviewer** (Durante PR)
-
-### Phase 1: Understanding
-
-```bash
-# 1.1 Read PR description
-- [ ] Description: clara y completa (>100 palabras)
-- [ ] Screenshots: incluidos si UI changes
-- [ ] JIRA link: presente
-- [ ] Soluciona el issue correctamente
-- [ ] No scope creep
-
-# 1.2 Entender cambios
-git show --name-only
-# ¿Qué archivos changed?
+- el pivote de validación está pendiente sin justificación
+- el patrón técnico del módulo quedó roto sin motivo claro
+- se cambió comportamiento real y no se revisó impacto documental
+- el riesgo residual es alto y no quedó explicitado
 # ¿Alcance es razonable?
 
 # 1.3 Check against AC

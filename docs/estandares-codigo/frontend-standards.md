@@ -1,826 +1,207 @@
-# ⚛️ Estándares Frontend: React/TypeScript
+# Estandares Frontend - cattle-front
 
-**Fecha**: 2026-01-09 | **Versión**: 1.0
+## Objetivo
 
-## 🎯 Objetivo
+Definir convenciones practicas para escribir y revisar codigo frontend en `cattle-front` a partir de la SPA real del repositorio.
 
-Estándares específicos para código React/TypeScript/JavaScript en cattle-front.
+Este documento describe como trabajar con React, Vite, JSX, hooks y servicios HTTP ligeros sin inventar una arquitectura que hoy no existe en el codigo.
 
----
+## Evidencia revisada
 
-## 📋 Tabla de Contenidos
+- `package.json`
+- `eslint.config.js`
+- `src/App.jsx`
+- `src/components/Bovines/list/BovineList.jsx`
+- `src/services/bovinesServices.ts`
+- `src/components/Bovines/hooks/useBovineForm.ts`
 
-1. [Setup del Proyecto](#setup-del-proyecto)
-2. [Configuración de Linting](#configuración-de-linting)
-3. [Patrones de Componentes](#patrones-de-componentes)
-4. [Gestión de Estado](#gestión-de-estado)
-5. [Patrones Avanzados](#patrones-avanzados)
-6. [Estilos CSS](#estilos-css)
-7. [Testing](#testing-frontend)
-8. [Performance](#performance-frontend)
+## Stack vigente
 
----
+- React 19
+- React Router DOM 7
+- Vite 7
+- JSX como formato dominante de componentes
+- mezcla de JavaScript y TypeScript en componentes, hooks y utilidades
+- Axios y `fetch` nativo para integracion HTTP
+- ESLint plano (`eslint.config.js`)
+- `vite-plugin-pwa` presente en dependencias
 
-## Setup del Proyecto
+## Principios de codigo
 
-### .eslintrc.json
+1. Mantener componentes orientados a pantalla, lista, tarjeta o formulario con responsabilidad clara.
+2. Separar presentacion, hooks y servicios cuando el modulo ya tenga esa division.
+3. Evitar introducir una capa de abstraccion nueva si el modulo vigente es mas simple.
+4. Conservar consistencia de nombres y rutas con la SPA actual.
+5. Hacer explicitos los acoplamientos de endpoints y configuracion cuando todavia esten hardcodeados.
 
-```json
-{
-  "env": {
-    "browser": true,
-    "es2021": true,
-    "jest": true
-  },
-  "extends": [
-    "eslint:recommended",
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended"
-  ],
-  "parserOptions": {
-    "ecmaVersion": "latest",
-    "sourceType": "module",
-    "ecmaFeatures": {
-      "jsx": true
-    }
-  },
-  "rules": {
-    "react/react-in-jsx-scope": "off",
-    "react/prop-types": "off",
-    "no-unused-vars": "warn",
-    "no-console": "warn",
-    "camelcase": "error",
-    "eqeqeq": ["error", "always"],
-    "no-eval": "error",
-    "no-implied-eval": "error"
-  },
-  "settings": {
-    "react": {
-      "version": "detect"
-    }
-  }
-}
-```
+## Organizacion recomendada
 
-### .prettierrc.json
+El patron actual mas estable es por dominio dentro de `src/components`:
 
-```json
-{
-  "semi": true,
-  "trailingComma": "es5",
-  "singleQuote": false,
-  "printWidth": 80,
-  "tabWidth": 2,
-  "useTabs": false,
-  "arrowParens": "avoid",
-  "endOfLine": "lf"
-}
-```
+- `Bovines/`
+- `MilkDashboard/`
+- `Paddock/`
+- `AgroChat/`
+- `Shared/`
 
-### Jest Configuration
+Dentro de cada dominio, preferir separar:
 
-```javascript
-// jest.config.js
-module.exports = {
-  testEnvironment: "jsdom",
-  setupFilesAfterEnv: ["<rootDir>/src/setupTests.js"],
-  moduleNameMapper: {
-    "\\.(css|less|scss|sass)$": "identity-obj-proxy",
-    "\\.(jpg|jpeg|png|gif|svg)$": "<rootDir>/__mocks__/fileMock.js"
-  },
-  collectCoverageFrom: [
-    "src/**/*.{js,jsx,ts,tsx}",
-    "!src/**/*.d.ts",
-    "!src/index.js",
-    "!src/reportWebVitals.js"
-  ],
-  coverageThresholds: {
-    global: {
-      branches: 75,
-      functions: 75,
-      lines: 75,
-      statements: 75
-    }
-  }
-};
-```
+- `list/` para vistas de coleccion
+- `cards/` para items visuales
+- `forms/` para captura y edicion
+- `hooks/` para logica reutilizable local del dominio
 
----
+## Convenciones de nombres
 
-## Patrones de Componentes
+### Componentes y archivos
 
-### ✅ Patrón: Functional Component + Hooks
+- `PascalCase` para componentes React y archivos de componentes
+- `camelCase` para funciones y variables
+- prefijo `use` para hooks
+
+Ejemplos reales:
+
+- `BovineList.jsx`
+- `BovineCard.jsx`
+- `AgroChatSimplePage.jsx`
+- `useBovineForm.ts`
+
+### Servicios
+
+- nombre de archivo en `camelCase` con sufijo `Service` o `Services` si el archivo ya sigue ese patron
+- exponer funciones pequenas por endpoint o contrato
+
+Ejemplos reales:
+
+- `bovinesServices.ts`
+- `milkingService.js`
+
+### Booleanos y handlers
+
+- usar prefijos `is`, `has`, `should` para booleanos
+- usar `handle...` para handlers de UI
+
+Ejemplos reales:
+
+- `isAuthenticated`
+- `handleChange`
+- `handleScanTag`
+
+## Patrones de implementacion
+
+### Componentes funcionales
+
+Usar componentes funcionales con hooks como patron por defecto.
+
+Preferido:
 
 ```jsx
-import React, { useState, useEffect, useCallback } from "react";
-import PropTypes from "prop-types";
-import "./BovineList.css";
-
-/**
- * Lista de bovinos en grid
- * 
- * Features:
- * - Carga automática al montar
- * - Búsqueda y filtros
- * - Paginación
- * 
- * @returns {JSX.Element}
- */
 function BovineList() {
-  // Estados
-  const [bovineIdentityItems, setBovines] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [page, setPage] = useState(1);
-
-  // Cargar bovinos
-  useEffect(() => {
-    const fetchBovines = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const data = await bovinesAPI.getAll();
-        setBovines(data);
-      } catch (err) {
-        setError(err.message || "Error cargando bovinos");
-        console.error("Fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBovines();
-  }, []);
-
-  // Filtrar bovineIdentityItems
-  const filtered = bovineIdentityItems.filter(b =>
-    b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.bovineId.toString().includes(searchTerm)
-  );
-
-  // Handlers
-  const handleSearch = useCallback((e) => {
-    setSearchTerm(e.target.value);
-    setPage(1); // Reset paginación
-  }, []);
-
-  const handleAddBovine = useCallback(() => {
-    navigate("/add");
-  }, []);
-
-  // Render
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorBanner message={error} />;
-
-  return (
-    <div className="bovineIdentityItem-list">
-      <header className="bovineIdentityItem-list-header">
-        <h1>Bovinos</h1>
-        <div className="bovineIdentityItem-list-controls">
-          <input
-            type="text"
-            placeholder="Buscar por nombre o ID..."
-            value={searchTerm}
-            onChange={handleSearch}
-            aria-label="Buscar bovinos"
-          />
-          <button onClick={handleAddBovine} aria-label="Agregar nuevo bovino">
-            Nuevo Bovino
-          </button>
-        </div>
-      </header>
-
-      <section className="bovineIdentityItem-list-grid" role="main">
-        {filtered.length === 0 ? (
-          <div className="empty-state">No se encontraron bovinos</div>
-        ) : (
-          filtered.map(bovineIdentityItem => (
-            <BovineCard key={bovineIdentityItem.bovineId} bovineIdentityItem={bovineIdentityItem} />
-          ))
-        )}
-      </section>
-    </div>
-  );
-}
-
-export default BovineList;
-```
-
-### ✅ Patrón: Componente Controlado
-
-```jsx
-/**
- * Formulario de bovino (crear/editar)
- * 
- * Props:
- *   - initialData (object): datos para editar
- *   - onSubmit (function): callback al enviar
- *   - isLoading (boolean): estado de carga
- * 
- * @component
- */
-function BovineForm({ initialData = {}, onSubmit, isLoading = false }) {
-  const [formData, setFormData] = useState(initialData);
-  const [errors, setErrors] = useState({});
-
-  // Manejadores
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value
-    }));
-
-    // Limpiar error del campo
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
-    }
-  };
-
-  const validate = () => {
-    const newErrors = {};
-    
-    if (!formData.name?.trim()) {
-      newErrors.name = "Nombre requerido";
-    }
-    
-    if (!formData.gender) {
-      newErrors.gender = "Género requerido";
-    }
-    
-    if (!formData.bornDate) {
-      newErrors.bornDate = "Fecha de nacimiento requerida";
-    } else {
-      const born = new Date(formData.bornDate);
-      if (born > new Date()) {
-        newErrors.bornDate = "Fecha no puede ser en el futuro";
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validate()) return;
-
-    try {
-      await onSubmit(formData);
-    } catch (err) {
-      setErrors({ submit: err.message });
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="bovineIdentityItem-form" noValidate>
-      {errors.submit && (
-        <div className="form-error" role="alert">
-          {errors.submit}
-        </div>
-      )}
-
-      <fieldset>
-        <legend>Información Básica</legend>
-
-        <div className="form-group">
-          <label htmlFor="name">Nombre *</label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            value={formData.name || ""}
-            onChange={handleChange}
-            aria-invalid={!!errors.name}
-            aria-describedby={errors.name ? "name-error" : undefined}
-            required
-          />
-          {errors.name && (
-            <span id="name-error" className="field-error">
-              {errors.name}
-            </span>
-          )}
-        </div>
-
-        <div className="form-group">
-          <label>Género *</label>
-          <div className="radio-group">
-            {["female", "male"].map(gender => (
-              <label key={gender} className="radio-label">
-                <input
-                  type="radio"
-                  name="gender"
-                  value={gender}
-                  checked={formData.gender === gender}
-                  onChange={handleChange}
-                  aria-invalid={!!errors.gender}
-                  required
-                />
-                {gender === "female" ? "Hembra" : "Macho"}
-              </label>
-            ))}
-          </div>
-          {errors.gender && (
-            <span className="field-error">{errors.gender}</span>
-          )}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="bornDate">Fecha de nacimiento *</label>
-          <input
-            id="bornDate"
-            name="bornDate"
-            type="date"
-            value={formData.bornDate || ""}
-            onChange={handleChange}
-            aria-invalid={!!errors.bornDate}
-            aria-describedby={errors.bornDate ? "date-error" : undefined}
-            required
-          />
-          {errors.bornDate && (
-            <span id="date-error" className="field-error">
-              {errors.bornDate}
-            </span>
-          )}
-        </div>
-      </fieldset>
-
-      <div className="form-actions">
-        <button
-          type="submit"
-          disabled={isLoading}
-          aria-busy={isLoading}
-        >
-          {isLoading ? "Guardando..." : "Guardar"}
-        </button>
-        <button type="reset">Limpiar</button>
-      </div>
-    </form>
-  );
-}
-```
-
----
-
-## Gestión de Estado
-
-### ✅ Patrón: useReducer para Estado Complejo
-
-```javascript
-// Hook personalizado para estado de formulario
-function useFormState(initialState) {
-  const [state, dispatch] = useReducer(
-    (state, action) => {
-      switch (action.type) {
-        case "CHANGE_FIELD":
-          return {
-            ...state,
-            data: { ...state.data, [action.field]: action.value },
-            errors: { ...state.errors, [action.field]: null }
-          };
-
-        case "VALIDATE":
-          return {
-            ...state,
-            errors: validateForm(state.data),
-            touched: true
-          };
-
-        case "SUBMIT_START":
-          return { ...state, isLoading: true, submitError: null };
-
-        case "SUBMIT_SUCCESS":
-          return {
-            ...state,
-            isLoading: false,
-            data: initialState,
-            touched: false
-          };
-
-        case "SUBMIT_ERROR":
-          return {
-            ...state,
-            isLoading: false,
-            submitError: action.error
-          };
-
-        case "RESET":
-          return { ...initialState };
-
-        default:
-          return state;
-      }
-    },
-    {
-      data: initialState,
-      errors: {},
-      isLoading: false,
-      submitError: null,
-      touched: false
-    }
-  );
-
-  return {
-    ...state,
-    handleChange: (field, value) =>
-      dispatch({ type: "CHANGE_FIELD", field, value }),
-    handleValidate: () => dispatch({ type: "VALIDATE" }),
-    handleSubmitStart: () => dispatch({ type: "SUBMIT_START" }),
-    handleSubmitSuccess: () => dispatch({ type: "SUBMIT_SUCCESS" }),
-    handleSubmitError: error =>
-      dispatch({ type: "SUBMIT_ERROR", error }),
-    reset: () => dispatch({ type: "RESET" })
-  };
-}
-```
-
-### ✅ Patrón: Context API para Global State
-
-```javascript
-// Crear contexto
-const BovineContext = createContext(null);
-
-// Provider
-export function BovineProvider({ children }) {
-  const [bovineIdentityItems, setBovines] = useState([]);
-  const [selectedBovine, setSelectedBovine] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  const value = {
-    bovineIdentityItems,
-    selectedBovine,
-    loading,
-    setBovines,
-    setSelectedBovine,
-    setLoading
-  };
-
-  return (
-    <BovineContext.Provider value={value}>
-      {children}
-    </BovineContext.Provider>
-  );
-}
-
-// Hook para usar
-export function useBovineContext() {
-  const context = useContext(BovineContext);
-  if (!context) {
-    throw new Error("useBovineContext debe usarse dentro BovineProvider");
-  }
-  return context;
-}
-
-// En App.jsx
-<BovineProvider>
-  <App />
-</BovineProvider>
-```
-
----
-
-## Patrones Avanzados
-
-### ✅ Patrón: Compound Components
-
-```jsx
-/**
- * Card con estructura flexible
- * Uso:
- *   <Card>
- *     <Card.Header title="..." />
- *     <Card.Body>...</Card.Body>
- *     <Card.Footer>...</Card.Footer>
- *   </Card>
- */
-
-function Card({ children, ...props }) {
-  return <div className="card" {...props}>{children}</div>;
-}
-
-Card.Header = function CardHeader({ title, subtitle }) {
-  return (
-    <div className="card-header">
-      <h2>{title}</h2>
-      {subtitle && <p>{subtitle}</p>}
-    </div>
-  );
-};
-
-Card.Body = function CardBody({ children }) {
-  return <div className="card-body">{children}</div>;
-};
-
-Card.Footer = function CardFooter({ children }) {
-  return <div className="card-footer">{children}</div>;
-};
-```
-
-### ✅ Patrón: Render Props
-
-```jsx
-/**
- * Componente de carga con render prop
- * Uso:
- *   <DataFetcher url="/bovineIdentityItems">
- *     {(data, loading, error) => (
- *       loading ? <Spinner /> : <List data={data} />
- *     )}
- *   </DataFetcher>
- */
-
-function DataFetcher({ url, children }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [bovines, setBovines] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(url);
-        setData(await response.json());
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetch(getBovinesSummaryEndpoint())
+      .then((res) => res.json())
+      .then((data) => setBovines(data))
+      .catch((err) => console.error(err));
+  }, []);
 
-    fetchData();
-  }, [url]);
-
-  return children(data, loading, error);
+  return <div>{/* UI */}</div>;
 }
 ```
 
-### ✅ Patrón: Higher Order Component (HOC)
+### Hooks de dominio
 
-```jsx
-/**
- * HOC para agregar loading state
- */
+Cuando un formulario o pantalla concentra demasiada logica, extraerla a un hook local del dominio.
 
-function withLoading(Component) {
-  return function WithLoadingComponent({ isLoading, ...props }) {
-    if (isLoading) return <LoadingSpinner />;
-    return <Component {...props} />;
-  };
-}
+Ejemplo confirmado:
 
-// Uso
-const BovineListWithLoading = withLoading(BovineList);
-<BovineListWithLoading isLoading={loading} />
-```
+- `useBovineForm.ts`
 
----
+Responsabilidades adecuadas del hook:
 
-## Estilos CSS
+- estado del formulario
+- carga de detalle puntual
+- submit y update
+- helpers de UI o calculos ligeros ligados al formulario
 
-### ✅ Convención: CSS Modules / BEM
+### Servicios HTTP
 
-```css
-/* BovineCard.css */
+Mantener funciones chicas y explicitas.
 
-/* Componente base */
-.bovineIdentityItem-card {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 16px;
-  background: white;
-  transition: box-shadow 0.3s ease;
-}
+Recomendado:
 
-/* Estado */
-.bovineIdentityItem-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
+- un helper para endpoint de listado si ese contrato es distinto
+- otro helper para endpoint CRUD si la escritura usa otra ruta
+- funciones `create`, `update`, `getById` con nombres directos
 
-/* Elementos hijos */
-.bovineIdentityItem-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 8px;
-}
+La correccion reciente de bovinos deja el patron esperado:
 
-.bovineIdentityItem-card-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-}
+- `getBovinesSummaryEndpoint()` para `/summary`
+- `getBovinesCrudEndpoint()` para `/bovines`
 
-.bovineIdentityItem-card-id {
-  font-size: 12px;
-  color: #999;
-  background: #f5f5f5;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
+### Routing
 
-.bovineIdentityItem-card-details {
-  flex: 1;
-  margin-bottom: 12px;
-}
+- declarar rutas en `App.jsx`
+- usar `RequireAuth` o wrapper equivalente para zona privada
+- mantener paths alineados con la navegacion real del producto
 
-.bovineIdentityItem-card-detail-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  font-size: 14px;
-}
+## Estado y datos
 
-.bovineIdentityItem-card-detail-label {
-  font-weight: 500;
-  color: #666;
-}
+- preferir `useState` y `useEffect` para estado local de pantalla cuando alcance
+- no introducir estado global si el slice sigue siendo local y simple
+- derivar datos presentacionales en el componente o hook solo cuando no exista ya ese calculo en backend
+- si backend ya entrega estados calculados, no duplicar la misma regla de negocio en varios componentes
 
-.bovineIdentityItem-card-detail-value {
-  color: #333;
-}
+## Estilos y CSS
 
-/* Acciones */
-.bovineIdentityItem-card-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
+- mantener CSS por componente o por pantalla cuando ya exista ese patron
+- usar nombres de clase suficientemente especificos para evitar colisiones
+- evitar refactors visuales globales dentro de cambios funcionales pequenos
 
-.bovineIdentityItem-card-btn {
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
+Ejemplos consistentes:
 
-.bovineIdentityItem-card-btn:hover {
-  background: #f5f5f5;
-}
+- `BovineList.css`
+- `DashboardLayout.css`
+- `AddBovine.css`
 
-.bovineIdentityItem-card-btn--primary {
-  background: #007bff;
-  color: white;
-  border-color: #007bff;
-}
+## Linting y validacion
 
-.bovineIdentityItem-card-btn--primary:hover {
-  background: #0056b3;
-}
+### Configuracion vigente
 
-/* Responsive */
-@media (max-width: 768px) {
-  .bovineIdentityItem-card {
-    padding: 12px;
-  }
+`eslint.config.js` confirma:
 
-  .bovineIdentityItem-card-title {
-    font-size: 16px;
-  }
+- ESLint 9 con flat config
+- `@eslint/js`
+- `eslint-plugin-react-hooks`
+- `eslint-plugin-react-refresh`
+- regla activa de `no-unused-vars`
 
-  .bovineIdentityItem-card-actions {
-    flex-direction: column;
-  }
+### Comandos vigentes
 
-  .bovineIdentityItem-card-btn {
-    width: 100%;
-  }
-}
-```
+- `npm run dev`
+- `npm run build`
+- `npm run lint`
 
----
+### Gaps de enforcement actuales
 
-## Testing Frontend
+No hay evidencia directa en la configuracion revisada de:
 
-### ✅ Patrón: React Testing Library
+- Prettier activo
+- testing frontend operativo como parte del flujo principal
+- lint dedicado para archivos `ts` o `tsx`
 
-```javascript
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import BovineForm from "./BovineForm";
+Conclusiones practicas:
 
-describe("BovineForm", () => {
-  it("debe mostrar mensaje de error si nombre está vacío", async () => {
-    const mockSubmit = jest.fn();
-    const user = userEvent.setup();
+- la consistencia visual depende hoy mas del estilo existente y de revision humana que de formateo automatico documentado
+- hay archivos TypeScript en el repo, pero el lint observado esta enfocado en `js` y `jsx`
 
-    render(<BovineForm onSubmit={mockSubmit} />);
+## Reglas practicas de revision
 
-    const submitBtn = screen.getByRole("button", { name: /guardar/i });
-    await user.click(submitBtn);
-
-    expect(screen.getByText(/nombre requerido/i)).toBeInTheDocument();
-    expect(mockSubmit).not.toHaveBeenCalled();
-  });
-
-  it("debe llamar onSubmit con datos válidos", async () => {
-    const mockSubmit = jest.fn().mockResolvedValue({ id: 1 });
-    const user = userEvent.setup();
-
-    render(<BovineForm onSubmit={mockSubmit} />);
-
-    const nameInput = screen.getByLabelText(/nombre/i);
-    const genderRadio = screen.getByLabelText(/hembra/i);
-    const dateInput = screen.getByLabelText(/fecha/i);
-    const submitBtn = screen.getByRole("button", { name: /guardar/i });
-
-    await user.type(nameInput, "Estrella");
-    await user.click(genderRadio);
-    await user.type(dateInput, "2023-05-10");
-    await user.click(submitBtn);
-
-    await waitFor(() => {
-      expect(mockSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: "Estrella",
-          gender: "female",
-          bornDate: "2023-05-10"
-        })
-      );
-    });
-  });
-
-  it("debe mostrar estado de carga", () => {
-    render(<BovineForm onSubmit={jest.fn()} isLoading={true} />);
-
-    const submitBtn = screen.getByRole("button", { name: /guardando/i });
-    expect(submitBtn).toBeDisabled();
-  });
-});
-```
-
----
-
-## Performance Frontend
-
-### ✅ Optimizaciones Clave
-
-```javascript
-// 1. Memoización de componentes
-const BovineCard = memo(({ bovineIdentityItem, onEdit }) => {
-  return <article>{/* ... */}</article>;
-});
-
-// 2. Memoización de callbacks
-const handleEdit = useCallback((id) => {
-  navigate(`/edit/${id}`);
-}, [navigate]);
-
-// 3. Lazy loading de componentes
-const MilkingModule = lazy(() => import("./Milking"));
-
-<Suspense fallback={<Loading />}>
-  <MilkingModule />
-</Suspense>
-
-// 4. Code splitting por ruta
-const routes = [
-  { path: "/bovineIdentityItems", element: lazy(() => import("./Bovines")) },
-  { path: "/milkingRecord", element: lazy(() => import("./Milking")) }
-];
-
-// 5. Optimizar listas grandes
-const BigList = ({ items }) => {
-  const itemHeight = 60;
-  const containerHeight = 400;
-
-  return (
-    <FixedSizeList
-      height={containerHeight}
-      itemCount={items.length}
-      itemSize={itemHeight}
-    >
-      {({ index, style }) => (
-        <div style={style}>
-          {items[index].name}
-        </div>
-      )}
-    </FixedSizeList>
-  );
-};
-
-// 6. Debouncing de búsqueda
-const searchBovines = useMemo(
-  () => debounce((term) => {
-    fetchBovines(term);
-  }, 300),
-  []
-);
-
-const handleSearch = (e) => {
-  setSearchTerm(e.target.value);
-  searchBovines(e.target.value);
-};
-```
-
----
-
-**Generado**: 2026-01-09 | **Versión**: 1.0
+1. El componente tiene una responsabilidad entendible desde su nombre.
+2. La logica repetida de formulario o carga se mueve a hook del dominio.
+3. Los endpoints de lectura y escritura no se mezclan por conveniencia.
+4. Los nombres de clases CSS y componentes siguen el estilo local del modulo.
+5. El cambio pasa `npm run lint` cuando afecte archivos cubiertos por ESLint.
+6. Si se introduce TypeScript nuevo, no degradar tipos existentes a `any` salvo borde justificado.
+7. Si backend ya calcula un estado, el frontend solo lo presenta o deriva un fallback ligero.

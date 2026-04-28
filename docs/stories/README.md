@@ -10,7 +10,8 @@ stories/
 ├── bedrock/
 ├── estimaciones/
 ├── eventos-bovines/
-└── milking/
+├── milking/
+└── summary/
 ```
 
 ## Estado por carpeta
@@ -32,6 +33,14 @@ Historias disponibles:
 
 La carpeta `milking/` contiene historias específicas del dominio de lactancia. En la revisión rápida de esta pasada no apareció la misma deriva sistemática observada en Bedrock, pero no se ha hecho todavía una normalización completa de esos artefactos.
 
+### Summary
+
+La carpeta `summary/` concentra historias vivas del slice de resumen consolidado de bovinos en backend. Debe usarse para registrar deuda técnica de pruebas, cobertura y consistencia entre controller, processor, service, repository, mapper, DTOs y entidades asociadas al flujo `SUMMARY`.
+
+Historias disponibles:
+
+- `HU-20260428-deuda-tecnica-summary.md`
+
 ### Eventos Bovinos
 
 La carpeta `eventos-bovines/` existe en la estructura del repositorio y debe tratarse como superficie documental separada cuando se revisen historias del dominio bovino orientadas a eventos.
@@ -50,8 +59,9 @@ Por eso debe leerse como material de planificación histórica o de trabajo, no 
 ## Orden de lectura recomendado
 
 1. Si el tema es chatbot o Bedrock, empezar por `bedrock/`.
-2. Si el tema es arquitectura o contratos reales, contrastar siempre con `docs/arquitectura/`.
-3. Si el tema cae en `estimaciones/`, validar primero que el artefacto siga siendo coherente con el código antes de reutilizarlo para decisiones técnicas.
+2. Si el tema es summary de bovinos, revisar `summary/` y contrastar el estado real con `src/main/java/com/cattle/*Summary*` y `src/test/java/**/*Summary*.java`.
+3. Si el tema es arquitectura o contratos reales, contrastar siempre con `docs/arquitectura/`.
+4. Si el tema cae en `estimaciones/`, validar primero que el artefacto siga siendo coherente con el código antes de reutilizarlo para decisiones técnicas.
 
 ## Criterio de mantenimiento
 
