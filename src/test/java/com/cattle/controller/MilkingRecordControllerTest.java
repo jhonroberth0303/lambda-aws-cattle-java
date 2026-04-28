@@ -1,6 +1,8 @@
 package com.cattle.controller;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.dtos.CowWithLactationsDTO;
+import com.cattle.dtos.LactationSummaryDTO;
 import com.cattle.dtos.MilkingDTO;
 import com.cattle.processor.MilkingProcessor;
 import org.junit.jupiter.api.BeforeEach;
@@ -180,6 +182,108 @@ class MilkingRecordControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(milkingProcessor, times(1)).getMilkingData(bovineId, "");
     }
+
+        // ==================== getCowsWithLactations Tests ====================
+
+        @Test
+        void getCowsWithLactations_withResults_returnsOkWithList() {
+        String siteId = "FARM#001";
+        List<CowWithLactationsDTO> cows = List.of(
+            CowWithLactationsDTO.builder()
+                .bovineId(172)
+                .lactations(List.of(
+                    LactationSummaryDTO.builder()
+                        .lactationNumber("001")
+                        .startDate("2025-11-27")
+                        .status("LACTATING")
+                        .build()
+                ))
+                .build()
+        );
+
+        when(milkingProcessor.getCowsWithLactations(siteId)).thenReturn(Optional.of(cows));
+
+        ResponseEntity<List<CowWithLactationsDTO>> response = milkingController.getCowsWithLactations(siteId);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
+        assertEquals(172, response.getBody().get(0).getBovineId());
+        verify(milkingProcessor, times(1)).getCowsWithLactations(siteId);
+        }
+
+        @Test
+        void getCowsWithLactations_noResults_returnsNotFound() {
+        String siteId = "FARM#001";
+        when(milkingProcessor.getCowsWithLactations(siteId)).thenReturn(Optional.empty());
+
+        ResponseEntity<List<CowWithLactationsDTO>> response = milkingController.getCowsWithLactations(siteId);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNull(response.getBody());
+        verify(milkingProcessor, times(1)).getCowsWithLactations(siteId);
+        }
+
+        // ==================== getMilkingByLactation Tests ====================
+
+        @Test
+        void getMilkingByLactation_withResults_returnsOkWithList() {
+        String siteId = "FARM#001";
+        Integer bovineId = 172;
+        String lactationNumber = "1";
+        String shift = "AM";
+        List<MilkingDTO> milkings = List.of(createMilkingDTO(bovineId, "2026-01-20", shift, 20.5));
+
+        when(milkingProcessor.getMilkingByLactation(bovineId, lactationNumber, shift))
+            .thenReturn(Optional.of(milkings));
+
+        ResponseEntity<List<MilkingDTO>> response =
+            milkingController.getMilkingByLactation(siteId, bovineId, lactationNumber, shift);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
+        assertEquals("AM", response.getBody().get(0).getShift());
+        verify(milkingProcessor, times(1)).getMilkingByLactation(bovineId, lactationNumber, shift);
+        }
+
+        @Test
+        void getMilkingByLactation_noResults_returnsNotFound() {
+        String siteId = "FARM#001";
+        Integer bovineId = 172;
+        String lactationNumber = "1";
+
+        when(milkingProcessor.getMilkingByLactation(bovineId, lactationNumber, null))
+            .thenReturn(Optional.empty());
+
+        ResponseEntity<List<MilkingDTO>> response =
+            milkingController.getMilkingByLactation(siteId, bovineId, lactationNumber, null);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNull(response.getBody());
+        verify(milkingProcessor, times(1)).getMilkingByLactation(bovineId, lactationNumber, null);
+        }
+
+        @Test
+        void getMilkingByLactation_invalidLactationHandledByExceptionHandler() {
+        String siteId = "FARM#001";
+        Integer bovineId = 172;
+        String lactationNumber = "LACT#01";
+
+        when(milkingProcessor.getMilkingByLactation(bovineId, lactationNumber, null))
+            .thenThrow(new IllegalArgumentException("El numero de lactancia es invalido"));
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> milkingController.getMilkingByLactation(siteId, bovineId, lactationNumber, null)
+        );
+
+        ResponseEntity<String> response = milkingController.handleIllegalArgument(exception);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("El numero de lactancia es invalido", response.getBody());
+        verify(milkingProcessor, times(1)).getMilkingByLactation(bovineId, lactationNumber, null);
+        }
 
     // ==================== handleIllegalArgument Tests ====================
 
