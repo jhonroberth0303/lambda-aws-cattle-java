@@ -155,7 +155,7 @@ public class MilkingProcessor {
     }
 
     public Optional<List<MilkingDTO>> getMilkingByLactation(Integer bovineId, String lactationNumber, String shift) {
-        return milkingService.getMilkingByBovineAndLactation(bovineId, lactationNumber)
+        return milkingService.getMilkingByBovineAndLactation(bovineId, formatLactationNumber(lactationNumber))
                 .map(records -> records.stream()
                         .filter(r -> shift == null || shift.isEmpty() || shift.equalsIgnoreCase(r.getShift()))
                         .map(milkingMapperImpl::toDTO)
@@ -196,6 +196,14 @@ public class MilkingProcessor {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private String formatLactationNumber(String lactationNumber) {
+        Integer parsedLactationNumber = parseLactationNumber(lactationNumber);
+        if (parsedLactationNumber == null) {
+            throw new IllegalArgumentException("El número de lactancia es inválido");
+        }
+        return String.format("%03d", parsedLactationNumber);
     }
 
 }
