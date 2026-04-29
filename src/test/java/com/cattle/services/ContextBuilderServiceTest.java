@@ -2,6 +2,7 @@ package com.cattle.services;
 
 import com.cattle.dtos.chatbot.BovineContextDTO;
 import com.cattle.dtos.chatbot.IntentContext;
+import com.cattle.dtos.chatbot.MilkingContextDTO;
 import com.cattle.dtos.chatbot.PastureContextDTO;
 import com.cattle.enums.QueryIntent;
 import com.cattle.exceptions.RepositoryException;
@@ -14,6 +15,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
+import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -224,8 +227,7 @@ class ContextBuilderServiceTest {
         String result = contextBuilderService.buildContext(intent, farmId);
 
         // Assert
-        // Service handles exception gracefully and returns context
-        assertNotNull(result);
+        assertEquals("Error al construir el contexto. Por favor intenta nuevamente.", result);
     }
 
     @Test
@@ -253,7 +255,9 @@ class ContextBuilderServiceTest {
         return BovineContextDTO.builder()
                 .bovineId(id)
                 .name(name)
-                .gender("FEMALE")
+                .gender("female")
+                .breed("Holstein")
+                .bornDate(LocalDate.now().minusMonths(36))
                 .ageInMonths(36)
                 .build();
     }
@@ -363,6 +367,183 @@ class ContextBuilderServiceTest {
         // Assert
         assertNotNull(result);
         assertTrue(result.contains("CONTEXTO") || result.contains("No se encontraron"));
+    }
+
+    @Test
+    void buildContext_listAllBovines_omitsOptionalFragmentsWhenDataMissing() throws RepositoryException {
+        String farmId = "farm-001";
+        IntentContext intent = IntentContext.builder()
+                .intent(QueryIntent.LIST_ALL_BOVINES)
+                .build();
+        List<BovineContextDTO> bovines = List.of(
+                BovineContextDTO.builder()
+                        .bovineId("1")
+                        .gender(null)
+                        .ageInMonths(0)
+                        .build()
+        );
+        when(bovineQueryService.getAllBovinesDetails(farmId)).thenReturn(bovines);
+
+        String result = contextBuilderService.buildContext(intent, farmId);
+
+        assertTrue(result.contains("Desconocido"));
+        assertFalse(result.contains("Nombre:"));
+        assertFalse(result.contains("Raza:"));
+        assertFalse(result.contains("Edad:"));
+    }
+
+    @Test
+    void buildContext_aggregateMilking_includesShiftAndTopProducer() throws RepositoryException {
+        String farmId = "farm-001";
+        IntentContext intent = IntentContext.builder()
+                .intent(QueryIntent.AGGREGATE_MILKING)
+                .build();
+
+        when(milkingQueryService.getMonthlyAverageProduction(farmId)).thenReturn(25.5);
+        when(milkingQueryService.getWeeklyAverageProduction(farmId)).thenReturn(26.0);
+        when(milkingQueryService.getProductionByShift(farmId)).thenReturn(Map.of("AM", 30.0, "PM", 21.0));
+        when(milkingQueryService.getTopProducerBovine(farmId)).thenReturn(
+                MilkingContextDTO.builder().bovineName("Bovina 10").litersMilked(44.2).build());
+
+        String result = contextBuilderService.buildContext(intent, farmId);
+
+        assertTrue(result.contains("PRODUCCIÓN DE LECHE"));
+        assertTrue(result.contains("Bovina 10"));
+        assertTrue(result.contains("AM"));
+    }
+
+    @Test
+    void buildContext_aggregateMilking_withoutTopProducer_skipsSection() throws RepositoryException {
+        String farmId = "farm-001";
+        IntentContext intent = IntentContext.builder()
+                .intent(QueryIntent.AGGREGATE_MILKING)
+                .build();
+
+        when(milkingQueryService.getMonthlyAverageProduction(farmId)).thenReturn(25.5);
+        when(milkingQueryService.getWeeklyAverageProduction(farmId)).thenReturn(26.0);
+        when(milkingQueryService.getProductionByShift(farmId)).thenReturn(Map.of());
+        when(milkingQueryService.getTopProducerBovine(farmId)).thenReturn(null);
+
+        String result = contextBuilderService.buildContext(intent, farmId);
+
+        assertTrue(result.contains("PRODUCCIÓN DE LECHE"));
+        assertFalse(result.contains("Top productor"));
+    }
+
+    @Test
+    void buildContext_pastureStatus_includesDistributionSummary() throws RepositoryException {
+        String farmId = "farm-001";
+        IntentContext intent = IntentContext.builder()
+                .intent(QueryIntent.PASTURE_STATUS)
+                .build();
+
+        when(pastureQueryService.getAvailablePastures(farmId)).thenReturn(List.of(createPastureContext("P-01", "DISPONIBLE")));
+        when(pastureQueryService.getPasturesInUse(farmId)).thenReturn(List.of(createPastureContext("P-02", "EN_USO")));
+        when(pastureQueryService.getTotalHectaresInUse(farmId)).thenReturn(12.5);
+        when(pastureQueryService.getTotalAvailableHectares(farmId)).thenReturn(20.0);
+        when(pastureQueryService.getPastureCountByStatus(farmId)).thenReturn(Map.of("DISPONIBLE", 1, "EN_USO", 1));
+
+        String result = contextBuilderService.buildContext(intent, farmId);
+
+        assertTrue(result.contains("ESTADO DE POTREROS"));
+        assertTrue(result.contains("EN_USO"));
+    }
+
+    @Test
+    void buildContext_generalQuery_includesCrossAreaSummary() throws RepositoryException {
+        String farmId = "farm-001";
+        IntentContext intent = IntentContext.builder()
+                .intent(QueryIntent.GENERAL_QUERY)
+                .build();
+
+        when(bovineQueryService.countAllBovines(farmId)).thenReturn(50L);
+        when(milkingQueryService.getMonthlyAverageProduction(farmId)).thenReturn(18.5);
+        when(pastureQueryService.getAvailablePastures(farmId)).thenReturn(List.of(createPastureContext("P-01", "DISPONIBLE")));
+
+        String result = contextBuilderService.buildContext(intent, farmId);
+
+        assertTrue(result.contains("RESUMEN GENERAL"));
+        assertTrue(result.contains("Producción promedio mensual"));
+    }
+
+    @Test
+    void buildContext_repositoryException_returnsFriendlyError() throws RepositoryException {
+        String farmId = "farm-error";
+        IntentContext intent = IntentContext.builder()
+                .intent(QueryIntent.COUNT_BOVINES)
+                .build();
+
+        when(bovineQueryService.countAllBovines(farmId)).thenThrow(new RepositoryException("Repository error"));
+
+        String result = contextBuilderService.buildContext(intent, farmId);
+
+        assertEquals("Error al construir el contexto. Por favor intenta nuevamente.", result);
+    }
+
+    @Test
+    void buildContext_countBovines_translatesGenderLabels() throws RepositoryException {
+        String farmId = "farm-001";
+        IntentContext intent = IntentContext.builder().intent(QueryIntent.COUNT_BOVINES).build();
+        when(bovineQueryService.countAllBovines(farmId)).thenReturn(10L);
+        when(bovineQueryService.countByGender(farmId)).thenReturn(Map.of("female", 8L, "male", 2L));
+
+        String result = contextBuilderService.buildContext(intent, farmId);
+
+        assertTrue(result.contains("Hembras"));
+        assertTrue(result.contains("Machos"));
+    }
+
+    @Test
+    void buildContext_listAllBovines_truncatesLongContext() throws RepositoryException {
+        String farmId = "farm-001";
+        IntentContext intent = IntentContext.builder().intent(QueryIntent.LIST_ALL_BOVINES).build();
+        List<BovineContextDTO> bovines = new ArrayList<>();
+        for (int i = 0; i < 80; i++) {
+            bovines.add(BovineContextDTO.builder()
+                    .bovineId(String.valueOf(i))
+                    .name("Bovino-nombre-muy-largo-" + i)
+                    .gender(i % 2 == 0 ? "female" : "male")
+                    .breed("Holstein-super-larga-" + i)
+                    .ageInMonths(24)
+                    .build());
+        }
+        when(bovineQueryService.getAllBovinesDetails(farmId)).thenReturn(bovines);
+
+        String result = contextBuilderService.buildContext(intent, farmId);
+
+        assertTrue(result.contains("[Contexto truncado...]"));
+        assertTrue(result.length() <= 2000);
+    }
+
+    @Test
+    void privateHelpers_translateCategoryStatusAndTruncate_areCovered() throws Exception {
+        Method translateCategory = ContextBuilderService.class.getDeclaredMethod("translateCategory", String.class);
+        Method translateGender = ContextBuilderService.class.getDeclaredMethod("translateGender", String.class);
+        Method translateStatus = ContextBuilderService.class.getDeclaredMethod("translateStatus", String.class);
+        Method truncateContext = ContextBuilderService.class.getDeclaredMethod("truncateContext", String.class);
+        translateCategory.setAccessible(true);
+        translateGender.setAccessible(true);
+        translateStatus.setAccessible(true);
+        truncateContext.setAccessible(true);
+
+        assertEquals("Vacas", translateCategory.invoke(contextBuilderService, "cow"));
+        assertEquals("Toros", translateCategory.invoke(contextBuilderService, "bull"));
+        assertEquals("Terneros", translateCategory.invoke(contextBuilderService, "calf"));
+        assertEquals("Novillas", translateCategory.invoke(contextBuilderService, "heifer"));
+        assertEquals("Novillos", translateCategory.invoke(contextBuilderService, "steer"));
+        assertEquals("otro", translateCategory.invoke(contextBuilderService, "otro"));
+        assertEquals("Desconocida", translateCategory.invoke(contextBuilderService, new Object[]{null}));
+        assertEquals("Machos", translateGender.invoke(contextBuilderService, "male"));
+        assertEquals("Hembras", translateGender.invoke(contextBuilderService, "female"));
+        assertEquals("otro", translateGender.invoke(contextBuilderService, "otro"));
+        assertEquals("Desconocido", translateGender.invoke(contextBuilderService, new Object[]{null}));
+        assertEquals("Preñadas", translateStatus.invoke(contextBuilderService, "PREGNANT"));
+        assertEquals("Lactando", translateStatus.invoke(contextBuilderService, "LACTATING"));
+        assertEquals("Secas", translateStatus.invoke(contextBuilderService, "DRY"));
+        assertEquals("Abiertas", translateStatus.invoke(contextBuilderService, "OPEN"));
+        assertEquals("otro", translateStatus.invoke(contextBuilderService, "otro"));
+        assertEquals("Desconocido", translateStatus.invoke(contextBuilderService, new Object[]{null}));
+        assertEquals("texto corto", truncateContext.invoke(contextBuilderService, "texto corto"));
     }
 
 }

@@ -1,7 +1,9 @@
 package com.cattle.mapper;
 
 import com.cattle.dtos.BovineDTO;
+import com.cattle.dtos.BreedCompositionDTO;
 import com.cattle.entities.bovines.BovineIdentityItem;
+import com.cattle.entities.bovines.BreedComposition;
 import com.cattle.enums.profiles.BovineOrigin;
 import com.cattle.utils.TestDataBuilder;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -214,5 +217,84 @@ class BovinesMapperTest {
         assertEquals(original.getName(), result.getName());
         assertEquals(original.getGender(), result.getGender());
         assertEquals(original.getBreed(), result.getBreed());
+    }
+
+    @Test
+    void toDTO_withBreedComposition_mapsBreedCompositionList() {
+        BovineIdentityItem entity = BovineIdentityItem.builder()
+                .bovineId(777)
+                .name("Breed Cow")
+                .gender("female")
+                .origin("BORN")
+                .breedComposition(List.of(
+                        BreedComposition.builder().breed("Holstein").pct(75).build(),
+                        BreedComposition.builder().breed("Jersey").pct(25).build()
+                ))
+                .build();
+
+        BovineDTO result = mapper.toDTO(entity);
+
+        assertNotNull(result);
+        assertNotNull(result.getBreedComposition());
+        assertEquals(2, result.getBreedComposition().size());
+        assertEquals("Holstein", result.getBreedComposition().get(0).getBreed());
+        assertEquals(75, result.getBreedComposition().get(0).getPct());
+    }
+
+    @Test
+    void toEntity_withBreedComposition_mapsBreedCompositionList() {
+        BovineDTO dto = BovineDTO.builder()
+                .bovineId(778)
+                .name("Breed DTO")
+                .gender("female")
+                .origin(BovineOrigin.BORN)
+                .breedComposition(List.of(
+                        BreedCompositionDTO.builder().breed("Angus").pct(60).build(),
+                        BreedCompositionDTO.builder().breed("Brahman").pct(40).build()
+                ))
+                .build();
+
+        BovineIdentityItem result = mapper.toEntity(dto);
+
+        assertNotNull(result);
+        assertNotNull(result.getBreedComposition());
+        assertEquals(2, result.getBreedComposition().size());
+        assertEquals("Angus", result.getBreedComposition().get(0).getBreed());
+        assertEquals(60, result.getBreedComposition().get(0).getPct());
+    }
+
+    @Test
+    void staticConverters_handleNullAndInvalidValues() {
+        assertNull(BovinesMapper.dtoListToEntityList(null));
+        assertNull(BovinesMapper.entityListToDtoList(null));
+        assertNull(BovinesMapper.stringToInstant(null));
+        assertNull(BovinesMapper.stringToInstant("bad-date"));
+        assertNull(BovinesMapper.stringToOrigin(null));
+        assertNull(BovinesMapper.stringToOrigin("invalid"));
+        assertNull(BovinesMapper.originToString(null));
+        assertNull(BovinesMapper.instantToString(null));
+    }
+
+    @Test
+    void staticConverters_mapExpectedValues() {
+        List<BreedCompositionDTO> dtoList = BovinesMapper.dtoListToEntityList(
+                List.of(BreedComposition.builder().breed("Simmental").pct(100).build())
+        );
+        List<BreedComposition> entityList = BovinesMapper.entityListToDtoList(
+                List.of(BreedCompositionDTO.builder().breed("Normando").pct(50).build())
+        );
+
+        assertEquals(1, dtoList.size());
+        assertEquals("Simmental", dtoList.get(0).getBreed());
+        assertEquals(100, dtoList.get(0).getPct());
+
+        assertEquals(1, entityList.size());
+        assertEquals("Normando", entityList.get(0).getBreed());
+        assertEquals(50, entityList.get(0).getPct());
+
+        assertEquals(Instant.parse("2024-01-01T00:00:00Z"), BovinesMapper.stringToInstant("2024-01-01T00:00:00Z"));
+        assertEquals("2024-01-01T00:00:00Z", BovinesMapper.instantToString(Instant.parse("2024-01-01T00:00:00Z")));
+        assertEquals(BovineOrigin.BOUGHT, BovinesMapper.stringToOrigin("bought"));
+        assertEquals("LEASED", BovinesMapper.originToString(BovineOrigin.LEASED));
     }
 }

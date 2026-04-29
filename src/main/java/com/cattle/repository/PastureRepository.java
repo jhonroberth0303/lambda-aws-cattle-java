@@ -68,58 +68,66 @@ public class PastureRepository {
     public void applyPatch(String pk, EntityPatch patch) {
         if (patch == null || patch.isEmpty()) return;
 
-        // 1) Construir UpdateExpression: "SET #f1 = :v1, #f2 = :v2 REMOVE #r1, #r2"
-        StringBuilder ue = new StringBuilder();
-        Map<String, String> names = new LinkedHashMap<>();
-        Map<String, AttributeValue> values = new LinkedHashMap<>();
+        try {
+            // 1) Construir UpdateExpression: "SET #f1 = :v1, #f2 = :v2 REMOVE #r1, #r2"
+            StringBuilder ue = new StringBuilder();
+            Map<String, String> names = new LinkedHashMap<>();
+            Map<String, AttributeValue> values = new LinkedHashMap<>();
 
-        // SET
-        if (!patch.set().isEmpty()) {
-            ue.append("SET ");
-            int i = 0;
-            for (Map.Entry<String, Object> e : patch.set().entrySet()) {
-                String field = e.getKey();
-                Object val = e.getValue();
-                String nKey = "#n" + i; // nombre
-                String vKey = ":v" + i; // valor
+            // SET
+            if (!patch.set().isEmpty()) {
+                ue.append("SET ");
+                int i = 0;
+                for (Map.Entry<String, Object> e : patch.set().entrySet()) {
+                    String field = e.getKey();
+                    Object val = e.getValue();
+                    String nKey = "#n" + i;
+                    String vKey = ":v" + i;
 
-                if (i > 0) ue.append(", ");
-                ue.append(nKey).append(" = ").append(vKey);
+                    if (i > 0) ue.append(", ");
+                    ue.append(nKey).append(" = ").append(vKey);
 
-                names.put(nKey, field);
-                values.put(vKey, toAttr(val));
-                i++;
+                    names.put(nKey, field);
+                    values.put(vKey, toAttr(val));
+                    i++;
+                }
             }
-        }
 
-        // REMOVE
-        if (!patch.remove().isEmpty()) {
-            if (ue.length() > 0) ue.append(" ");
-            ue.append("REMOVE ");
-            for (int j = 0; j < patch.remove().size(); j++) {
-                String field = patch.remove().get(j);
-                String nKey = "#r" + j;
-                if (j > 0) ue.append(", ");
-                ue.append(nKey);
-                names.put(nKey, field);
+            // REMOVE
+            if (!patch.remove().isEmpty()) {
+                if (ue.length() > 0) ue.append(" ");
+                ue.append("REMOVE ");
+                for (int j = 0; j < patch.remove().size(); j++) {
+                    String field = patch.remove().get(j);
+                    String nKey = "#r" + j;
+                    if (j > 0) ue.append(", ");
+                    ue.append(nKey);
+                    names.put(nKey, field);
+                }
             }
+
+            // 2) Clave primaria
+            Map<String, AttributeValue> key = Map.of("pk", AttributeValue.builder().s(pk).build());
+
+            // 3) Construir request (puedes agregar ConditionExpression si quieres bloqueo optimista)
+            UpdateItemRequest req = UpdateItemRequest.builder()
+                    .tableName(TABLE_PASTURE)
+                    .key(key)
+                    .updateExpression(ue.toString())
+                    .expressionAttributeNames(names.isEmpty() ? null : names)
+                    .expressionAttributeValues(values.isEmpty() ? null : values)
+                    .returnValues(ReturnValue.ALL_NEW)
+                    .build();
+
+            // 4) Ejecutar
+            dynamoDbClient.updateItem(req);
+        } catch (DynamoDbException ex) {
+            lambdaContext.logException(LogType.REPOSITORY, "Error applying pasture patch", ex);
+            throw new RepositoryException("Unexpected error applying pasture patch", ex);
+        } catch (Exception ex) {
+            lambdaContext.logException(LogType.REPOSITORY, "Unexpected error applying pasture patch", ex);
+            throw new RepositoryException("Unexpected error applying pasture patch", ex);
         }
-
-        // 2) Clave primaria
-        Map<String, AttributeValue> key = Map.of("pk", AttributeValue.builder().s(pk).build());
-
-        // 3) Construir request (puedes agregar ConditionExpression si quieres bloqueo optimista)
-        UpdateItemRequest req = UpdateItemRequest.builder()
-                .tableName(TABLE_PASTURE)
-                .key(key)
-                .updateExpression(ue.toString())
-                .expressionAttributeNames(names.isEmpty() ? null : names)
-                .expressionAttributeValues(values.isEmpty() ? null : values)
-                .returnValues(ReturnValue.ALL_NEW) // o UPDATED_NEW / NONE
-                .build();
-
-        // 4) Ejecutar
-        dynamoDbClient.updateItem(req);
     }
 
     /** Conversión simple Java → AttributeValue. Amplíala si usas listas/mapas anidados. */

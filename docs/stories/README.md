@@ -8,6 +8,7 @@ Este índice organiza los artefactos de `docs/stories/` y deja explícito qué s
 stories/
 ├── README.md
 ├── bedrock/
+├── cattle-pastures-milking/
 ├── estimaciones/
 ├── eventos-bovines/
 ├── milking/
@@ -32,6 +33,14 @@ Historias disponibles:
 ### Milking
 
 La carpeta `milking/` contiene historias específicas del dominio de lactancia. En la revisión rápida de esta pasada no apareció la misma deriva sistemática observada en Bedrock, pero no se ha hecho todavía una normalización completa de esos artefactos.
+
+### Cattle Pastures Milking
+
+La carpeta `cattle-pastures-milking/` concentra deuda técnica transversal de pruebas unitarias y cobertura para componentes backend de bovinos, potreros y lactancia cuando el alcance cruza más de un dominio y conviene gestionar la remediación como una única HU técnica.
+
+Historias disponibles:
+
+- `HU-20260428-deuda-tecnica-pu-cattle-pastures-milking.md`
 
 ### Summary
 

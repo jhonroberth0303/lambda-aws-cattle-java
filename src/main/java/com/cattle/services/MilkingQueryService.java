@@ -197,7 +197,9 @@ public class MilkingQueryService {
         
         return milkingsOpt.get().stream()
                 .map(m -> toMilkingContextDTO(m, averageProduction))
-                .sorted(Comparator.comparing(MilkingContextDTO::getMilkingDate).reversed())
+            .sorted(Comparator.comparing(
+                MilkingContextDTO::getMilkingDate,
+                Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
     }
     

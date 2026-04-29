@@ -12,6 +12,8 @@ import org.mockito.Mock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -270,8 +272,9 @@ class PastureQueryServiceTest {
         java.util.Map<String, Integer> result = pastureQueryService.getPastureCountByStatus(farmId);
 
         // Assert
-        assertNotNull(result);
-        assertFalse(result.isEmpty());
+        assertEquals(2, result.get("DISPONIBLE"));
+        assertEquals(1, result.get("EN_USO"));
+        assertEquals(1, result.get("DESCANSO"));
     }
 
     @Test
@@ -288,6 +291,67 @@ class PastureQueryServiceTest {
         assertTrue(result.isEmpty());
     }
 
+    @Test
+    void getPastureCountByStatus_normalizesRecoveryAndMaintenance() throws RepositoryException {
+        String farmId = "farm-001";
+        List<Pasture> pastures = List.of(
+                createPasture("RECUPERACION", 10.0, null, 25),
+                createPasture("RECOVERY", 12.0, null, 25),
+                createPasture("MANTENIMIENTO", 8.0, null, 25),
+                createPasture("MAINTENANCE", 7.0, null, 25),
+                createPasture(null, 5.0, null, 25)
+        );
+        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+
+        Map<String, Integer> result = pastureQueryService.getPastureCountByStatus(farmId);
+
+        assertEquals(2, result.get("EN_RECUPERACION"));
+        assertEquals(2, result.get("MANTENIMIENTO"));
+    }
+
+    @Test
+    void getPasturesNeedingRotation_filtersAndSortsByDaysDescending() throws RepositoryException {
+        String farmId = "farm-001";
+        List<Pasture> pastures = List.of(
+                createPasture("EN_USO", 10.0, LocalDate.now().minusDays(5).toString(), 25),
+                createPasture("IN_USE", 8.0, LocalDate.now().minusDays(20).toString(), 18),
+                createPasture("OCUPADO", 7.0, LocalDate.now().minusDays(12).toString(), 12),
+                createPasture("DISPONIBLE", 9.0, null, 30)
+        );
+        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+
+        List<PastureContextDTO> result = pastureQueryService.getPasturesNeedingRotation(farmId, 10);
+
+        assertEquals(2, result.size());
+        assertTrue(result.get(0).getDaysSinceLastRotation() >= result.get(1).getDaysSinceLastRotation());
+    }
+
+    @Test
+    void getAllPastures_mapsQualityAndInvalidDateGracefully() throws RepositoryException {
+        String farmId = "farm-001";
+        List<Pasture> pastures = List.of(
+                createPasture("AVAILABLE", 10.0, LocalDate.now().minusDays(3).toString(), 26),
+                createPasture("EN_USO", 8.0, "fecha-invalida", null)
+        );
+        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+
+        List<PastureContextDTO> result = pastureQueryService.getAllPastures(farmId);
+
+        assertEquals(2, result.size());
+        assertEquals("excellent", result.get(0).getGrassQuality());
+        assertNull(result.get(1).getDaysSinceLastRotation());
+        assertEquals("unknown", result.get(1).getGrassQuality());
+    }
+
+    @Test
+    void getAllPastures_emptyOptional_returnsEmptyList() throws RepositoryException {
+        when(pastureRepository.findPastures("farm-empty")).thenReturn(Optional.empty());
+
+        List<PastureContextDTO> result = pastureQueryService.getAllPastures("farm-empty");
+
+        assertTrue(result.isEmpty());
+    }
+
     // ==================== Helper Methods ====================
 
     private Pasture createPastureWithStatus(String status, Double areaHa) {
@@ -299,6 +363,20 @@ class PastureQueryServiceTest {
                 .status(status)
                 .areaHa(areaHa)
                 .species("Kikuyu")
+                .build();
+    }
+
+    private Pasture createPasture(String status, Double areaHa, String lastUseAt, Integer currentHeightCm) {
+        return Pasture.builder()
+                .pk("PASTURE#pasture-1")
+                .farmId("farm-001")
+                .id("pasture-1")
+                .name("Potrero 1")
+                .status(status)
+                .areaHa(areaHa)
+                .species("Kikuyu")
+                .lastUseAt(lastUseAt)
+                .currentHeightCm(currentHeightCm)
                 .build();
     }
 }
