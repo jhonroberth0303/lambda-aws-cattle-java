@@ -42,6 +42,41 @@ Parameters:
     Default: 100
     Description: Límite de requests por hora por finca
 
+  AppTimezone:
+    Type: String
+    Default: America/Bogota
+    Description: Zona horaria operativa de la aplicación y jobs programados
+
+  SummaryRefreshScheduleExpression:
+    Type: String
+    Default: cron(0 3 * * ? *)
+    Description: Expresión cron del refresh batch de summaries
+
+  TableBovines:
+    Type: String
+    Default: Bovines
+    Description: Nombre de la tabla DynamoDB de bovinos y summary
+
+  TableFarmMilking:
+    Type: String
+    Default: MilkingRecords
+    Description: Nombre de la tabla DynamoDB de registros de ordeño
+
+  TablePasture:
+    Type: String
+    Default: Pastures
+    Description: Nombre de la tabla DynamoDB de potreros
+
+  TablePlan:
+    Type: String
+    Default: Plans
+    Description: Nombre de la tabla DynamoDB de planes
+
+  TableCounters:
+    Type: String
+    Default: counters
+    Description: Nombre de la tabla DynamoDB de contadores
+
 Globals:
   Api:
     EndpointConfiguration: REGIONAL
@@ -117,9 +152,15 @@ Resources:
           BEDROCK_MODEL_ID: !Ref BedrockModelId
           BEDROCK_KB_MODEL_ARN: !Ref BedrockKnowledgeBaseModelArn
           # Application Configuration
+          APP_TIMEZONE: !Ref AppTimezone
           CORS_ALLOWED_ORIGINS: !Ref CorsAllowedOrigins
           SECURITY_ENABLED: !Ref SecurityEnabled
           RATE_LIMIT_PER_HOUR: !Ref RateLimitPerHour
+          TABLE_BOVINES: !Ref TableBovines
+          TABLE_FARM_MILKING: !Ref TableFarmMilking
+          TABLE_PASTURE: !Ref TablePasture
+          TABLE_PLAN: !Ref TablePlan
+          TABLE_COUNTERS: !Ref TableCounters
       Events:
         ProxyResource:
           Type: Api
@@ -127,9 +168,90 @@ Resources:
             Path: /{proxy+}
             Method: any
 
+  SummaryRefreshSchedulerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: cattle-summary-refresh-scheduler
+      Role: !GetAtt CattleLambdaRole.Arn
+      Handler: com.cattle.SummaryRefreshSchedulerHandler::handleRequest
+      Runtime: java21
+      CodeUri: build/distributions/cattle-lambda-function.zip
+      MemorySize: 1024
+      Timeout: 300
+      Environment:
+        Variables:
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+          BEDROCK_KB_MODEL_ARN: !Ref BedrockKnowledgeBaseModelArn
+          APP_TIMEZONE: !Ref AppTimezone
+          CORS_ALLOWED_ORIGINS: !Ref CorsAllowedOrigins
+          SECURITY_ENABLED: !Ref SecurityEnabled
+          RATE_LIMIT_PER_HOUR: !Ref RateLimitPerHour
+          TABLE_BOVINES: !Ref TableBovines
+          TABLE_FARM_MILKING: !Ref TableFarmMilking
+          TABLE_PASTURE: !Ref TablePasture
+          TABLE_PLAN: !Ref TablePlan
+          TABLE_COUNTERS: !Ref TableCounters
+
+  SummaryRefreshSchedulerDlq:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: cattle-summary-refresh-scheduler-dlq
+      MessageRetentionPeriod: 1209600
+
+  SummaryRefreshSchedulerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: summary-refresh-scheduler-targets
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: !GetAtt SummaryRefreshSchedulerFunction.Arn
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                Resource: !GetAtt SummaryRefreshSchedulerDlq.Arn
+
+  SummaryRefreshDailySchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Description: Daily refresh of bovine summaries at 3 AM
+      FlexibleTimeWindow:
+        Mode: 'OFF'
+      ScheduleExpression: !Ref SummaryRefreshScheduleExpression
+      ScheduleExpressionTimezone: !Ref AppTimezone
+      State: ENABLED
+      Target:
+        Arn: !GetAtt SummaryRefreshSchedulerFunction.Arn
+        RoleArn: !GetAtt SummaryRefreshSchedulerExecutionRole.Arn
+        Input: '{"source":"eventbridge.scheduler","job":"summary-refresh"}'
+        DeadLetterConfig:
+          Arn: !GetAtt SummaryRefreshSchedulerDlq.Arn
+        RetryPolicy:
+          MaximumEventAgeInSeconds: 3600
+          MaximumRetryAttempts: 2
+
 Outputs:
   CattleBovinesFunctionsAwsApi:
     Description: URL for application
     Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/ping'
     Export:
       Name: CattleBovinesFunctionsAwsApi
+
+  SummaryRefreshSchedulerFunctionName:
+    Description: Nombre de la Lambda dedicada al refresh diario de summaries
+    Value: !Ref SummaryRefreshSchedulerFunction
+
+  SummaryRefreshSchedulerDlqArn:
+    Description: ARN de la cola DLQ del scheduler de refresh summary
+    Value: !GetAtt SummaryRefreshSchedulerDlq.Arn

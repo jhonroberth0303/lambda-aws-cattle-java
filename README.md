@@ -8,7 +8,7 @@ Backend serverless del ecosistema Cattle para gestión de bovinos, ordeño, potr
 |---|---|
 | Java 21 | Runtime |
 | Spring Boot 3.4.5 | API y configuración |
-| AWS Lambda | Ejecución serverless |
+| AWS Lambda | Ejecución serverless HTTP y jobs programados |
 | API Gateway | Publicación HTTP |
 | DynamoDB Enhanced Client | Persistencia |
 | Amazon Bedrock | Chatbot y Knowledge Base |
@@ -76,6 +76,7 @@ sam local start-api
 - Rate limiting por finca.
 - Sanitización de input y auditoría para endpoints de chatbot.
 - CORS configurable por variable de entorno.
+- Scheduler diario de `summary` a las `3:00 AM` con `EventBridge Scheduler` y Lambda dedicada.
 - Swagger y endpoints de health públicos según configuración de seguridad actual.
 
 ## Variables de entorno relevantes
@@ -89,6 +90,7 @@ sam local start-api
 | `BEDROCK_MODEL_ID` | Modelo de Bedrock para chat |
 | `BEDROCK_KB_ID` | ID de Knowledge Base |
 | `BEDROCK_KB_MODEL_ARN` | Modelo usado por Knowledge Base |
+| `APP_TIMEZONE` | Zona horaria operativa y del scheduler diario |
 | `TABLE_BOVINES` | Tabla de bovinos |
 | `TABLE_FARM_MILKING` | Tabla de ordeño |
 | `TABLE_PASTURE` | Tabla de potreros |
@@ -100,6 +102,7 @@ sam local start-api
 - [Índice de documentación](docs/README.md)
 - [Índice de arquitectura](docs/arquitectura/index.md)
 - [Arquitectura base del backend](docs/arquitectura/architecture-cattle-lambda-function.md)
+- [Scheduler de refresh de summary](docs/arquitectura/summary-refresh-scheduler.md)
 - [Arquitectura del chatbot integrado](docs/arquitectura/chatbot/ARCHITECTURE.md)
 
 ## Notas importantes

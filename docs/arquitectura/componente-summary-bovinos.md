@@ -139,6 +139,14 @@ Implicación: no todo cambio en `BovineSummaryDTO` rompe la tarjeta, pero sí ro
 3. Intenta reconstruir cada summary.
 4. Guarda el lote disponible y devuelve el conteo actualizado.
 
+### Regeneración batch programada
+
+1. EventBridge Scheduler dispara la Lambda dedicada `cattle-summary-refresh-scheduler`.
+2. `SummaryRefreshSchedulerHandler` invoca `BovineSummaryService.refreshAllSummaries()`.
+3. El servicio recorre todos los bovinos y reconstruye el lote `SUMMARY`.
+4. La ejecución registra inicio, fin, cantidad procesada y falla si agota el flujo batch.
+5. EventBridge Scheduler aplica reintentos y deriva a DLQ cuando corresponde.
+
 ## Dependencias del componente
 
 - `BovineRepository`
@@ -157,6 +165,7 @@ Conclusión: `summary` es una proyección derivada con reglas de negocio relevan
 
 - el endpoint `/summary/categories` llama internamente a `refreshAllSummaries()`, así que su nombre público no refleja con precisión el comportamiento implementado
 - la proyección `SUMMARY` puede divergir de la identidad base si no se ejecuta regeneración tras cambios relevantes
+- la automatización diaria reduce esa deriva, pero no sustituye refresh puntual cuando el negocio necesite consistencia inmediata
 - el frontend principal de bovinos depende de esta proyección para listar, por lo que una degradación aquí afecta la entrada al dominio completo
 - el componente no está aislado en infraestructura propia; comparte tabla y ciclo operativo con el dominio bovino principal
 - parte de la semántica visual del frontend sigue dependiendo de combinaciones entre `productiveState`, fechas y fallbacks locales, por lo que pequeños cambios en datos calculados pueden alterar el comportamiento del card sin cambiar el contrato HTTP formal

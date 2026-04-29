@@ -9,7 +9,7 @@ Esta documentación se limita a la arquitectura base comprobable en el repositor
 ## Evidencia revisada
 
 - `build.gradle`: runtime Java 21, Spring Boot 3.4.5, AWS SDK, Bedrock, Security, OpenAPI, MapStruct, Lombok, JUnit y Testcontainers.
-- `template.yml`: despliegue SAM de una Lambda Java 21 detrás de API Gateway con variables de entorno para CORS, seguridad, rate limit y Bedrock.
+- `template.yml`: despliegue SAM de una Lambda Java HTTP detrás de API Gateway y una Lambda Java programada para refresh diario de summaries.
 - `src/main/resources/application.properties`: configuración de CORS, JWT, Swagger y feature toggle de seguridad.
 - `src/main/java/com/cattle/StreamLambdaHandler.java`: punto de entrada Lambda con `aws-serverless-java-container-springboot3`.
 - `src/main/java/com/cattle/config/SecurityConfig.java`: autorización HTTP y activación condicional de seguridad.
@@ -46,7 +46,7 @@ No es solo una Lambda delgada de passthrough. El código refleja una capa de neg
 
 ## Patrón arquitectónico principal
 
-El patrón dominante es una arquitectura por capas montada sobre una única función Lambda.
+El patrón dominante es una arquitectura por capas montada sobre una Lambda HTTP principal y una Lambda programada especializada para mantenimiento batch de summaries.
 
 Capas visibles:
 
@@ -63,11 +63,15 @@ Además, el módulo de chatbot introduce servicios especializados para intenció
 ### 1. Adaptador serverless
 
 - `src/main/java/com/cattle/StreamLambdaHandler.java`
+- `src/main/java/com/cattle/SummaryRefreshSchedulerHandler.java`
 - `src/main/java/com/cattle/Application.java`
 
-Responsabilidad: traducir la invocación de AWS Lambda a una aplicación Spring Boot usando `SpringBootLambdaContainerHandler`.
+Responsabilidades:
 
-Implicación operativa: el servicio depende de cold starts de Java y del tiempo de inicialización del contenedor Spring.
+- `StreamLambdaHandler`: traducir requests HTTP de API Gateway a una aplicación Spring Boot usando `SpringBootLambdaContainerHandler`
+- `SummaryRefreshSchedulerHandler`: atender eventos programados del scheduler diario y delegar el refresh batch de summaries al servicio de negocio
+
+Implicación operativa: el servicio depende de cold starts de Java y del tiempo de inicialización del contenedor Spring tanto para tráfico HTTP como para el job batch diario.
 
 ### 2. Capa HTTP
 
@@ -188,8 +192,10 @@ Contratos confirmados en código:
 
 - AWS Lambda como cómputo
 - API Gateway REST tipo proxy
+- EventBridge Scheduler para el refresh diario de `summary`
+- SQS DLQ para eventos programados fallidos del scheduler de `summary`
 - IAM Role con permisos sobre CloudWatch, DynamoDB y Bedrock
-- variables de entorno para CORS, toggle de seguridad, rate limit y modelo de Bedrock
+- variables de entorno para CORS, toggle de seguridad, rate limit, modelo de Bedrock y zona horaria de aplicación
 
 ### Integraciones de datos
 
@@ -211,7 +217,7 @@ El backend también usa la tabla de bovinos para múltiples vistas o perfiles ad
 
 ### Despliegue
 
-`template.yml` define una única función:
+`template.yml` define dos funciones:
 
 - nombre: `cattle-lambda-function`
 - runtime: `java21`
@@ -220,12 +226,20 @@ El backend también usa la tabla de bovinos para múltiples vistas o perfiles ad
 - timeout: `30 s`
 - evento: `/{proxy+}` con método `any`
 
+- nombre: `cattle-summary-refresh-scheduler`
+- runtime: `java21`
+- handler: `com.cattle.SummaryRefreshSchedulerHandler::handleRequest`
+- memoria: `1024 MB`
+- timeout: `300 s`
+- evento: invocación desde `AWS::Scheduler::Schedule` diario con zona horaria explícita
+
 ### Configuración operativa visible
 
 Variables configuradas en SAM:
 
 - `BEDROCK_MODEL_ID`
 - `BEDROCK_KB_MODEL_ARN`
+- `APP_TIMEZONE`
 - `CORS_ALLOWED_ORIGINS`
 - `SECURITY_ENABLED`
 - `RATE_LIMIT_PER_HOUR`
@@ -241,7 +255,7 @@ Configuración relevante en propiedades:
 
 ## Decisiones arquitectónicas relevantes
 
-- Ejecutar todo el backend como una sola Lambda con un único API Gateway proxy.
+- Ejecutar el backend HTTP en una Lambda principal y el refresh diario de summary en una Lambda programada dedicada.
 - Usar Spring Boot completo en serverless para conservar el modelo tradicional de controladores, seguridad y DI.
 - Mantener separación por capas para que la lógica de dominio no quede atrapada en controladores o repositorios.
 - Integrar chatbot y knowledge base dentro del mismo backend, reutilizando seguridad y contexto de finca.
@@ -254,7 +268,7 @@ Configuración relevante en propiedades:
 - `SecurityConfig` protege `/milking/**`, pero el controlador real usa `/site/{siteId}/milking/**`. Esa discrepancia puede dejar desalineada la seguridad respecto a las rutas reales.
 - El template SAM no crea tablas DynamoDB; la arquitectura depende de infraestructura previa o administrada por fuera de este repositorio.
 - La documentación raíz `README.md` del backend contiene afirmaciones que no coinciden completamente con el árbol actual y no debe usarse como única fuente de verdad.
-- Al empaquetar Spring Boot dentro de una sola Lambda Java, el riesgo de cold start y crecimiento del artefacto aumenta frente a un diseño más segmentado.
+- Al empaquetar Spring Boot dentro de Lambdas Java, el riesgo de cold start y crecimiento del artefacto sigue siendo alto frente a un diseño más segmentado.
 
 ## Siguiente recomendación
 

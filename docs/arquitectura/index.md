@@ -22,6 +22,7 @@ El documento principal resume:
 ### Componentes
 
 - [Componente summary de bovinos](./componente-summary-bovinos.md)
+- [Scheduler de refresh de summary](./summary-refresh-scheduler.md)
 
 ### Flujos
 

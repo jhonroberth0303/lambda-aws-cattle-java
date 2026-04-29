@@ -49,6 +49,7 @@ La carpeta `summary/` concentra historias vivas del slice de resumen consolidado
 Historias disponibles:
 
 - `HU-20260428-deuda-tecnica-summary.md`
+- `HU-20260428-schedulersummary-refresh.md`
 
 ### Eventos Bovinos
 
