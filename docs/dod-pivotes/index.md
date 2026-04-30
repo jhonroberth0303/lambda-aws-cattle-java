@@ -1,263 +1,145 @@
-# ✅ Definition of Done (DoD) - Proyecto Cattle
+# Administracion de Pivotes DoD - Proyecto Cattle
 
-**Fecha**: 2026-01-09 | **Versión**: 1.0
+## Objetivo
 
-## 🎯 Objetivo
+Definir como se administran los pivotes de Definition of Done para cambios en `cattle-front` y `lambda-aws-cattle-java` usando criterios verificables con el repositorio real.
 
-Establecer criterios claros de aceptación para que una tarea se considere **COMPLETADA** y lista para:
-- Integración a rama develop
-- Despliegue a producción
-- Cierre en jira
+En esta carpeta, un pivote es un checkpoint de calidad o trazabilidad que debe quedar resuelto antes de dar por cerrado un cambio.
 
----
+## Evidencia revisada
 
-## 📋 Tabla de Contenidos
+- `docs/estandares-codigo/index.md`
+- `docs/estandares-codigo/frontend-standards.md`
+- `docs/estandares-codigo/backend-standards.md`
+- `cattle-front/package.json`
+- `cattle-front/eslint.config.js`
+- `lambda-aws-cattle-java/build.gradle`
 
-1. [DoD Global](#dod-global)
-2. [DoD por Tipo de Tarea](#dod-por-tipo-de-tarea)
-3. [Pivotes (Checkpoints Críticos)](#pivotes-checkpoints-críticos)
-4. [Matriz de Aceptación](#matriz-de-aceptación)
-5. [Proceso de Verificación](#proceso-de-verificación)
-6. [Excepciones y Waivers](#excepciones-y-waivers)
+## Documentos de esta carpeta
 
----
+- `guia-verificacion.md`: cómo comprobar pivotes y qué evidencia aceptar
+- `pivotes-por-tipo.md`: pivotes mínimos por tipo de cambio
+- `plantilla-cierre-historia-pr.md`: plantilla reutilizable para cierre de historia o PR
 
-## DoD Global
+## Principios de administracion
 
-**Aplica a TODOS los tipos de tareas**
+1. Los pivotes son artefactos vivos, no una lista ceremonial.
+2. Un pivote solo cuenta si tiene evidencia verificable.
+3. No se exigen gates que el repositorio no demuestra poder ejecutar hoy.
+4. Si hay excepción, debe quedar anotado el riesgo y la compensación.
+5. Si el cambio modifica comportamiento real, también debe evaluarse el impacto documental.
 
-### ✅ Checklist Obligatorio
+## Pivotes globales
 
-```
-CÓDIGO
-☐ Código escrito en rama feature/ISSUE-XX
-☐ Sigue estándares del proyecto (ESLint/Checkstyle)
-☐ No tiene errores de linting (warnings = fail)
-☐ Sin código muerto o comentarios innecesarios
-☐ Nombres de variables/funciones en inglés y claros
-☐ Máximo complejidad ciclomática = 10
-☐ Máximo anidación = 3 niveles
-☐ Sin magic numbers (usar constantes)
-☐ Sin secrets/passwords en código
-☐ Cambios revisados por pair programming o code review
+Estos pivotes aplican a cualquier cambio de código o documentación técnica relevante.
 
-TESTING
-☐ Tests unitarios escritos (mínimo 75% coverage)
-☐ Tests integración si aplica (75%+ coverage)
-☐ Todos los tests pasan (CI/CD green)
-☐ Casos de error cubiertos
-☐ Edge cases considerados
-☐ Mocks/fixtures usados apropiadamente
-☐ Performance tests si cambios de perf
+### Pivote 1. Alcance claro
 
-DOCUMENTACIÓN
-☐ JSDoc/JavaDoc completo (parámetros, retorno, excepciones)
-☐ Comentarios en lógica compleja (>5 líneas)
-☐ README actualizado si aplica
-☐ APIs documentadas (parámetros, ejemplos)
-☐ Migración documentada (si cambios BD)
-☐ CHANGELOG.md actualizado
+Debe quedar claro:
 
-GIT & VERSIONADO
-☐ Commit messages en Conventional Commits format
-☐ Mínimo 2 commits (no single mega-commit)
-☐ Historia de git limpia (sin merge commits innecesarios)
-☐ PRs con descripción clara (mínimo 100 palabras)
-☐ Linked a issue JIRA (#ISSUE-XX)
-☐ Todos los comentarios de review resueltos
+- qué se cambia
+- por qué se cambia
+- qué módulo o repositorio toca
+- qué riesgo principal introduce
 
-SEGURIDAD
-☐ Validación de inputs (Frontend y Backend)
-☐ Autorización verificada (si aplica)
-☐ Injection attacks prevención (SQL, JS)
-☐ Secrets en variables de entorno
-☐ No secrets en .env.example
-☐ Passwords hasheados (si aplica)
-☐ CORS configurado (si backend)
+Evidencia válida:
 
-PERFORMANCE
-☐ Sin N+1 queries
-☐ Lazy loading implementado (si aplica)
-☐ Caching considerado
-☐ Bundle size no aumentó >50KB
-☐ Time to interactive aceptable (<3s)
-☐ Lighthouse score > 80 (si frontend)
-☐ Memory leaks descartados
+- descripción de PR
+- historia o incidente
+- documento técnico asociado
+- mensaje de trabajo claramente trazable
 
-CALIDAD
-☐ No tiene TODO/FIXME sin contexto
-☐ Errores manejados apropiadamente
-☐ Respuestas HTTP apropiadas
-☐ Timezones considerados (si aplica)
-☐ Localization considerado (i18n)
-☐ Accessibility (a11y) si UI
-☐ Mobile responsive (si UI)
+### Pivote 2. Patrón correcto
 
-CONTROL DE CALIDAD
-☐ Funcionalmente correcto (tester validation)
-☐ Aceptación del usuario (si aplica)
-☐ Regresiones descartadas (test suite completo)
-☐ Cumple con el user story/acceptance criteria
-☐ Demostrable en ambiente de staging
-☐ Screenshots/videos si UI changes
-```
+El cambio debe respetar el patrón dominante del slice afectado.
 
-### 🔍 Verificación
+Ejemplos:
 
-**Quién verifica**: Tech Lead + Code Reviewer
-**Cuándo**: Antes de merge a develop
-**Evidencia**: PR checklist completado + CI/CD green
+- frontend por dominio, componente, hook o servicio ligero
+- backend por capas `Controller -> Processor -> Service -> Repository`
 
----
+Evidencia válida:
 
-## DoD por Tipo de Tarea
+- diff del cambio
+- revisión del archivo tocado
+- referencia al estándar aplicable
 
-### 📝 TIPO: Feature (Nueva Funcionalidad)
+### Pivote 3. Validación ejecutable
 
-**Además de DoD Global**:
+El cambio debe tener al menos una validación proporcional al riesgo.
 
-```
-ANÁLISIS
-☐ Story tiene aceptación criteria clara
-☐ Dependencias identificadas
-☐ Impact analysis completado
-☐ Estimación realista (story points)
-☐ Riesgos documentados
+Validaciones reales observadas en este workspace:
 
-IMPLEMENTACIÓN
-☐ Todos los acceptance criteria cumplidos
-☐ Backend endpoint implementado y probado
-☐ Frontend UI completado y funcional
-☐ Integración entre capas validada
-☐ APIs contract establecido
-☐ Business logic implementada correctamente
+- `npm run lint`
+- `npm run build`
+- `gradlew test`
+- `gradlew build`
+- chequeo de errores del editor sobre archivos tocados
 
-TESTING ESPECÍFICO
-☐ User flow end-to-end (E2E)
-☐ Casos positivos y negativos cubiertos
-☐ Boundary conditions probadas
-☐ Performance baseline establecido
-☐ Load testing (si aplica)
+Si no existe validación ejecutable razonable, debe dejarse explícito.
 
-DOCUMENTACIÓN ESPECÍFICA
-☐ User guide/tutorial creado (si complejo)
-☐ Admin guide (si configuración)
-☐ API documentation (OpenAPI/Swagger)
-☐ Screenshots en README
-☐ Video demo (si UI compleja)
+### Pivote 4. Riesgos explícitos
 
-DEMOSTRACIÓN
-☐ Feature demostrable a stakeholders
-☐ En ambiente staging funcional
-☐ Aceptación del PO registrada
-☐ Feedback incorporado si aplicable
+Si queda una deuda abierta, debe anotarse junto con su impacto.
 
-TIMING
-☐ Completada en sprint estimado
-☐ Entrega a tiempo (no spillover)
-```
+Ejemplos válidos:
 
-**Ejemplo**: Feature "Agregar formulario de bovino"
-- ✅ Form component creado + validaciones
-- ✅ API endpoint POST /bovineIdentityItems implementado
-- ✅ Tests unitarios e integración (80%+ coverage)
-- ✅ UI responsive en mobile
-- ✅ User can create bovino → demostrado
-- ✅ PO acepta
+- endpoint hardcodeado
+- ausencia de lint para `ts/tsx`
+- documentación legacy aún no saneada
+- dependencia de variable de entorno no modelada en SAM
 
-### 🐛 TIPO: Bug (Corrección)
+### Pivote 5. Impacto documental
 
-**Además de DoD Global**:
+Si el cambio altera contratos, journeys, seguridad, configuración o flujos de negocio, debe verificarse si `docs/` necesita actualización.
 
-```
-ANÁLISIS
-☐ Causa raíz identificada
-☐ Reproducción documentada
-☐ Severidad categorizada
-☐ Impacto evaluado
+## Estado de un pivote
 
-IMPLEMENTACIÓN
-☐ Bug fix implementado
-☐ Causa raíz resuelta (no patch superficial)
-☐ No introduce regressions
-☐ Solución testeable
+Cada pivote debe marcarse en uno de estos estados:
 
-TESTING ESPECÍFICO
-☐ Test que reproduce bug (red test primero)
-☐ Test pasa post-fix (green)
-☐ Casos similares descartados (regression)
-☐ Performance no degradada
-☐ Ambiente production simulado si es crítico
+- `cumplido`
+- `cumplido con observación`
+- `pendiente`
+- `exceptuado`
 
-DOCUMENTACIÓN
-☐ Commit message explica causa y solución
-☐ Link a bug report incluído
-☐ Cambios en comportamiento documentados
-☐ Workarounds descartados si existían
+## Regla para excepciones
 
-VALIDACIÓN
-☐ Reproduce en production (si aplica)
-☐ Fix validado en staging por QA
-☐ Síntomas desaparecidos
-☐ Side effects evaluados
+Un pivote puede exceptuarse solo si se documenta:
 
-TIMING
-☐ P0 critical: < 24h
-☐ P1 high: < 3 días
-☐ P2 medium: < 1 semana
-☐ P3 low: próximo sprint
-```
+- qué pivote no se cumple
+- por qué no se cumple ahora
+- qué riesgo deja abierto
+- qué acción compensatoria se tomó
 
-**Ejemplo**: Bug "Mastitis no se detecta correctamente"
-- ✅ Causa: lógica de comparación con parseInt() en lugar de float
-- ✅ Fix: usar parseFloat() + umbral correcto
-- ✅ Test: new test que valida detección con 7.2L vs umbral 7.0L
-- ✅ Regression: otros tests de detección siguen pasando
-- ✅ QA valida: mastitis detectada correctamente en staging
+## Evidencia mínima esperada
 
-### 🔧 TIPO: Refactoring
+### Frontend
 
-**Además de DoD Global**:
+- diff comprensible
+- validación con `npm run lint` o justificación si no aplica
+- evidencia de que no se mezcló lectura con escritura o summary con CRUD
+- actualización documental si cambió navegación, contrato o integración
 
-```
-ANÁLISIS
-☐ Razón clara para refactoring
-☐ Beneficios cuantificables (perf, mantenibilidad)
-☐ Impact analysis completado
-☐ Alcance bien definido (no scope creep)
-☐ Versioning strategy si breaking changes
+### Backend
 
-IMPLEMENTACIÓN
-☐ Comportamiento externo NO cambia
-☐ Arquitectura/patrón mejorado
-☐ Código más legible/mantenible
-☐ Sin cambios funcionales
-☐ Métodos private si helpers
+- diff comprensible
+- validación con `gradlew test`, `gradlew build` o check razonable equivalente
+- errores manejados en la capa correcta
+- actualización documental si cambió endpoint, seguridad, integración o proyección
 
-TESTING
-☐ Tests PRE-refactoring existen
-☐ Todos los tests pasan POST-refactoring
-☐ Cobertura no disminuye
-☐ Performance benchmark (antes/después)
-☐ Behavior idéntico validado
+## Flujo sugerido de administración
 
-DOCUMENTACIÓN
-☐ Patrón arquitectónico documentado (si nuevo)
-☐ Razón del refactor en commit message
-☐ Cambios de API documentados (si aplica)
-☐ Migration guide si breaking changes
-☐ Deprecation warnings si needed
+1. Identificar el tipo de cambio.
+2. Ir a `pivotes-por-tipo.md`.
+3. Ejecutar la verificación usando `guia-verificacion.md`.
+4. Registrar excepciones y riesgos si existen.
+5. Cerrar el cambio solo cuando los pivotes críticos estén en `cumplido` o `cumplido con observación` bien justificada.
 
-VALIDACIÓN
-☐ Cobertura >= cobertura anterior
-☐ Performance mejorada o igual
-☐ Complejidad reducida
-☐ Duplicación de código reducida
-☐ Métricas de código mejoraron
+## Qué no debe hacerse
 
-TIMING
-☐ Refactor completado sin spillover
-☐ Technical debt reducida
+- exigir Maven, Checkstyle, SonarQube o JIRA como gate automático si el repo no los prueba como flujo activo
+- marcar un pivote como cumplido solo por intención verbal
+- tratar una checklist heredada como fuente de verdad por encima del código vigente
 ```
 
 **Ejemplo**: Refactoring "Simplificar BovinesService"

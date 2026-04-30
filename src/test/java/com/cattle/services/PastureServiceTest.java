@@ -3,6 +3,7 @@ package com.cattle.services;
 import com.cattle.config.LambdaContext;
 import com.cattle.entities.Pasture;
 import com.cattle.events.EntityPatch;
+import com.cattle.exceptions.ProcessingException;
 import com.cattle.exceptions.RepositoryException;
 import com.cattle.exceptions.ServiceException;
 import com.cattle.repository.PastureRepository;
@@ -119,6 +120,15 @@ class PastureServiceTest {
         verify(pastureRepository, times(1)).findPastures(farmId);
     }
 
+    @Test
+    void findPastures_unexpectedException_throwsProcessingException() {
+        String farmId = "farm-001";
+        when(pastureRepository.findPastures(farmId)).thenThrow(new RuntimeException("boom"));
+
+        assertThrows(ProcessingException.class, () -> pastureService.getPastures(farmId));
+        verify(pastureRepository).findPastures(farmId);
+    }
+
     // ==================== applyPatch Tests ====================
 
     @Test
@@ -216,6 +226,23 @@ class PastureServiceTest {
     }
 
     @Test
+    void applyPatch_blankPk_throwsException() {
+        EntityPatch patch = EntityPatch.of();
+        patch.set("status", "EN_USO");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> pastureService.applyPatch("   ", patch));
+        assertTrue(exception.getMessage().contains("pk"));
+    }
+
+    @Test
+    void applyPatch_nullPatch_throwsException() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> pastureService.applyPatch("PASTURE#1", null));
+        assertTrue(exception.getMessage().contains("patch"));
+    }
+
+    @Test
     void applyPatch_repositoryException_throwsServiceException() {
         // Arrange
         String pk = "PASTURE#pasture-1";
@@ -227,6 +254,17 @@ class PastureServiceTest {
         // Act & Assert
         assertThrows(ServiceException.class, () -> pastureService.applyPatch(pk, patch));
         verify(pastureRepository, times(1)).applyPatch(pk, patch);
+    }
+
+    @Test
+    void applyPatch_unexpectedException_throwsProcessingException() {
+        String pk = "PASTURE#pasture-1";
+        EntityPatch patch = EntityPatch.of();
+        patch.set("status", "EN_USO");
+        doThrow(new RuntimeException("boom")).when(pastureRepository).applyPatch(pk, patch);
+
+        assertThrows(ProcessingException.class, () -> pastureService.applyPatch(pk, patch));
+        verify(pastureRepository).applyPatch(pk, patch);
     }
 
     @Test

@@ -1,40 +1,85 @@
-Contexto:
+# Contexto de Eventos Bovinos y Operativos
 
-Mantenimiento de praderas en 2026, Hoy 20 de enero de 2026 se hizo podda de colchones con guadaña y se hace encalado con cal dolomita de potrero, 1,2,3 y 7,8,9,10, se encala cada potrero con 42 kg de cal, compre 6 bultos de cal cada uno con peso de 50kg, a un precio de 21 mil pesos en San Bernardo en Agropecuaria Ordoñez, donde el señor Jhon Ordoñez cuyo numero de contacto es 3205404823. para este proceso se usa proteccion como tapabocas y guantes el señor Arnulfo cobró 50 mil pesos por el trabajo, fue un dia sin lluvia pero humedo y con nubocidad.
+## Propósito
 
-20/01/2026 se hace mantenimiento del cultivo de cuba 22, potreros 5 y 6, aplicando uera y aporcando, el pasto esta de al rededor de 50cm, pero siento que le falta encalar para bajar acidez, esto queda como una tarea pendiente por realizar, el area de dichos cultivos es de 10mx10m cada uno, se debe hacer calculo de la cantidad de cal que se debe comprar,. la tarea la hace el señor Arnulfo y costo 50 mil pesos.
+Este archivo funciona como insumo crudo curado para identificar eventos candidatos de negocio, mantenimiento y seguimiento zootécnico. No representa todavía un contrato técnico ni una estructura final de persistencia.
 
-El dia 13 de enero de 2026 adquiri un ternero de 8 meses cruce de brahman X pardo suizo, en buenas condiciones corporales, se compra a William Veterinario movil 3104137834 por el valor de $1.700.000 pesos y se paga 70 mil pesos a Wilmer primo movil 3125769623, El ternero lleva a hoy 7 días en mi ganaderia, se ve bien camina bien, pasta de forma normal, es activo, le gusta ir detras de la vaca 167 siempre, se sienta a rumiar a la misma hora que la vaca Jersey167, no tiene exceso de saliva o moco, le gusta la sal mas que la harina de maiz, se le dan 50 gramos de sal(ganasal leche, la cual no es recomendada y se cambiara a futuro por sal para terneros) y 50 gramos de harina de maiz mezclado, y aun no se deja tocar.
+## Alcance del contenido fuente
 
-El día 24 de Enero bañe las vacas 167, 173, 173 y 174 contra las garrapatas con Bañamax valor del medicamento  x 100 ml, este contiene cipermetrina al 15%, valor $30.000.
+El material original mezclaba:
 
-El día 06 de febrero se hace desparasitacion con bovex 25 Co (Albendazol 25% mas cobalto) contenido del bote 125ml, valor $25.000.
-Se desparasita animales 172,173,174 excepto 167 porque esta en segundo ciclo de preñez.
+- labores de potreros y cultivos
+- compras e insumos
+- seguimiento sanitario y reproductivo
+- mantenimiento de equipos
+- tareas pendientes y próximos eventos
 
-Extraer posibles eventos: Seguimiento a vaca preñada: una vaca jersey preñada dura 279 días segun la literatura, mi vaca fue servida el 6 de julio de 2025, a hoy aun no termina el segundo tercio y esta programada para el 10 de abril de 2026 segun los calculos, la vaca fue servida de un toro holstein comun, a hoy le estoy dejando de dar leche ganasal leche, solo le doy un poco de salvado, la vaca se repuso bien de su primer anterior parto, es una madre muy pegajosa con las cria muy dificil de hacer destete, me gustaria si las cosas se dan, manejar su proxima cria de la forma como se lleva en las lecherias profesionales, separada de la madre. la vaca la adquiri hace mas de un año y cuando llego a mi region sufrio fiebre de garrapatas pero finalmente se adapto. ella venia preñada pero desafortunadamente la cria murio horas despues de nacida, nacio durante la noche y no tuvo atencion inmediata, esto me pone triste y alerta, debo aprender a manejar este tipo de situaciones para no perder las crias. dias despues la vaca sufrio fiebre de leche, me gustaria saber manejar esto tambien ya que resulta costoso y arriego la salud de mis vacas si nolo puedo manejar. me gustaria mas adleante tener un grafico de linea de tiempo de secado, celo , preñez los meses o tercios de preñez , preparto, parto y postparto de cada vaca, incluso la curva de lactancia, para saber como debo alimentar y que de controles debo llevar a lo largo de dicha linea.
+## Eventos candidatos extraídos
 
-Evento de modelo de Pasticultura y potreros:
-Sembre ryegrass, avena forrajera y maiz el dia 22 de noviembre de 2025, la semilla de maiz comparada en el CAN PAsto fue muy mala, no salio, y se resembro un mes despues, la avena y el ryegrass va bien pero me temo que debo encalar los suelos para la proxima siembra por la presencia de hongos en el pasto cuba 22 y esto deja suceptible al ryegrass, la avena va bien pero deberia ya estar mejor, debo hacer una linea de tiempo estimado de produccion para cada uno de estos pastos, con fecha de siembra, que tipo de manejo al suelo se debe hacer y con que productos ojala lo mas organico posible, fechas de abonos sugeridos para aumentar produccion, aplicacion de foliares y fecha de cosecha, y conteo de toneladas. esto como contexto para mejorar y crecer en el tema de pasticultura.
+### 1. Mantenimiento de potreros
 
-El 25 de Enero de 2026 se compra crento corona, equilibrio, con fosforo total 3%, calcio total 31%, magnecio 15%, azufre total 3%, silicio total 15% y humedad maxima 3.5% con contenido de 50Kg cada bulto por valor de $48.000 c/u, compre 4 bultos. vendedor Jhon ordoñez, Agropecuaria Ordoñez  movil 3205404823
+- 2026-01-20: encalado con cal dolomita en potreros 001, 002, 003, 007, 008, 009 y 010
+- 2026-01-20: aporque y manejo de pasto de corte en potreros 005 y 006
+- 2026-02-06: aplicación de crento corona en potrero 004
 
-El 25 de enero de 2026 se compra fosforita o roca fosforica por valor de $35.000. bulto por 50kg, llamada tambien fosforita huila . vendedor Jhon ordoñez, Agropecuaria Ordoñez  movil 3205404823
+### 2. Manejo de cultivos y pasturas
 
-El día 20 de Enero se encala con cal dolomita potreros 001,002,003, (ryegrass) 007,008,009, 010 (kikuyo) cada uno con 42 kilogramos de cal dolomita se usan 6 bultos de 50 kg. mano se obra $45.000.
+- 2025-11-22: siembra inicial de ryegrass, avena forrajera y maíz
+- 2025-12 aproximado: resiembra de maíz por mala germinación inicial
+- seguimiento agronómico pendiente sobre encalado, hongos, fertilización y cronograma productivo
 
-El día 20 de enero de 2026 se aporca el pasto de corte potreros 005 y 006, valor mano de obra $45.000.
+### 3. Compras de insumos agropecuarios
 
-El dia 06 de febreo se hace aplicacion de crento corona por 20kg en el potrero 04 ryegrass. dia llivioso.
+- 2026-01-20: compra y uso de cal dolomita para encalado
+- 2026-01-25: compra de crento corona
+- 2026-01-25: compra de fosforita o roca fosfórica
 
-El 06 de febrero de 2026 se comra aceite 10w30 mobile $35.000 y  gasolina $16.000, y se hace mantenimiento a la PICA pastos penagos PP300, se lava la tolva, se afilan cuchillas y se hace cambio de aceite.
+### 4. Eventos sanitarios y de manejo bovino
 
-Proximos eventos: 
+- 2026-01-13: compra e ingreso de un ternero de 8 meses
+- 2026-01-24: baño garrapaticida a animales 167, 173 y 174
+- 2026-02-06: desparasitación de animales 172, 173 y 174; exclusión de 167 por condición reproductiva
 
-El 07 de febrero se aporcara el maiz por 700m2 y se aplicara silfato de amonio.
+### 5. Seguimiento reproductivo
 
-El 07 de febrero se aplicara crento al cultivo de moras.
+- vaca jersey servida el 2025-07-06 con fecha estimada de parto el 2026-04-10
+- interés explícito en una línea de tiempo reproductiva y de lactancia por animal
+- referencia histórica a fiebre de garrapatas, muerte de cría en parto previo y fiebre de leche
 
-Aplicar fosforo al pasto de los potreros 001,002,003,004, ryegrass.
+### 6. Mantenimiento de equipos
 
-Aplicar crento a cuba 22 de potreros 005 y 006.
+- 2026-02-06: mantenimiento de picapastos Penagos PP300 con lavado, afilado y cambio de aceite
 
+### 7. Próximos eventos declarados
+
+- 2026-02-07: aporque de maíz y aplicación de sulfato de amonio
+- 2026-02-07: aplicación de crento al cultivo de moras
+- aplicar fósforo en potreros 001, 002, 003 y 004
+- aplicar crento a Cuba 22 en potreros 005 y 006
+
+## Posibles categorías de evento
+
+Para una futura normalización técnica, este material sugiere al menos estas categorías:
+
+- `PASTURE_MAINTENANCE`
+- `CROP_MANAGEMENT`
+- `SUPPLY_PURCHASE`
+- `BOVINE_HEALTH`
+- `BOVINE_REPRODUCTIVE_TRACKING`
+- `EQUIPMENT_MAINTENANCE`
+- `PLANNED_TASK`
+
+## Gaps para convertirlo en modelo operativo
+
+- faltan identificadores formales por animal, potrero, cultivo y proveedor
+- varias fechas o cantidades requieren normalización
+- el texto mezcla hechos ejecutados, observaciones, preferencias y tareas futuras
+- no hay separación explícita entre evento observado y recomendación deseada
+
+## Uso recomendado
+
+Este archivo puede servir como base para:
+
+1. diseñar taxonomía de eventos rurales/bovinos
+2. preparar extracción estructurada desde texto libre
+3. definir qué parte del contexto va a historial operativo y cuál va a notas de seguimiento

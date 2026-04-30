@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * Tests unitarios para GlobalExceptionHandler
- * HU-002-pruebas-summary - Aumento de cobertura
+ * HU-20260428-deuda-tecnica-summary - Alineacion de cobertura y trazabilidad
  */
 @Tag("unit")
 @Tag("fast")

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import java.util.Collections;
@@ -29,7 +30,7 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
  * Tests unitarios para BovineSummaryService
- * HU-002-pruebas-summary
+ * HU-20260428-deuda-tecnica-summary
  * 
  * Cobertura objetivo: >= 80%
  */
@@ -243,6 +244,27 @@ class BovineIdentityItemSummaryServiceTest {
             assertThrows(ServiceException.class, () -> service.findAll());
             verify(lambdaContext).logException(any(), anyString());
         }
+
+        @Test
+        @DisplayName("Debe ordenar summaries con status OPEN al inicio")
+        void findAll_openStatus_returnsOpenFirst() {
+            BovineSummary closed = createTestSummary(167);
+            closed.setStatus("SOLD");
+            BovineSummary open = createTestSummary(168);
+            open.setStatus("OPEN");
+            BovineSummary unknown = createTestSummary(169);
+            unknown.setStatus(null);
+
+            when(summaryRepository.findAll()).thenReturn(List.of(closed, open, unknown));
+            when(mapper.toDTO(closed)).thenReturn(BovineSummaryDTO.builder().bovineId(167).status("SOLD").build());
+            when(mapper.toDTO(open)).thenReturn(BovineSummaryDTO.builder().bovineId(168).status("OPEN").build());
+            when(mapper.toDTO(unknown)).thenReturn(BovineSummaryDTO.builder().bovineId(169).status(null).build());
+
+            List<BovineSummaryDTO> result = service.findAll();
+
+            assertEquals(3, result.size());
+            assertEquals(168, result.get(0).getBovineId());
+        }
     }
 
     // ==================== findById Tests ====================
@@ -384,6 +406,100 @@ class BovineIdentityItemSummaryServiceTest {
                 () -> service.refreshSummary(bovineId));
             assertTrue(exception.getMessage().contains("Bovine not found"));
         }
+
+        @Test
+        @DisplayName("Debe conservar calvingDate cuando la preñez está cerrada")
+        void refreshSummary_closedPregnancy_setsCalvingDate() {
+            Integer bovineId = 170;
+            String pk = "BOVINE#" + bovineId;
+            BovineIdentityItem bovineIdentityItem = createTestBovine(bovineId);
+            ProfileLifecycle lifecycle = createTestLifecycle(pk);
+            ProfileReproductive reproductive = ProfileReproductive.builder()
+                    .pk(pk)
+                    .sk("PROFILE#REPRODUCTIVE")
+                    .currentPregnancyId("PREG#2025-01-10")
+                    .currentLactationId(null)
+                    .build();
+            ProfilePregnancy closedPregnancy = ProfilePregnancy.builder()
+                    .pk(pk)
+                    .sk("PREG#2025-01-10")
+                    .status("CLOSED")
+                    .expectedDueDate("2025-10-10")
+                    .calvingDate("2025-09-20")
+                    .build();
+            ArgumentCaptor<BovineSummary> summaryCaptor = ArgumentCaptor.forClass(BovineSummary.class);
+
+            when(bovineRepository.findById(bovineId)).thenReturn(Optional.of(bovineIdentityItem));
+            when(lifecycleRepository.findById(pk, "PROFILE#LIFECYCLE")).thenReturn(Optional.of(lifecycle));
+            when(reproductiveRepository.findById(pk, "PROFILE#REPRODUCTIVE")).thenReturn(Optional.of(reproductive));
+            when(pregnancyRepository.findById(pk, "PREG#2025-01-10")).thenReturn(Optional.of(closedPregnancy));
+            when(summaryRepository.save(any(BovineSummary.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(mapper.toDTO(any(BovineSummary.class))).thenReturn(createTestSummaryDTO(bovineId));
+            when(lifecycleRecalculationService.recalculate(any(), any())).thenReturn(
+                    new LifecycleRecalculationService.RecalculationResult(false, false, LifeStage.ADULT, BovineCategory.COW, null)
+            );
+            when(lifecycleRecalculationService.applyRecalculation(any(), any())).thenAnswer(inv -> inv.getArgument(0));
+
+            service.refreshSummary(bovineId);
+
+            verify(summaryRepository).save(summaryCaptor.capture());
+            assertEquals(Boolean.FALSE, summaryCaptor.getValue().getIsPregnant());
+            assertEquals("CLOSED", summaryCaptor.getValue().getPregnancyStatus());
+            assertEquals("2025-09-20", summaryCaptor.getValue().getCalvingDate());
+        }
+
+        @Test
+        @DisplayName("Debe usar lifecycle original cuando applyRecalculation retorna null")
+        void refreshSummary_nullRecalculation_usesOriginalLifecycle() {
+            Integer bovineId = 171;
+            String pk = "BOVINE#" + bovineId;
+            BovineIdentityItem bovineIdentityItem = createTestBovine(bovineId);
+            ProfileLifecycle lifecycle = ProfileLifecycle.builder()
+                    .pk(pk)
+                    .sk("PROFILE#LIFECYCLE")
+                    .status(LifecycleStatus.OPEN)
+                    .category(BovineCategory.HEIFER)
+                    .categorySource(Source.AUTO)
+                    .lifeStage(LifeStage.GROWER)
+                    .lifeStageSource(Source.AUTO)
+                    .enabled(false)
+                    .build();
+            ArgumentCaptor<BovineSummary> summaryCaptor = ArgumentCaptor.forClass(BovineSummary.class);
+
+            when(bovineRepository.findById(bovineId)).thenReturn(Optional.of(bovineIdentityItem));
+            when(lifecycleRepository.findById(pk, "PROFILE#LIFECYCLE")).thenReturn(Optional.of(lifecycle));
+            when(reproductiveRepository.findById(pk, "PROFILE#REPRODUCTIVE")).thenReturn(Optional.empty());
+            when(summaryRepository.save(any(BovineSummary.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(mapper.toDTO(any(BovineSummary.class))).thenReturn(createTestSummaryDTO(bovineId));
+            when(lifecycleRecalculationService.recalculate(any(), any())).thenReturn(
+                    new LifecycleRecalculationService.RecalculationResult(false, false, LifeStage.GROWER, BovineCategory.HEIFER, null)
+            );
+            when(lifecycleRecalculationService.applyRecalculation(any(), any())).thenReturn(null);
+
+            service.refreshSummary(bovineId);
+
+            verify(lifecycleRepository).save(same(lifecycle));
+            verify(summaryRepository).save(summaryCaptor.capture());
+            assertEquals("HEIFER", summaryCaptor.getValue().getCategory());
+            assertEquals("OPEN", summaryCaptor.getValue().getStatus());
+            assertEquals("GROWER", summaryCaptor.getValue().getLifeStage());
+            assertEquals(Boolean.FALSE, summaryCaptor.getValue().getEnabled());
+        }
+
+        @Test
+        @DisplayName("Debe traducir error de repositorio durante refreshSummary")
+        void refreshSummary_repositoryError_throwsServiceException() {
+            Integer bovineId = 172;
+            String pk = "BOVINE#" + bovineId;
+            BovineIdentityItem bovineIdentityItem = createTestBovine(bovineId);
+
+            when(bovineRepository.findById(bovineId)).thenReturn(Optional.of(bovineIdentityItem));
+            when(lifecycleRepository.findById(pk, "PROFILE#LIFECYCLE")).thenReturn(Optional.empty());
+            when(reproductiveRepository.findById(pk, "PROFILE#REPRODUCTIVE")).thenReturn(Optional.empty());
+            when(summaryRepository.save(any(BovineSummary.class))).thenThrow(new RepositoryException("save failed", null));
+
+            assertThrows(ServiceException.class, () -> service.refreshSummary(bovineId));
+        }
     }
 
     // ==================== refreshAllSummaries Tests ====================
@@ -433,6 +549,17 @@ class BovineIdentityItemSummaryServiceTest {
         }
 
         @Test
+        @DisplayName("Debe retornar 0 cuando la lista de bovinos está vacía")
+        void refreshAllSummaries_emptyList_returnsZero() {
+            when(bovineRepository.findAll()).thenReturn(Optional.of(Collections.emptyList()));
+
+            int result = service.refreshAllSummaries();
+
+            assertEquals(0, result);
+            verify(summaryRepository, never()).saveAll(anyList());
+        }
+
+        @Test
         @DisplayName("Debe continuar con otros bovinos si uno falla")
         void refreshAllSummaries_oneFailure_continuesWithOthers() {
             // Arrange
@@ -456,6 +583,14 @@ class BovineIdentityItemSummaryServiceTest {
             // Assert
             assertEquals(1, result);
             verify(lambdaContext, atLeastOnce()).logException(any(), anyString());
+        }
+
+        @Test
+        @DisplayName("Debe traducir error del repositorio principal en refreshAllSummaries")
+        void refreshAllSummaries_repositoryError_throwsServiceException() {
+            when(bovineRepository.findAll()).thenThrow(new RepositoryException("findAll failed", null));
+
+            assertThrows(ServiceException.class, () -> service.refreshAllSummaries());
         }
     }
 }

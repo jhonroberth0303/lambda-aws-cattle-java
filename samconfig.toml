@@ -14,7 +14,12 @@ parameter_overrides = """
   BedrockKnowledgeBaseModelArn="arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0" \
   CorsAllowedOrigins="http://localhost:3000,http://localhost:5173,https://ambitious-tree-021c81b10.4.azurestaticapps.net" \
   SecurityEnabled="false" \
-  RateLimitPerHour="100"
+  RateLimitPerHour="100" \
+  TableBovines="Bovines" \
+  TableFarmMilking="MilkingRecords" \
+  TablePasture="Pastures" \
+  TablePlan="Plans" \
+  TableCounters="counters"
 """
 image_repositories = []
 
@@ -30,7 +35,12 @@ parameter_overrides = """
   BedrockKnowledgeBaseModelArn="arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0" \
   CorsAllowedOrigins="http://localhost:3000,http://localhost:5173,https://ambitious-tree-021c81b10.4.azurestaticapps.net" \
   SecurityEnabled="false" \
-  RateLimitPerHour="100"
+  RateLimitPerHour="100" \
+  TableBovines="Bovines" \
+  TableFarmMilking="MilkingRecords" \
+  TablePasture="Pastures" \
+  TablePlan="Plans" \
+  TableCounters="counters"
 """
 
 [prod.deploy.parameters]
@@ -43,5 +53,10 @@ parameter_overrides = """
   BedrockKnowledgeBaseModelArn="arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0" \
   CorsAllowedOrigins="https://cattle-app.com,https://ambitious-tree-021c81b10.4.azurestaticapps.net" \
   SecurityEnabled="true" \
-  RateLimitPerHour="100"
+  RateLimitPerHour="100" \
+  TableBovines="Bovines" \
+  TableFarmMilking="MilkingRecords" \
+  TablePasture="Pastures" \
+  TablePlan="Plans" \
+  TableCounters="counters"
 """

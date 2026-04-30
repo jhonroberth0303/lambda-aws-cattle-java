@@ -1,61 +1,85 @@
-# 📋 Historias de Usuario - Cattle Backend
+# Historias de Usuario - lambda-aws-cattle-java
 
-**Última actualización**: 2026-02-03
+Este índice organiza los artefactos de `docs/stories/` y deja explícito qué superficies ya fueron alineadas con el código actual y cuáles siguen siendo principalmente históricas o candidatas a revisión adicional.
 
----
+## Estructura vigente
 
-## 📁 Organización
-
-```
+```text
 stories/
-├── README.md                # Este archivo
-├── bedrock/                 # HUs del módulo Chatbot IA
-└── estimaciones/            # Estimaciones técnicas y matrices
+├── README.md
+├── bedrock/
+├── cattle-pastures-milking/
+├── estimaciones/
+├── eventos-bovines/
+├── milking/
+└── summary/
 ```
 
----
+## Estado por carpeta
 
-## 🤖 Módulo Bedrock (Chatbot IA)
+### Bedrock
 
-| Historia | Descripción | Estado |
-|----------|-------------|--------|
-| [HU-BEDROCK-001](bedrock/HU-BEDROCK-001-IMPLEMENTACION.md) | Implementación chatbot Bedrock | ✅ Completada |
-| [HU-BEDROCK-002](bedrock/HU-BEDROCK-002-TESTING.md) | Testing y cobertura | ✅ Completada |
-| [HU-BEDROCK-003](bedrock/HU-BEDROCK-003-SEGURIDAD.md) | Seguridad y hardening | ✅ Completada |
-| [HU-BEDROCK-004](bedrock/HU-BEDROCK-004-DOCUMENTACION.md) | Documentación | ✅ Completada |
-| [HU-BEDROCK-AGENT-001](bedrock/HU-BEDROCK-AGENT-001-knowledge-base.md) | Knowledge Base | 📋 Refinada |
-| [HU-ASEGURAMIENTO-CALIDAD-001](bedrock/HU-ASEGURAMIENTO-CALIDAD-001.md) | Aseguramiento de calidad | 📋 Refinada |
+La carpeta `bedrock/` ya fue revisada y homogeneizada como conjunto de historias vivas. Sus artefactos principales están alineados con la arquitectura actual integrada en `lambda-aws-cattle-java`.
 
----
+Historias disponibles:
 
-## 📊 Estimaciones Técnicas
+- `HU-BEDROCK-001-IMPLEMENTACION.md`
+- `HU-BEDROCK-002-TESTING.md`
+- `HU-BEDROCK-003-SEGURIDAD.md`
+- `HU-BEDROCK-004-DOCUMENTACION.md`
+- `HU-BEDROCK-AGENT-001-knowledge-base.md`
+- `HU-ASEGURAMIENTO-CALIDAD-001.md`
 
-| Documento | Descripción |
-|-----------|-------------|
-| [INDEX.md](estimaciones/INDEX.md) | Índice de estimaciones |
-| [ESTIMACIONES-TECNICAS-25-HU.md](estimaciones/ESTIMACIONES-TECNICAS-25-HU.md) | Estimaciones para 25 HUs |
-| [MATRIZ-ASIGNACION-RECURSOS.md](estimaciones/MATRIZ-ASIGNACION-RECURSOS.md) | Asignación de recursos |
-| [MATRIZ-COMPLEJIDAD-DETALLADA.md](estimaciones/MATRIZ-COMPLEJIDAD-DETALLADA.md) | Análisis de complejidad |
-| [QUICK-REFERENCE-ESTIMACIONES.md](estimaciones/QUICK-REFERENCE-ESTIMACIONES.md) | Referencia rápida |
+### Milking
 
-### Historias de Potreros (Pastures)
+La carpeta `milking/` contiene historias específicas del dominio de lactancia. En la revisión rápida de esta pasada no apareció la misma deriva sistemática observada en Bedrock, pero no se ha hecho todavía una normalización completa de esos artefactos.
 
-| Historia | Descripción |
-|----------|-------------|
-| [PASTURES-HU-001](estimaciones/PASTURES-HU-001-post-eventos.md) | POST eventos |
-| [PASTURES-HU-002](estimaciones/PASTURES-HU-002-frontend-botones.md) | Frontend botones |
-| [PASTURES-HU-003](estimaciones/PASTURES-HU-003-detailpanel.md) | Panel de detalle |
-| [PASTURES-HU-004](estimaciones/PASTURES-HU-004-put-editar.md) | PUT editar |
-| [PASTURES-HU-005](estimaciones/PASTURES-HU-005-post-crear.md) | POST crear |
-| [PASTURES-HU-006](estimaciones/PASTURES-HU-006-modal-bloqueo.md) | Modal bloqueo |
-| [PASTURES-HU-007](estimaciones/PASTURES-HU-007-validaciones.md) | Validaciones |
-| [PASTURES-HU-008](estimaciones/PASTURES-HU-008-tests-engine.md) | Tests engine |
-| [PASTURES-HU-009](estimaciones/PASTURES-HU-009-tests-eta.md) | Tests ETA |
-| [PASTURES-HU-010](estimaciones/PASTURES-HU-010-calendario.md) | Calendario |
+Historias disponibles:
 
----
+- `HU-001-consulta-lactancias.md`
+- `HU-20260429-flujo-registro-lactancias.md`
 
-## 📝 Convenciones
+### Cattle Pastures Milking
 
-- Formato de nombre: `HU-MODULO-NNN-descripcion.md`
-- Estados: ✅ Completada | 🚧 En progreso | 📋 Refinada | ⏳ Pendiente
+La carpeta `cattle-pastures-milking/` concentra deuda técnica transversal de pruebas unitarias y cobertura para componentes backend de bovinos, potreros y lactancia cuando el alcance cruza más de un dominio y conviene gestionar la remediación como una única HU técnica.
+
+Historias disponibles:
+
+- `HU-20260428-deuda-tecnica-pu-cattle-pastures-milking.md`
+
+### Summary
+
+La carpeta `summary/` concentra historias vivas del slice de resumen consolidado de bovinos en backend. Debe usarse para registrar deuda técnica de pruebas, cobertura y consistencia entre controller, processor, service, repository, mapper, DTOs y entidades asociadas al flujo `SUMMARY`.
+
+Historias disponibles:
+
+- `HU-20260428-deuda-tecnica-summary.md`
+- `HU-20260428-schedulersummary-refresh.md`
+
+### Eventos Bovinos
+
+La carpeta `eventos-bovines/` existe en la estructura del repositorio y debe tratarse como superficie documental separada cuando se revisen historias del dominio bovino orientadas a eventos.
+
+### Estimaciones
+
+La carpeta `estimaciones/` concentra artefactos de planeación y backlog técnico. En esta revisión aparecieron varias señales de deriva documental, por ejemplo:
+
+- referencias a rutas o nombres de controladores antiguos
+- comandos de testing heredados
+- enlaces documentales que ya no coinciden con la estructura actual
+- supuestos operativos sobre tablas o endpoints que conviene revalidar
+
+Por eso debe leerse como material de planificación histórica o de trabajo, no como fuente arquitectónica principal sin contraste con el código actual.
+
+## Orden de lectura recomendado
+
+1. Si el tema es chatbot o Bedrock, empezar por `bedrock/`.
+2. Si el tema es summary de bovinos, revisar `summary/` y contrastar el estado real con `src/main/java/com/cattle/*Summary*` y `src/test/java/**/*Summary*.java`.
+3. Si el tema es arquitectura o contratos reales, contrastar siempre con `docs/arquitectura/`.
+4. Si el tema cae en `estimaciones/`, validar primero que el artefacto siga siendo coherente con el código antes de reutilizarlo para decisiones técnicas.
+
+## Criterio de mantenimiento
+
+- Las historias deben mantenerse como artefactos vivos con trazabilidad.
+- Cuando una historia mezcle contexto vigente con topología o endpoints legacy, debe corregirse o marcarse explícitamente como histórica.
+- `docs/arquitectura/` sigue siendo la fuente principal para arquitectura base; `docs/stories/` complementa esa visión desde el backlog y la entrega.

@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests unitarios para BovineSummaryMapper
- * HU-002-pruebas-summary
+ * HU-20260428-deuda-tecnica-summary
  * 
  * Cobertura objetivo: >= 80%
  */

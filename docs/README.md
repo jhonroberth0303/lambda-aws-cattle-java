@@ -1,142 +1,68 @@
-# 📚 Documentación - Cattle Backend (Lambda Function)
+# Documentación - lambda-aws-cattle-java
 
-**Última actualización**: 2026-02-03  
-**Proyecto**: cattle-lambda-function  
-**Stack**: Java 21 + Spring Boot 3.4.5 + AWS Lambda + DynamoDB
+Este directorio reúne la documentación operativa y arquitectónica del backend serverless `lambda-aws-cattle-java`.
 
----
+## Punto de entrada recomendado
 
-## 📁 Estructura de Documentación
+1. [Índice de arquitectura](./arquitectura/index.md)
+2. [Arquitectura base del backend](./arquitectura/architecture-cattle-lambda-function.md)
+3. Dominio específico: chatbot, eventos, modelo de negocio o datos
 
-```
+## Estructura vigente
+
+```text
 docs/
-├── README.md                         # Este archivo - Índice principal
-│
-├── arquitectura/                     # 🏗️ Arquitectura del sistema
-│   ├── index.md                      # GPS arquitectónico principal
-│   ├── architecture-cattle-lambda-function.md  # Detalle del componente backend
-│   ├── eventos/                      # Sistema de eventos
-│   │   ├── index.md
-│   │   ├── events-overview.md
-│   │   ├── sealed-interface-pattern.md
-│   │   ├── generic-events-builder.md
-│   │   └── entity-patch-pattern.md
-│   ├── chatbot/                      # Arquitectura Bedrock Chatbot
-│   │   ├── ARCHITECTURE.md
-│   │   ├── architecture-diagram.puml
-│   │   └── GUIA-INTEGRACION-CHATBOT-DYNAMODB.md
-│   └── diagramas/                    # Diagramas PlantUML generales
-│
-├── modelo-negocio/                   # 📊 Flujos y reglas de negocio
-│   ├── index.md                      # Índice de flujos
-│   ├── flujo-bovineIdentityItems.md              # Ciclo de vida bovino
-│   ├── flujo-pastures.md             # Gestión de potreros
-│   ├── flujo-milking.md              # Producción lechera
-│   ├── bovineIdentityItems/                      # Detalle módulo bovinos
-│   │   ├── index.md
-│   │   ├── bovineIdentityItems-overview.md
-│   │   ├── components-frontend.md
-│   │   └── implementation-guide.md
-│   ├── pastures/                     # Detalle módulo potreros
-│   │   ├── index.md
-│   │   ├── pastures-overview.md
-│   │   ├── events-architecture.md
-│   │   ├── components-frontend.md
-│   │   ├── implementation-guide.md
-│   │   └── tasks-pending.md
-│   └── milking/                      # Detalle módulo lactancia
-│       ├── index.md
-│       ├── milking-overview.md
-│       ├── components-frontend.md
-│       └── implementation-guide.md
-│
-├── modelos-datos/                    # 🗄️ Diseño de datos
-│   ├── analysis-table-design.md      # Diseño de tablas DynamoDB
-│   └── lifecycle-model.md            # Modelo ciclo de vida bovino
-│
-├── bases-conocimiento/               # 🧠 Knowledge Base para IA
-│   ├── cattle.csv                    # Datos consolidados
-│   └── knowledge-base/               # CSVs temáticos
-│       ├── 01_kb_sanidad.csv
-│       ├── 02_kb_nutricion.csv
-│       ├── 03_kb_pasticultura.csv
-│       ├── 04_kb_potreros_rotacion.csv
-│       ├── 05_kb_normativas.csv
-│       ├── 06_kb_faq_app.csv
-│       └── 07_kb_lecciones_aprendidas.csv
-│
-├── estandares-codigo/                # 📏 Estándares de desarrollo
-│   ├── index.md
-│   ├── backend-standards.md
-│   └── frontend-standards.md
-│
-├── dod-pivotes/                      # ✅ Definition of Done
-│   ├── index.md
-│   ├── guia-verificacion.md
-│   └── pivotes-por-tipo.md
-│
-├── stories/                          # 📋 Historias de usuario
-│   ├── README.md                     # Índice y estado de HUs
-│   ├── bedrock/                      # HUs del chatbot
-│   │   ├── HU-BEDROCK-001-IMPLEMENTACION.md
-│   │   ├── HU-BEDROCK-002-TESTING.md
-│   │   ├── HU-BEDROCK-003-SEGURIDAD.md
-│   │   ├── HU-BEDROCK-004-DOCUMENTACION.md
-│   │   └── HU-BEDROCK-AGENT-001-knowledge-base.md
-│   ├── pastures/                     # HUs de potreros
-│   │   ├── HU-INDEX.md
-│   │   └── HU-PASTURES-001-backend-post-eventos.md
-│   └── estimaciones/                 # Estimaciones técnicas
-│       ├── ESTIMACIONES-TECNICAS-25-HU.md
-│       ├── MATRIZ-ASIGNACION-RECURSOS.md
-│       ├── MATRIZ-COMPLEJIDAD-DETALLADA.md
-│       └── QUICK-REFERENCE-ESTIMACIONES.md
-│
-└── changelog/                        # 📝 Registro de cambios
-    └── MIGRATION-BEDROCK-COMPLETED.md
+├── README.md
+├── arquitectura/
+├── bases-conocimiento/
+├── changelog/
+├── dod-pivotes/
+├── estandares-codigo/
+├── mejoras/
+├── mockups/
+├── modelo-negocio/
+├── modelos-datos/
+├── scripts/
+├── stories/
+└── tables/
 ```
 
----
+## Contenido principal
 
-## 🎯 Guía Rápida por Rol
+### Arquitectura
 
-### 🆕 Desarrollador Nuevo
-1. Leer [arquitectura/index.md](arquitectura/index.md) - Visión general del sistema
-2. Revisar [arquitectura/architecture-cattle-lambda-function.md](arquitectura/architecture-cattle-lambda-function.md) - Estructura del código
-3. Consultar [estandares-codigo/](estandares-codigo/) - Convenciones obligatorias
+- `arquitectura/index.md`: índice navegable del backend.
+- `arquitectura/architecture-cattle-lambda-function.md`: fuente principal para stack, capas, endpoints, seguridad, despliegue y gaps.
+- `arquitectura/chatbot/`: documentación del módulo Bedrock integrado dentro del backend.
+- `arquitectura/eventos/`: documentación del sistema de eventos y patches del dominio de potreros.
 
-### 👨‍💻 Backend Developer (Java)
-1. [arquitectura/architecture-cattle-lambda-function.md](arquitectura/architecture-cattle-lambda-function.md) - Capas y patrones
-2. [arquitectura/eventos/](arquitectura/eventos/) - Sistema de eventos
-3. [modelo-negocio/](modelo-negocio/) - Lógica de negocio por módulo
-4. [modelos-datos/](modelos-datos/) - Diseño DynamoDB
+### Negocio y datos
 
-### 🤖 AI/ML Developer
-1. [arquitectura/chatbot/](arquitectura/chatbot/) - Integración Bedrock
-2. [bases-conocimiento/](bases-conocimiento/) - Knowledge base
-3. [stories/bedrock/](stories/bedrock/) - HUs de chatbot
+- `modelo-negocio/`: flujos y documentación por dominio.
+- `modelos-datos/`: notas de diseño y modelos de datos.
+- `bases-conocimiento/`: insumos de Knowledge Base para el módulo Bedrock.
 
-### 📊 Product Owner / Analista
-1. [modelo-negocio/](modelo-negocio/) - Flujos de negocio documentados
-2. [stories/](stories/) - Backlog de historias
+### Gobierno de desarrollo
 
-### 🔧 DevOps / SRE
-1. Ver `README.md` en raíz del proyecto - Comandos de build/deploy
-2. [arquitectura/chatbot/](arquitectura/chatbot/) - Políticas IAM
+- `estandares-codigo/`: estándares técnicos.
+- `dod-pivotes/`: material de Definition of Done y verificación.
+- `stories/`: historias, estimaciones y artefactos de entrega.
 
----
+## Qué reflejan estos documentos
 
-## 🔗 Documentación Relacionada
+La documentación vigente debe leerse con estas premisas, confirmadas en el código actual:
 
-- **Frontend**: Ver `cattle-front/docs/`
-- **Estándares Generales**: Ver `docs/architecture/coding-standards.md` (raíz del monorepo)
+- backend monolítico serverless sobre una sola Lambda Java 21
+- Spring Boot 3.4.5 como framework HTTP y de configuración
+- persistencia principal en DynamoDB mediante Enhanced Client
+- integración de Bedrock y Knowledge Base dentro del mismo repositorio, no en un proyecto separado activo
+- seguridad JWT condicional por configuración
+- despliegue mediante AWS SAM con infraestructura parcial declarada en `template.yml`
 
----
+## Límites y criterio de mantenimiento
 
-## 📝 Convenciones
+- La arquitectura base es la fuente principal de verdad para topología, endpoints e integraciones.
+- Los documentos de `chatbot/` y `eventos/` amplían dominios concretos y no deben contradecir la arquitectura base.
+- Cuando cambie código, configuración Spring, seguridad o template SAM, primero deben actualizarse los documentos de arquitectura antes que las guías derivadas.
 
-- Diagramas: PlantUML (.puml) o Mermaid (embebido en markdown)
-- Historias de usuario: `HU-MODULO-NNN-descripcion.md`
-- Índices: Cada carpeta tiene un `index.md` navegable
-- Fechas: Formato ISO 8601 (YYYY-MM-DD)
-
+Si un documento describe un componente archivado, una ruta HTTP que ya no existe o infraestructura no declarada en el repo, debe corregirse o marcarse explícitamente como legado.

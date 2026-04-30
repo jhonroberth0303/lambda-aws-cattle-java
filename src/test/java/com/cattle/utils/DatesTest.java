@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests unitarios para Dates utility
- * HU-002-pruebas-summary - Aumento de cobertura
+ * HU-20260428-deuda-tecnica-summary - Alineacion de cobertura y trazabilidad
  */
 @Tag("unit")
 @Tag("fast")

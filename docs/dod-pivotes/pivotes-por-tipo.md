@@ -1,262 +1,188 @@
-# 🎯 Pivotes por Tipo de Tarea - Proyecto Cattle
+# Pivotes DoD por Tipo de Cambio - Proyecto Cattle
 
-**Fecha**: 2026-01-09 | **Versión**: 1.0
+## Objetivo
 
-## 🎯 Objetivo
+Definir los pivotes mínimos que deben administrarse según el tipo de cambio más común en este workspace.
 
-Definir los pivotes (checkpoints críticos no negociables) específicos para cada tipo de tarea.
+Cada pivote se evalúa con los estados definidos en `index.md`.
 
----
+## Tipos cubiertos
 
-## 📋 Tabla de Contenidos
+1. feature
+2. bug
+3. refactor
+4. documentación
+5. configuración
+6. integración o contrato
 
-1. [Feature](#feature-nueva-funcionalidad)
-2. [Bug](#bug-corrección)
-3. [Refactoring](#refactoring)
-4. [Testing](#testing)
-5. [Documentation](#documentation)
-6. [DevOps/Infrastructure](#devopsinfrastructure)
-7. [Configuration](#configuration)
-8. [Spike/Investigation](#spikeinvestigation)
+## Feature
 
----
+### Pivotes críticos
 
-## Feature (Nueva Funcionalidad)
+#### 1. Alcance funcional claro
 
-### 🎁 Tipo: Feature Nueva
+Debe estar claro qué capacidad nueva se agrega y sobre qué módulo.
 
-**Duración típica**: 5-10 días
-**Complejidad**: Media-Alta
-**Risk**: Media
+Evidencia:
 
-### Pivotes CRÍTICOS
+- historia o descripción del cambio
+- flujo o criterio de aceptación verificable
 
+#### 2. Integración completa del slice
+
+Si la feature cruza capas, debe quedar conectada de extremo a extremo dentro del alcance prometido.
+
+Evidencia:
+
+- rutas o componentes frontend conectados
+- endpoint o servicio backend conectado
+- contrato coherente entre capas
+
+#### 3. Validación ejecutable
+
+Debe correrse al menos la validación más cercana al slice tocado.
+
+Evidencia:
+
+- `npm run lint`
+- `npm run build`
+- `gradlew test`
+- `gradlew build`
+
+#### 4. Impacto documental evaluado
+
+Si cambió una capacidad visible, revisar si debe actualizarse arquitectura, flujo o componente.
+
+Evidencia:
+
+- actualización en `docs/`
+- o nota explícita de que no aplica
+
+## Bug
+
+### Pivotes críticos
+
+#### 1. Causa local identificada
+
+Debe quedar claro si se corrigió causa raíz o solo un síntoma.
+
+Evidencia:
+
+- archivo o función responsable
+- hipótesis confirmada por lectura, error o comportamiento reproducible
+
+#### 2. Fix acotado
+
+El cambio debe corregir el slice defectuoso sin abrir refactor amplio innecesario.
+
+Evidencia:
+
+- diff localizado
+- ausencia de cambios laterales no relacionados
+
+#### 3. Revalidación del mismo slice
+
+La misma validación que falsaba el bug debe usarse para confirmar el fix cuando sea posible.
+
+Evidencia:
+
+- comando o prueba repetida
+- chequeo de errores si el cambio es documental o de wiring simple
+
+#### 4. Riesgo de regresión explicitado
+
+Si no hay test, debe quedar claro qué podría volver a romperse.
+
+## Refactor
+
+### Pivotes críticos
+
+#### 1. Alcance sin cambio funcional inesperado
+
+Debe quedar claro que el objetivo es estructura, claridad o mantenibilidad, no comportamiento nuevo encubierto.
+
+#### 2. Patrón mejorado o preservado
+
+El refactor debe acercar el código al patrón vigente del repo o al menos no degradarlo.
+
+#### 3. Validación del comportamiento existente
+
+El comportamiento relevante debe seguir pasando tras el cambio.
+
+## Documentación
+
+### Pivotes críticos
+
+#### 1. Fuente de verdad identificada
+
+El documento debe derivarse del código, configuración o artefacto fuente existente.
+
+#### 2. Sin afirmaciones no verificadas
+
+No deben declararse herramientas, procesos o gates que el repo no sostenga hoy.
+
+#### 3. Navegación útil
+
+Si se crea un documento nuevo, debe quedar enlazado desde un índice o documento principal cuando tenga vocación persistente.
+
+#### 4. Validación de consistencia
+
+El archivo debe pasar chequeo de errores y no contradecir la arquitectura vigente revisada.
+
+## Configuración
+
+### Pivotes críticos
+
+#### 1. Cambio de configuración trazable
+
+Debe quedar claro qué variable, script, lint o build cambia.
+
+#### 2. Impacto operativo evaluado
+
+Debe revisarse si el cambio afecta despliegue, seguridad, CORS, Bedrock, tablas o rutas.
+
+#### 3. Documentación alineada
+
+Si cambia una variable o comando operativo, debe reflejarse en docs relevantes.
+
+## Integración o contrato
+
+Aplica a cambios entre frontend y backend, o entre backend y servicios externos.
+
+### Pivotes críticos
+
+#### 1. Contrato explícito
+
+Debe quedar claro qué endpoint, DTO, payload o respuesta cambió.
+
+#### 2. Coherencia entre lados
+
+Frontend y backend no deben quedar esperando contratos distintos.
+
+#### 3. Riesgo de compatibilidad
+
+Si el cambio puede romper consumers existentes, debe quedar señalado.
+
+#### 4. Documento derivado revisado
+
+Flujos, arquitectura o documentos de componente deben actualizarse si el contrato cambió.
+
+## Plantilla corta de pivotes por cambio
+
+```md
+## Pivotes aplicados
+
+- Tipo: <feature|bug|refactor|documentacion|configuracion|integracion>
+- Alcance: <estado>
+- Patrón técnico: <estado>
+- Validación: <estado>
+- Riesgo residual: <estado>
+- Impacto documental: <estado>
+
+### Notas
+- Evidencia principal: <archivo, comando o prueba>
+- Observaciones: <si aplica>
 ```
-PIVOTE 1: Requirements Claros
-═════════════════════════════════
-Validación:
-├─ User Story tiene acceptance criteria completos
-├─ Edge cases identificados
-├─ Error scenarios documentados
-├─ Non-functional requirements definidos
-└─ Mockups/wireframes aprobados (si UI)
-
-Gate: JIRA story tiene AC checklist completo
-Entidad: Product Owner
-Timing: ANTES de comenzar implementación
-Impacto: Sin esto → scope creep garantizado
-
-Evidencia:
-├─ JIRA story description: 200+ palabras
-├─ AC checklist: mínimo 5 items
-├─ Mockups en Figma (si UI)
-└─ Signed off por PO en JIRA
-
-
-PIVOTE 2: Arquitectura Validada
-════════════════════════════════
-Validación:
-├─ Design review completado
-├─ APIs definidas (endpoints/parámetros)
-├─ Database schema definido
-├─ Performance implications identified
-└─ Security implications identified
-
-Gate: Tech Lead aprobó arquitectura
-Entidad: Tech Lead
-Timing: ANTES de code
-Impacto: Sin esto → refactor masivo probable
-
-Evidencia:
-├─ Architecture diagram (en JIRA)
-├─ API spec (OpenAPI/Swagger draft)
-├─ DB schema SQL statements
-├─ Performance analysis
-└─ Security review checklist
-
-
-PIVOTE 3: Implementación Completa
-═════════════════════════════════════
-Validación:
-├─ TODOS los AC cumplidos
-├─ Backend: endpoints funcionan
-├─ Frontend: UI completa y funcional
-├─ Integration: todo integrado
-├─ Error handling: presente
-└─ Edge cases: handled
-
-Gate: Funcionalmente completado
-Entidad: Developer
-Timing: Al finalizar implementación
-Impacto: Feature debe ser 100% funcional
-
-Evidencia:
-├─ Code compila sin errores
-├─ Todos AC checkbox: ✅
-├─ Feature demostrable en local
-├─ Video demo o screenshots
-└─ Testeable en staging
-
-
-PIVOTE 4: Testing Completo
-═══════════════════════════
-Validación:
-├─ Unit tests: >= 80% coverage
-├─ Integration tests: happy path + error paths
-├─ E2E tests: user flow end-to-end
-├─ Performance tests: baseline establecido
-├─ No regressions: test suite anterior pasa
-
-Gate: Coverage >= 80% + tests pasan
-Entidad: Developer + QA
-Timing: Antes de PR
-Impacto: Sin tests → bugs en producción
-
-Evidencia:
-├─ Coverage report: 80%+ (screenshot)
-├─ Test run log: all tests pass
-├─ No @Skip / @Ignore
-└─ Coverage diff: shows increase
-
-
-PIVOTE 5: User Acceptance
-════════════════════════════
-Validación:
-├─ PO probó en staging
-├─ Todos AC en checklist: ✅
-├─ UI/UX acorde a expectativas
-├─ Feedback incorporado
-└─ Sign-off en JIRA
-
-Gate: PO aprobó feature
-Entidad: Product Owner
-Timing: Después de testing, antes de merge
-Impacto: Sin esto → incorrect feature
-
-Evidencia:
-├─ JIRA comment: "Accepted by PO"
-├─ Demo completado ante stakeholders
-├─ AC photo evidence
-└─ No blocking feedback
-
-
-PIVOTE 6: Código Limpio
-════════════════════════
-Validación:
-├─ ESLint/Checkstyle: 0 errors, 0 warnings
-├─ No secrets en código
-├─ Nombres claros (no bId, bovId)
-├─ Complejidad <= 10
-├─ Cobertura >80%
-
-Gate: npm/mvn lint → SUCCESS
-Entidad: CI/CD automático
-Timing: En cada PR
-Impacto: Sin esto → deuda técnica
-
-Evidencia:
-├─ CI/CD green checkmark
-├─ SonarQube quality gate: PASS
-├─ No code smells flagged
-└─ Metrics dashboard: OK
-
-
-PIVOTE 7: Documentación
-═════════════════════════
-Validación:
-├─ JSDoc/JavaDoc: completo
-├─ API documented (Swagger)
-├─ README: actualizado
-├─ Changelog: entry creada
-├─ User guide (si complejo)
-
-Gate: Code review: docs validated
-Entidad: Code Reviewer
-Timing: Durante PR review
-Impacto: Sin esto → otros devs pierden tiempo
-
-Evidencia:
-├─ JSDoc con @param/@return/@throws
-├─ API spec actualizado
-├─ README updated section
-├─ CHANGELOG.md entry
-└─ Examples en comentarios
-
-
-PIVOTE 8: Performance OK
-════════════════════════════
-Validación:
-├─ No N+1 queries (si aplica)
-├─ Response time acceptable (<100ms P95)
-├─ Bundle size: <50KB increase
-├─ Memory: no leaks
-└─ Lighthouse: >=80 (si UI)
-
-Gate: Performance tests pasan
-Entidad: Developer + performance testing
-Timing: Antes de merge
-Impacto: Sin esto → users ven delays
-
-Evidencia:
-├─ Performance benchmark results
-├─ Load test report (si crítico)
-├─ Lighthouse screenshot (si UI)
-├─ Database EXPLAIN PLAN
-└─ Memory profiler: no leaks
-```
-
-### 🎯 Cómo Completar Feature
-
-**Checklist de Hitos**:
-
-```
-Semana 1: Setup + Design
-Day 1-2:
-  ☐ Lee user story
-  ☐ Aclara dudas con PO (preguntas en JIRA)
-  ☐ Design review con Tech Lead
-  ☐ Crea rama feature/ISSUE-XX-description
-
-Day 3-5:
-  ☐ Arquitectura decidida
-  ☐ DB schema diseñado
-  ☐ APIs definidas
-  ☐ Tech Lead: "Approved"
-
-Semana 2: Implementación
-Day 6-10:
-  ☐ Backend implementado
-  ☐ Tests unitarios: escritos
-  ☐ Integration tests: escritos
-  ☐ Performance baseline: established
-
-Semana 2-3: Finalización
-Day 11-12:
-  ☐ Frontend integrado
-  ☐ E2E tests: escritos
-  ☐ Documentation: completa
-  ☐ Code review: requested
-
-Day 13:
-  ☐ Feedback incorporated
-  ☐ QA testing en staging
-  ☐ PO acceptance: signed
-
-Day 14:
-  ☐ Merge a develop
-  ☐ Deploy a staging
-  ☐ Final validation
-```
-
----
-
-## Bug (Corrección)
-
-### 🐛 Tipo: Bug Fix
-
-**Duración típica**: 2-5 días
-**Complejidad**: Baja-Media
-**Risk**: Media-Alta (regressions)
 
 ### Pivotes CRÍTICOS
 

@@ -3,6 +3,7 @@ package com.cattle.repository;
 import com.cattle.config.LambdaContext;
 import com.cattle.dtos.commons.MessageDTO;
 import com.cattle.entities.bovines.BovineIdentityItem;
+import com.cattle.entities.bovines.BovineSummary;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
 import org.springframework.stereotype.Repository;
@@ -26,12 +27,15 @@ public class BovineRepository {
     private static final String IDENTITY = "IDENTITY";
     private static final String GSI1_BOVINES = "GSI1";
     private static final String PREFIX_BOVINE = "BOVINE#";
+    private static final String SUMMARY = "SUMMARY";
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<BovineIdentityItem> table;
+    private final DynamoDbTable<BovineSummary> summaryTable;
 
     public BovineRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient) {
         this.lambdaContext = lambdaContext;
         table = enhancedClient.table(TABLE_BOVINES, TableSchema.fromBean(BovineIdentityItem.class));
+        summaryTable = enhancedClient.table(TABLE_BOVINES, TableSchema.fromBean(BovineSummary.class));
     }
 
     public Optional<List<BovineIdentityItem>> findAll() {
@@ -68,6 +72,10 @@ public class BovineRepository {
                     .build());
 
             table.query(r -> r.queryConditional(queryConditional)).items().forEach(list::add);
+
+            if (list.isEmpty()) {
+                return Optional.empty();
+            }
 
             lambdaContext.logInfo(LogType.REPOSITORY, "findById: " + list.getFirst().getBovineId() + " in table: " + TABLE_BOVINES);
             return Optional.ofNullable(list.getFirst());
@@ -199,7 +207,7 @@ public class BovineRepository {
             while (iterator.hasNext()) {
                 Page<BovineIdentityItem> page = iterator.next();
                 page.items().stream()
-                        .filter(b -> farmId != null && farmId.equals(b.getFarmId()))
+                        .filter(b -> matchesFarmId(b, farmId) && matchesCategory(b, category))
                         .forEach(result::add);
             }
 
@@ -254,7 +262,7 @@ public class BovineRepository {
             while (iterator.hasNext()) {
                 Page<BovineIdentityItem> page = iterator.next();
                 page.items().stream()
-                        .filter(b -> farmId != null && farmId.equals(b.getFarmId()) )
+                        .filter(b -> matchesFarmId(b, farmId) && matchesStatus(b, status))
                         .forEach(result::add);
             }
 
@@ -291,5 +299,66 @@ public class BovineRepository {
             lambdaContext.logException(LogType.REPOSITORY, "Error finding all bovines by farmId", ex);
             throw new RepositoryException("Unexpected error finding all bovines by farmId", ex);
         }
+    }
+
+    private boolean matchesFarmId(BovineIdentityItem bovine, String farmId) {
+        return farmId != null && farmId.equals(bovine.getFarmId());
+    }
+
+    private boolean matchesCategory(BovineIdentityItem bovine, String category) {
+        if (category == null) {
+            return false;
+        }
+
+        return loadSummary(bovine.getBovineId())
+                .map(BovineSummary::getCategory)
+                .filter(summaryCategory -> summaryCategory.equalsIgnoreCase(category))
+                .isPresent();
+    }
+
+    private boolean matchesStatus(BovineIdentityItem bovine, String requestedStatus) {
+        if (requestedStatus == null) {
+            return false;
+        }
+
+        return loadSummary(bovine.getBovineId())
+                .map(summary -> matchesStatus(summary, requestedStatus))
+                .orElse(false);
+    }
+
+    private boolean matchesStatus(BovineSummary summary, String requestedStatus) {
+        if (equalsIgnoreCase(summary.getStatus(), requestedStatus)
+                || equalsIgnoreCase(summary.getReproductiveState(), requestedStatus)
+                || equalsIgnoreCase(summary.getProductiveState(), requestedStatus)
+                || equalsIgnoreCase(summary.getLactationStatus(), requestedStatus)
+                || equalsIgnoreCase(summary.getPregnancyStatus(), requestedStatus)) {
+            return true;
+        }
+
+        if ("PREGNANT".equalsIgnoreCase(requestedStatus)) {
+            return Boolean.TRUE.equals(summary.getIsPregnant());
+        }
+
+        if ("LACTATING".equalsIgnoreCase(requestedStatus)) {
+            return Boolean.TRUE.equals(summary.getIsLactating());
+        }
+
+        return false;
+    }
+
+    private boolean equalsIgnoreCase(String value, String requestedStatus) {
+        return value != null && value.equalsIgnoreCase(requestedStatus);
+    }
+
+    private Optional<BovineSummary> loadSummary(Integer bovineId) {
+        if (bovineId == null) {
+            return Optional.empty();
+        }
+
+        Key summaryKey = Key.builder()
+                .partitionValue(PREFIX_BOVINE + bovineId)
+                .sortValue(SUMMARY)
+                .build();
+        return Optional.ofNullable(summaryTable.getItem(summaryKey));
     }
 }
