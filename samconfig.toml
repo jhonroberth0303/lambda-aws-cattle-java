@@ -19,7 +19,8 @@ parameter_overrides = """
   TableFarmMilking="MilkingRecords" \
   TablePasture="Pastures" \
   TablePlan="Plans" \
-  TableCounters="counters"
+  TableCounters="counters" \
+  TableSiteSettings="SiteSettings"
 """
 image_repositories = []
 
@@ -40,7 +41,8 @@ parameter_overrides = """
   TableFarmMilking="MilkingRecords" \
   TablePasture="Pastures" \
   TablePlan="Plans" \
-  TableCounters="counters"
+  TableCounters="counters" \
+  TableSiteSettings="SiteSettings"
 """
 
 [prod.deploy.parameters]
@@ -58,5 +60,6 @@ parameter_overrides = """
   TableFarmMilking="MilkingRecords" \
   TablePasture="Pastures" \
   TablePlan="Plans" \
-  TableCounters="counters"
+  TableCounters="counters" \
+  TableSiteSettings="SiteSettings"
 """

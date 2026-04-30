@@ -77,6 +77,11 @@ Parameters:
     Default: counters
     Description: Nombre de la tabla DynamoDB de contadores
 
+  TableSiteSettings:
+    Type: String
+    Default: SiteSettings
+    Description: Nombre de la tabla DynamoDB de configuraciones reutilizables por sitio
+
 Globals:
   Api:
     EndpointConfiguration: REGIONAL
@@ -136,6 +141,35 @@ Resources:
                 Resource:
                   - 'arn:aws:bedrock:*:*:knowledge-base/*'
 
+  SiteSettingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TableSiteSettings
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
   # Lambda Function
   CattleBovinesFunctionsAwsFunction:
     Type: AWS::Serverless::Function
@@ -161,6 +195,7 @@ Resources:
           TABLE_PASTURE: !Ref TablePasture
           TABLE_PLAN: !Ref TablePlan
           TABLE_COUNTERS: !Ref TableCounters
+          TABLE_SITE_SETTINGS: !Ref TableSiteSettings
       Events:
         ProxyResource:
           Type: Api
@@ -191,6 +226,7 @@ Resources:
           TABLE_PASTURE: !Ref TablePasture
           TABLE_PLAN: !Ref TablePlan
           TABLE_COUNTERS: !Ref TableCounters
+          TABLE_SITE_SETTINGS: !Ref TableSiteSettings
 
   SummaryRefreshSchedulerDlq:
     Type: AWS::SQS::Queue
@@ -255,3 +291,7 @@ Outputs:
   SummaryRefreshSchedulerDlqArn:
     Description: ARN de la cola DLQ del scheduler de refresh summary
     Value: !GetAtt SummaryRefreshSchedulerDlq.Arn
+
+  SiteSettingsTableName:
+    Description: Nombre de la tabla reusable de configuraciones por sitio
+    Value: !Ref SiteSettingsTable
