@@ -6,9 +6,14 @@ import com.cattle.dtos.LactationSummaryDTO;
 import com.cattle.dtos.MilkingDTO;
 import com.cattle.entities.MilkingRecord;
 import com.cattle.entities.bovines.ProfileLactancy;
+import com.cattle.entities.bovines.ProfileLifecycle;
+import com.cattle.entities.bovines.ProfileReproductive;
 import com.cattle.enums.LogType;
+import com.cattle.enums.profiles.LifecycleStatus;
 import com.cattle.mapper.MilkingMapperImpl;
 import com.cattle.repository.ProfileLactancyRepository;
+import com.cattle.repository.ProfileLifecycleRepository;
+import com.cattle.repository.ProfileReproductiveRepository;
 import com.cattle.services.MilkingService;
 import io.jsonwebtoken.lang.Strings;
 import org.springframework.stereotype.Component;
@@ -23,19 +28,29 @@ public class MilkingProcessor {
     private static final String PK_PREFIX = "BOVINE#";
     private static final String SK_PREFIX = "MILKING#";
     private static final String LACT_PREFIX = "LACT#";
+    private static final String PROFILE_LIFECYCLE_SK = "PROFILE#LIFECYCLE";
+    private static final String PROFILE_REPRODUCTIVE_SK = "PROFILE#REPRODUCTIVE";
+    private static final String LACTATING_STATUS = "LACTATING";
     public static final String HASH_TAG = "#";
 
     private final MilkingService milkingService;
     private final MilkingMapperImpl milkingMapperImpl;
     private final LambdaContext lambdaContext;
     private final ProfileLactancyRepository profileLactancyRepository;
+    private final ProfileLifecycleRepository profileLifecycleRepository;
+    private final ProfileReproductiveRepository profileReproductiveRepository;
 
     public MilkingProcessor(MilkingService milkingService, MilkingMapperImpl milkingMapperImpl,
-                            LambdaContext lambdaContext, ProfileLactancyRepository profileLactancyRepository) {
+                            LambdaContext lambdaContext,
+                            ProfileLactancyRepository profileLactancyRepository,
+                            ProfileLifecycleRepository profileLifecycleRepository,
+                            ProfileReproductiveRepository profileReproductiveRepository) {
         this.milkingService = milkingService;
         this.milkingMapperImpl = milkingMapperImpl;
         this.lambdaContext = lambdaContext;
         this.profileLactancyRepository = profileLactancyRepository;
+        this.profileLifecycleRepository = profileLifecycleRepository;
+        this.profileReproductiveRepository = profileReproductiveRepository;
     }
 
     public Optional<List<MilkingDTO>> getMilkingData(Integer idBovine, String shift) {
@@ -85,21 +100,21 @@ public class MilkingProcessor {
 
     private void assignLactationToMilking(MilkingRecord entity, Integer bovineId) {
         String pk = PK_PREFIX + bovineId;
-        Optional<List<ProfileLactancy>> lactationsOpt = profileLactancyRepository.findAllLactationsByBovine(pk);
+        ProfileLifecycle lifecycle = profileLifecycleRepository.findById(pk, PROFILE_LIFECYCLE_SK)
+                .orElseThrow(() -> new IllegalArgumentException("El bovino " + bovineId + " no tiene perfil lifecycle registrado"));
+        validateOperationalLifecycle(lifecycle, bovineId);
 
-        if (lactationsOpt.isEmpty()) {
-            throw new IllegalArgumentException("El bovino " + bovineId + " no tiene lactancias registradas");
+        ProfileReproductive reproductive = profileReproductiveRepository.findById(pk, PROFILE_REPRODUCTIVE_SK)
+                .orElseThrow(() -> new IllegalArgumentException("El bovino " + bovineId + " no tiene perfil reproductivo registrado"));
+
+        String currentLactationId = reproductive.getCurrentLactationId();
+        if (currentLactationId == null || currentLactationId.isBlank()) {
+            throw new IllegalArgumentException("El bovino " + bovineId + " no tiene una lactancia activa referenciada");
         }
 
-        Optional<ProfileLactancy> openLactation = lactationsOpt.get().stream()
-                .filter(l -> "LACTATING".equalsIgnoreCase(l.getStatus()))
-                .findFirst();
-
-        if (openLactation.isEmpty()) {
-            throw new IllegalArgumentException("El bovino " + bovineId + " no tiene una lactancia activa (OPEN)");
-        }
-
-        ProfileLactancy lactation = openLactation.get();
+        ProfileLactancy lactation = profileLactancyRepository.findById(pk, currentLactationId)
+                .orElseThrow(() -> new IllegalArgumentException("El bovino " + bovineId + " no tiene una lactancia vigente válida"));
+        validateLactationForMilking(lactation, bovineId);
         Integer lactNum = parseLactationNumber(lactation.getLactationNumber());
 
         if (lactNum == null) {
@@ -113,6 +128,56 @@ public class MilkingProcessor {
     }
 
     public Optional<List<CowWithLactationsDTO>> getCowsWithLactations(String siteId) {
+        lambdaContext.logInfo(LogType.PROCESSOR, "Fetching operational milking cows");
+        Optional<List<ProfileLactancy>> allLactationsOpt = profileLactancyRepository.findAllLactations(siteId);
+
+        if (allLactationsOpt.isEmpty()) {
+            lambdaContext.logInfo(LogType.PROCESSOR, "No lactations found for operational milking view");
+            return Optional.empty();
+        }
+
+        Map<Integer, List<ProfileLactancy>> lactationsByBovine = groupLactationsByBovine(allLactationsOpt.get());
+        List<CowWithLactationsDTO> result = new ArrayList<>();
+
+        for (Map.Entry<Integer, List<ProfileLactancy>> entry : lactationsByBovine.entrySet()) {
+            Integer bovineId = entry.getKey();
+            String pk = PK_PREFIX + bovineId;
+
+            Optional<ProfileLifecycle> lifecycleOpt = profileLifecycleRepository.findById(pk, PROFILE_LIFECYCLE_SK);
+            if (lifecycleOpt.isEmpty() || !isOperationalLifecycle(lifecycleOpt.get())) {
+                continue;
+            }
+
+            Optional<ProfileReproductive> reproductiveOpt = profileReproductiveRepository.findById(pk, PROFILE_REPRODUCTIVE_SK);
+            if (reproductiveOpt.isEmpty()) {
+                continue;
+            }
+
+            String currentLactationId = reproductiveOpt.get().getCurrentLactationId();
+            if (currentLactationId == null || currentLactationId.isBlank()) {
+                continue;
+            }
+
+            Optional<ProfileLactancy> lactationOpt = entry.getValue().stream()
+                    .filter(lactation -> currentLactationId.equals(lactation.getSk()))
+                    .findFirst()
+                    .or(() -> profileLactancyRepository.findById(pk, currentLactationId));
+
+            if (lactationOpt.isEmpty() || !isValidCurrentLactation(lactationOpt.get())) {
+                continue;
+            }
+
+            result.add(CowWithLactationsDTO.builder()
+                    .bovineId(bovineId)
+                    .lactations(List.of(toLactationSummary(lactationOpt.get())))
+                    .build());
+        }
+
+        lambdaContext.logInfo(LogType.PROCESSOR, "Operational milking cows found: " + result.size());
+        return result.isEmpty() ? Optional.empty() : Optional.of(result);
+    }
+
+    public Optional<List<CowWithLactationsDTO>> getCowsWithLactationsHistory(String siteId) {
 
         lambdaContext.logInfo(LogType.PROCESSOR, "Fetching cows with lactations");
         Optional<List<ProfileLactancy>> allLactationsOpt = profileLactancyRepository.findAllLactations(siteId);
@@ -124,10 +189,7 @@ public class MilkingProcessor {
 
         List<ProfileLactancy> allLactations = allLactationsOpt.get();
 
-        // Agrupar lactancias por bovineId
-        Map<Integer, List<ProfileLactancy>> lactationsByBovine = allLactations.stream()
-                .filter(lact -> extractBovineIdFromPk(lact.getPk()) != null)
-                .collect(Collectors.groupingBy(lact -> extractBovineIdFromPk(lact.getPk())));
+    Map<Integer, List<ProfileLactancy>> lactationsByBovine = groupLactationsByBovine(allLactations);
 
         lambdaContext.logInfo(LogType.PROCESSOR, "Found " + lactationsByBovine.size() + " bovines with lactations");
 
@@ -174,6 +236,12 @@ public class MilkingProcessor {
         }
     }
 
+    private Map<Integer, List<ProfileLactancy>> groupLactationsByBovine(List<ProfileLactancy> lactations) {
+        return lactations.stream()
+                .filter(lact -> extractBovineIdFromPk(lact.getPk()) != null)
+                .collect(Collectors.groupingBy(lact -> extractBovineIdFromPk(lact.getPk())));
+    }
+
     private LactationSummaryDTO toLactationSummary(ProfileLactancy lactancy) {
         String lactNumber = lactancy.getSk() != null && lactancy.getSk().startsWith(LACT_PREFIX)
                 ? lactancy.getSk().substring(LACT_PREFIX.length())
@@ -185,6 +253,26 @@ public class MilkingProcessor {
                 .endDate(lactancy.getEndDate())
                 .status(lactancy.getStatus())
                 .build();
+    }
+
+    private void validateOperationalLifecycle(ProfileLifecycle lifecycle, Integer bovineId) {
+        if (!isOperationalLifecycle(lifecycle)) {
+            throw new IllegalArgumentException("El bovino " + bovineId + " no está habilitado para el flujo operativo de ordeño");
+        }
+    }
+
+    private boolean isOperationalLifecycle(ProfileLifecycle lifecycle) {
+        return lifecycle.getStatus() == LifecycleStatus.OPEN && Boolean.TRUE.equals(lifecycle.getEnabled());
+    }
+
+    private void validateLactationForMilking(ProfileLactancy lactation, Integer bovineId) {
+        if (!isValidCurrentLactation(lactation)) {
+            throw new IllegalArgumentException("El bovino " + bovineId + " no tiene una lactancia activa válida para ordeño");
+        }
+    }
+
+    private boolean isValidCurrentLactation(ProfileLactancy lactation) {
+        return LACTATING_STATUS.equalsIgnoreCase(lactation.getStatus()) && lactation.getEndDate() == null;
     }
 
     private Integer parseLactationNumber(String lactationNumber) {

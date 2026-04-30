@@ -53,11 +53,11 @@ public class MilkingController {
     }
 
     @Operation(
-            summary = "Obtener vacas con lactancias",
-            description = "Obtiene la lista de vacas que tienen lactancias registradas, con todas sus lactancias (activas e históricas)"
+            summary = "Obtener vacas ordeñables",
+            description = "Obtiene la lista operativa de vacas habilitadas para ordeño con su lactancia vigente"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de vacas con sus lactancias",
+            @ApiResponse(responseCode = "200", description = "Lista operativa de vacas ordeñables",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = CowWithLactationsDTO.class))),
             @ApiResponse(responseCode = "404", description = "No se encontraron vacas con lactancias", content = @Content)
     })
@@ -67,6 +67,25 @@ public class MilkingController {
             @PathVariable("siteId") String siteId) {
         lambdaContext.logInfo(LogType.CONTROLLER, "Received request to find milking cows for site: " + siteId);
         return milkingProcessor.getCowsWithLactations(siteId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @Operation(
+            summary = "Obtener histórico de lactancias",
+            description = "Obtiene la lista histórica de vacas con sus lactancias activas e históricas"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista histórica de vacas con lactancias",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = CowWithLactationsDTO.class))),
+            @ApiResponse(responseCode = "404", description = "No se encontraron vacas con lactancias históricas", content = @Content)
+    })
+    @GetMapping("/history")
+    public ResponseEntity<List<CowWithLactationsDTO>> getCowsWithLactationsHistory(
+            @Parameter(description = "ID de la finca", required = true, example = "FARM#001")
+            @PathVariable("siteId") String siteId) {
+        lambdaContext.logInfo(LogType.CONTROLLER, "Received request to find milking cows history for site: " + siteId);
+        return milkingProcessor.getCowsWithLactationsHistory(siteId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

@@ -34,6 +34,11 @@ Historias disponibles:
 
 La carpeta `milking/` contiene historias específicas del dominio de lactancia. En la revisión rápida de esta pasada no apareció la misma deriva sistemática observada en Bedrock, pero no se ha hecho todavía una normalización completa de esos artefactos.
 
+Historias disponibles:
+
+- `HU-001-consulta-lactancias.md`
+- `HU-20260429-flujo-registro-lactancias.md`
+
 ### Cattle Pastures Milking
 
 La carpeta `cattle-pastures-milking/` concentra deuda técnica transversal de pruebas unitarias y cobertura para componentes backend de bovinos, potreros y lactancia cuando el alcance cruza más de un dominio y conviene gestionar la remediación como una única HU técnica.

@@ -224,6 +224,51 @@ class MilkingRecordControllerTest {
         verify(milkingProcessor, times(1)).getCowsWithLactations(siteId);
         }
 
+        @Test
+        void getCowsWithLactationsHistory_withResults_returnsOkWithList() {
+        String siteId = "FARM#001";
+        List<CowWithLactationsDTO> cows = List.of(
+            CowWithLactationsDTO.builder()
+                .bovineId(172)
+                .lactations(List.of(
+                    LactationSummaryDTO.builder()
+                        .lactationNumber("001")
+                        .startDate("2025-11-27")
+                        .status("LACTATING")
+                        .build(),
+                    LactationSummaryDTO.builder()
+                        .lactationNumber("002")
+                        .startDate("2026-01-10")
+                        .status("CLOSED")
+                        .build()
+                ))
+                .build()
+        );
+
+        when(milkingProcessor.getCowsWithLactationsHistory(siteId)).thenReturn(Optional.of(cows));
+
+        ResponseEntity<List<CowWithLactationsDTO>> response = milkingController.getCowsWithLactationsHistory(siteId);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
+        assertEquals(172, response.getBody().get(0).getBovineId());
+        assertEquals(2, response.getBody().get(0).getLactations().size());
+        verify(milkingProcessor, times(1)).getCowsWithLactationsHistory(siteId);
+        }
+
+        @Test
+        void getCowsWithLactationsHistory_noResults_returnsNotFound() {
+        String siteId = "FARM#001";
+        when(milkingProcessor.getCowsWithLactationsHistory(siteId)).thenReturn(Optional.empty());
+
+        ResponseEntity<List<CowWithLactationsDTO>> response = milkingController.getCowsWithLactationsHistory(siteId);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNull(response.getBody());
+        verify(milkingProcessor, times(1)).getCowsWithLactationsHistory(siteId);
+        }
+
         // ==================== getMilkingByLactation Tests ====================
 
         @Test

@@ -6,8 +6,13 @@ import com.cattle.dtos.LactationSummaryDTO;
 import com.cattle.dtos.MilkingDTO;
 import com.cattle.entities.MilkingRecord;
 import com.cattle.entities.bovines.ProfileLactancy;
+import com.cattle.entities.bovines.ProfileLifecycle;
+import com.cattle.entities.bovines.ProfileReproductive;
+import com.cattle.enums.profiles.LifecycleStatus;
 import com.cattle.mapper.MilkingMapperImpl;
 import com.cattle.repository.ProfileLactancyRepository;
+import com.cattle.repository.ProfileLifecycleRepository;
+import com.cattle.repository.ProfileReproductiveRepository;
 import com.cattle.services.MilkingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -40,12 +45,24 @@ class MilkingProcessorTest {
     @Mock
     private ProfileLactancyRepository profileLactancyRepository;
 
+    @Mock
+    private ProfileLifecycleRepository profileLifecycleRepository;
+
+    @Mock
+    private ProfileReproductiveRepository profileReproductiveRepository;
+
     private MilkingProcessor milkingProcessor;
 
     @BeforeEach
     void setUp() {
         openMocks(this);
-        milkingProcessor = new MilkingProcessor(milkingService, milkingMapper, lambdaContext, profileLactancyRepository);
+        milkingProcessor = new MilkingProcessor(
+                milkingService,
+                milkingMapper,
+                lambdaContext,
+                profileLactancyRepository,
+                profileLifecycleRepository,
+                profileReproductiveRepository);
     }
 
     // ==================== getMilkingData Tests ====================
@@ -124,8 +141,12 @@ class MilkingProcessorTest {
                 .startDate("2025-11-27")
                 .build();
         when(milkingMapper.toEntity(inputDTO)).thenReturn(entity);
-        when(profileLactancyRepository.findAllLactationsByBovine("BOVINE#1"))
-                .thenReturn(Optional.of(List.of(openLactation)));
+        when(profileLifecycleRepository.findById("BOVINE#1", "PROFILE#LIFECYCLE"))
+            .thenReturn(Optional.of(createLifecycle(LifecycleStatus.OPEN, true)));
+        when(profileReproductiveRepository.findById("BOVINE#1", "PROFILE#REPRODUCTIVE"))
+            .thenReturn(Optional.of(createReproductive("LACT#001")));
+        when(profileLactancyRepository.findById("BOVINE#1", "LACT#001"))
+            .thenReturn(Optional.of(openLactation));
         when(milkingService.save(any(MilkingRecord.class))).thenReturn(Optional.of(savedEntity));
         when(milkingMapper.toDTO(savedEntity)).thenReturn(outputDTO);
         Optional<MilkingDTO> result = milkingProcessor.createMilking(inputDTO);
@@ -191,8 +212,12 @@ class MilkingProcessorTest {
                 .startDate("2025-11-27")
                 .build();
         when(milkingMapper.toEntity(inputDTO)).thenReturn(entity);
-        when(profileLactancyRepository.findAllLactationsByBovine("BOVINE#42"))
-                .thenReturn(Optional.of(List.of(openLactation)));
+        when(profileLifecycleRepository.findById("BOVINE#42", "PROFILE#LIFECYCLE"))
+            .thenReturn(Optional.of(createLifecycle(LifecycleStatus.OPEN, true)));
+        when(profileReproductiveRepository.findById("BOVINE#42", "PROFILE#REPRODUCTIVE"))
+            .thenReturn(Optional.of(createReproductive("LACT#001")));
+        when(profileLactancyRepository.findById("BOVINE#42", "LACT#001"))
+            .thenReturn(Optional.of(openLactation));
         when(milkingService.save(any(MilkingRecord.class))).thenReturn(Optional.of(savedEntity));
         when(milkingMapper.toDTO(savedEntity)).thenReturn(outputDTO);
         Optional<MilkingDTO> result = milkingProcessor.createMilking(inputDTO);
@@ -218,8 +243,12 @@ class MilkingProcessorTest {
                 .startDate("2026-01-01")
                 .build();
         when(milkingMapper.toEntity(inputDTO)).thenReturn(entity);
-        when(profileLactancyRepository.findAllLactationsByBovine("BOVINE#167"))
-                .thenReturn(Optional.of(List.of(openLactation)));
+        when(profileLifecycleRepository.findById("BOVINE#167", "PROFILE#LIFECYCLE"))
+            .thenReturn(Optional.of(createLifecycle(LifecycleStatus.OPEN, true)));
+        when(profileReproductiveRepository.findById("BOVINE#167", "PROFILE#REPRODUCTIVE"))
+            .thenReturn(Optional.of(createReproductive("LACT#002")));
+        when(profileLactancyRepository.findById("BOVINE#167", "LACT#002"))
+            .thenReturn(Optional.of(openLactation));
         when(milkingService.save(any(MilkingRecord.class))).thenReturn(Optional.of(savedEntity));
         when(milkingMapper.toDTO(savedEntity)).thenReturn(outputDTO);
 
@@ -233,8 +262,100 @@ class MilkingProcessorTest {
         ));
     }
 
-        @Test
-        void getCowsWithLactations_groupsByBovineAndSortsLactations() {
+    @Test
+    void createMilking_soldBovine_throwsException() {
+        MilkingDTO inputDTO = createMilkingDTO(172, "2026-04-25", "AM", 3.0);
+        MilkingRecord entity = createFarmMilking(172, "2026-04-25", "AM", 3.0);
+        when(milkingMapper.toEntity(inputDTO)).thenReturn(entity);
+        when(profileLifecycleRepository.findById("BOVINE#172", "PROFILE#LIFECYCLE"))
+                .thenReturn(Optional.of(createLifecycle(LifecycleStatus.SOLD, true)));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> milkingProcessor.createMilking(inputDTO));
+
+        assertTrue(exception.getMessage().contains("no está habilitado"));
+        verify(milkingService, never()).save(any(MilkingRecord.class));
+    }
+
+    @Test
+    void createMilking_closedLactation_throwsException() {
+        MilkingDTO inputDTO = createMilkingDTO(172, "2026-04-25", "AM", 3.0);
+        MilkingRecord entity = createFarmMilking(172, "2026-04-25", "AM", 3.0);
+        ProfileLactancy closedLactation = ProfileLactancy.builder()
+                .pk("BOVINE#172")
+                .sk("LACT#001")
+                .lactationNumber("1")
+                .status("CLOSED")
+                .startDate("2025-11-27")
+                .endDate("2026-04-10")
+                .build();
+        when(milkingMapper.toEntity(inputDTO)).thenReturn(entity);
+        when(profileLifecycleRepository.findById("BOVINE#172", "PROFILE#LIFECYCLE"))
+                .thenReturn(Optional.of(createLifecycle(LifecycleStatus.OPEN, true)));
+        when(profileReproductiveRepository.findById("BOVINE#172", "PROFILE#REPRODUCTIVE"))
+                .thenReturn(Optional.of(createReproductive("LACT#001")));
+        when(profileLactancyRepository.findById("BOVINE#172", "LACT#001"))
+                .thenReturn(Optional.of(closedLactation));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> milkingProcessor.createMilking(inputDTO));
+
+        assertTrue(exception.getMessage().contains("lactancia activa válida"));
+        verify(milkingService, never()).save(any(MilkingRecord.class));
+    }
+
+    @Test
+    void getCowsWithLactations_returnsOnlyOperationalCurrentLactations() {
+        String siteId = "FARM#001";
+        ProfileLactancy operationalLactation = ProfileLactancy.builder()
+            .pk("BOVINE#167")
+            .sk("LACT#002")
+            .lactationNumber("2")
+            .status("LACTATING")
+            .startDate("2026-01-10")
+            .build();
+        ProfileLactancy soldBovineLactation = ProfileLactancy.builder()
+            .pk("BOVINE#172")
+            .sk("LACT#001")
+            .lactationNumber("1")
+            .status("LACTATING")
+            .startDate("2025-11-27")
+            .build();
+        ProfileLactancy closedLactation = ProfileLactancy.builder()
+            .pk("BOVINE#200")
+            .sk("LACT#001")
+            .lactationNumber("1")
+            .status("CLOSED")
+            .startDate("2026-02-01")
+            .endDate("2026-03-01")
+            .build();
+
+        when(profileLactancyRepository.findAllLactations(siteId))
+            .thenReturn(Optional.of(List.of(operationalLactation, soldBovineLactation, closedLactation)));
+        when(profileLifecycleRepository.findById("BOVINE#167", "PROFILE#LIFECYCLE"))
+            .thenReturn(Optional.of(createLifecycle(LifecycleStatus.OPEN, true)));
+        when(profileReproductiveRepository.findById("BOVINE#167", "PROFILE#REPRODUCTIVE"))
+            .thenReturn(Optional.of(createReproductive("LACT#002")));
+        when(profileLifecycleRepository.findById("BOVINE#172", "PROFILE#LIFECYCLE"))
+            .thenReturn(Optional.of(createLifecycle(LifecycleStatus.SOLD, true)));
+        when(profileLifecycleRepository.findById("BOVINE#200", "PROFILE#LIFECYCLE"))
+            .thenReturn(Optional.of(createLifecycle(LifecycleStatus.OPEN, true)));
+        when(profileReproductiveRepository.findById("BOVINE#200", "PROFILE#REPRODUCTIVE"))
+            .thenReturn(Optional.of(createReproductive("LACT#001")));
+
+        Optional<List<CowWithLactationsDTO>> result = milkingProcessor.getCowsWithLactations(siteId);
+
+        assertTrue(result.isPresent());
+        assertEquals(1, result.get().size());
+        assertEquals(167, result.get().get(0).getBovineId());
+        assertEquals(1, result.get().get(0).getLactations().size());
+        assertEquals("002", result.get().get(0).getLactations().get(0).getLactationNumber());
+
+        verify(profileLactancyRepository).findAllLactations(siteId);
+    }
+
+    @Test
+    void getCowsWithLactationsHistory_groupsByBovineAndSortsLactations() {
         String siteId = "FARM#001";
         ProfileLactancy lactation2 = ProfileLactancy.builder()
             .pk("BOVINE#172")
@@ -262,7 +383,7 @@ class MilkingProcessorTest {
         when(profileLactancyRepository.findAllLactations(siteId))
             .thenReturn(Optional.of(List.of(lactation2, lactation1, otherBovine)));
 
-        Optional<List<CowWithLactationsDTO>> result = milkingProcessor.getCowsWithLactations(siteId);
+        Optional<List<CowWithLactationsDTO>> result = milkingProcessor.getCowsWithLactationsHistory(siteId);
 
         assertTrue(result.isPresent());
         assertEquals(2, result.get().size());
@@ -276,7 +397,7 @@ class MilkingProcessorTest {
         assertEquals("001", cow172.getLactations().get(0).getLactationNumber());
         assertEquals("002", cow172.getLactations().get(1).getLactationNumber());
         verify(profileLactancyRepository).findAllLactations(siteId);
-        }
+    }
 
         @Test
         void getCowsWithLactations_withoutRecords_returnsEmpty() {
@@ -300,11 +421,11 @@ class MilkingProcessorTest {
 
         when(profileLactancyRepository.findAllLactations(siteId)).thenReturn(Optional.of(List.of(invalidPk)));
 
-        Optional<List<CowWithLactationsDTO>> result = milkingProcessor.getCowsWithLactations(siteId);
+        Optional<List<CowWithLactationsDTO>> result = milkingProcessor.getCowsWithLactationsHistory(siteId);
 
         assertTrue(result.isEmpty());
         verify(profileLactancyRepository).findAllLactations(siteId);
-        }
+    }
 
     @Test
     void getMilkingByLactation_normalizesInputToThreeDigits() {
@@ -397,6 +518,19 @@ class MilkingProcessorTest {
                 .shift(shift)
                 .liters(liters)
                 .status("completo")
+                .build();
+    }
+
+    private ProfileLifecycle createLifecycle(LifecycleStatus status, boolean enabled) {
+        return ProfileLifecycle.builder()
+                .status(status)
+                .enabled(enabled)
+                .build();
+    }
+
+    private ProfileReproductive createReproductive(String currentLactationId) {
+        return ProfileReproductive.builder()
+                .currentLactationId(currentLactationId)
                 .build();
     }
 }
