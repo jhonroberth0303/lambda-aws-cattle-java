@@ -1,6 +1,9 @@
 package com.cattle.controller;
 
+import com.cattle.dtos.PastureEventRequestDTO;
+import com.cattle.dtos.PastureEventResponseDTO;
 import com.cattle.dtos.RotationSemaphoreItemDTO;
+import com.cattle.processor.PastureEventProcessor;
 import com.cattle.processor.RotationPlanProcessor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,9 +22,11 @@ import java.util.List;
 public class PastureController {
 
     private final RotationPlanProcessor rotationPlanProcessor;
+    private final PastureEventProcessor pastureEventProcessor;
 
-    public PastureController(RotationPlanProcessor rotationPlanProcessor) {
+    public PastureController(RotationPlanProcessor rotationPlanProcessor, PastureEventProcessor pastureEventProcessor) {
         this.rotationPlanProcessor = rotationPlanProcessor;
+        this.pastureEventProcessor = pastureEventProcessor;
     }
 
     @Operation(
@@ -37,5 +42,14 @@ public class PastureController {
             @Parameter(description = "ID de la finca", required = true, example = "FARM#001")
             @PathVariable("farmId") String farmId) {
         return ResponseEntity.ok(rotationPlanProcessor.getRotationSemaphoreItems(farmId).orElse(List.of()));
+    }
+
+    @PostMapping("/{pastureId}/events")
+    public ResponseEntity<PastureEventResponseDTO> applyEvent(
+            @PathVariable("farmId") String farmId,
+            @PathVariable("pastureId") String pastureId,
+            @RequestBody PastureEventRequestDTO request
+    ) {
+        return ResponseEntity.ok(pastureEventProcessor.applyEvent(farmId, pastureId, request));
     }
 }

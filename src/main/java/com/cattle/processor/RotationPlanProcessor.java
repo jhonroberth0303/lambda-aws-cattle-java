@@ -20,7 +20,6 @@ import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.cattle.events.PatchApplier.applyLocal;
@@ -110,7 +109,7 @@ public class RotationPlanProcessor {
         LocalDate now = LocalDate.now(ZoneOffset.UTC);
         Integer etaOpenDays = EtaCalculator.etaOpenDays(pasture, plan);
 
-        dto.setId(UUID.randomUUID().toString());
+        dto.setId(pasture.getId());
         dto.setFarmId(pasture.getFarmId());
         dto.setPastureId(pasture.getId());
         dto.setName(pasture.getName());
@@ -118,10 +117,14 @@ public class RotationPlanProcessor {
         dto.setStatus(pasture.getStatus());
         dto.setSubstatus(pasture.getSubstatus());
         dto.setBlocked(pasture.getGsi2pk() != null && pasture.getGsi2pk().contains("true"));
+        dto.setBlockReason(pasture.getBlockReason());
         dto.setEtaOpenDays(etaOpenDays);
         dto.setReadyAt(etaOpenDays != null ? now.plusDays(etaOpenDays.longValue()).toString() : null);
+        dto.setHoldUntil(pasture.getHoldUntil());
+        dto.setLastUseAt(pasture.getLastUseAt());
         dto.setCurrentHeightCm(pasture.getCurrentHeightCm());
         dto.setAreaHa(pasture.getAreaHa());
+        dto.setNotes(pasture.getNotes());
 
         if (plan != null && plan.getRules() != null) {
             dto.setDaysRest(plan.getRules().getRestDaysMin());

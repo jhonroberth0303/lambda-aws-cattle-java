@@ -35,20 +35,9 @@ public class PastureRepository {
 
     public Optional<List<Pasture>> findPastures(String farmId) {
         try {
-            List<Pasture> pastures;
-
-            QueryConditional queryConditional = QueryConditional.keyEqualTo(
-                Key.builder()
-                    .partitionValue("farm#" + farmId + "#blocked#false")
-                    .build()
-            );
-
-            Page<Pasture> result = table
-                .index(GSI2_SPECIES_ETA)
-                .query(r -> r.limit(20).queryConditional(queryConditional))
-                .iterator()
-                .next();
-            pastures = new ArrayList<>(result.items());
+            List<Pasture> pastures = new ArrayList<>();
+            pastures.addAll(queryPasturesByBlocked(farmId, false));
+            pastures.addAll(queryPasturesByBlocked(farmId, true));
 
             return Optional.of(pastures);
         } catch (ResourceNotFoundException e) {
@@ -61,6 +50,25 @@ public class PastureRepository {
             lambdaContext.logException(LogType.REPOSITORY, "Unexpected error: " + e.getMessage());
             throw new RepositoryException("Unexpected error: " + e.getMessage(), e);
         }
+    }
+
+    private List<Pasture> queryPasturesByBlocked(String farmId, boolean blocked) {
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(
+                Key.builder()
+                        .partitionValue("farm#" + farmId + "#blocked#" + blocked)
+                        .build()
+        );
+
+        Iterator<Page<Pasture>> iterator = table
+                .index(GSI2_SPECIES_ETA)
+                .query(r -> r.limit(50).queryConditional(queryConditional))
+                .iterator();
+
+        if (!iterator.hasNext()) {
+            return List.of();
+        }
+
+        return new ArrayList<>(iterator.next().items());
     }
 
 

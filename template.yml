@@ -82,6 +82,11 @@ Parameters:
     Default: SiteSettings
     Description: Nombre de la tabla DynamoDB de configuraciones reutilizables por sitio
 
+  TableEvents:
+    Type: String
+    Default: Events
+    Description: Nombre de la tabla DynamoDB de eventos para auditoría y tracking
+
 Globals:
   Api:
     EndpointConfiguration: REGIONAL
@@ -196,6 +201,7 @@ Resources:
           TABLE_PLAN: !Ref TablePlan
           TABLE_COUNTERS: !Ref TableCounters
           TABLE_SITE_SETTINGS: !Ref TableSiteSettings
+          TABLE_EVENTS: !Ref TableEvents
       Events:
         ProxyResource:
           Type: Api
@@ -227,6 +233,7 @@ Resources:
           TABLE_PLAN: !Ref TablePlan
           TABLE_COUNTERS: !Ref TableCounters
           TABLE_SITE_SETTINGS: !Ref TableSiteSettings
+          TABLE_EVENTS: !Ref TableEvents
 
   SummaryRefreshSchedulerDlq:
     Type: AWS::SQS::Queue
