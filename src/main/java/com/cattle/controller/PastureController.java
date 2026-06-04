@@ -1,6 +1,11 @@
 package com.cattle.controller;
 
+import com.cattle.config.LambdaContext;
+import com.cattle.dtos.PastureEventRequestDTO;
+import com.cattle.dtos.PastureEventResponseDTO;
 import com.cattle.dtos.RotationSemaphoreItemDTO;
+import com.cattle.enums.LogType;
+import com.cattle.processor.PastureEventProcessor;
 import com.cattle.processor.RotationPlanProcessor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,9 +24,13 @@ import java.util.List;
 public class PastureController {
 
     private final RotationPlanProcessor rotationPlanProcessor;
+    private final PastureEventProcessor pastureEventProcessor;
+    private final LambdaContext lambdaContext;
 
-    public PastureController(RotationPlanProcessor rotationPlanProcessor) {
+    public PastureController(RotationPlanProcessor rotationPlanProcessor, PastureEventProcessor pastureEventProcessor, LambdaContext lambdaContext) {
         this.rotationPlanProcessor = rotationPlanProcessor;
+        this.pastureEventProcessor = pastureEventProcessor;
+        this.lambdaContext = lambdaContext;
     }
 
     @Operation(
@@ -36,6 +45,17 @@ public class PastureController {
     public ResponseEntity<List<RotationSemaphoreItemDTO>> getRotationSemaphore(
             @Parameter(description = "ID de la finca", required = true, example = "FARM#001")
             @PathVariable("farmId") String farmId) {
+        lambdaContext.logInfo(LogType.CONTROLLER, "Obteniendo semáforo de rotación para finca: " + farmId);
         return ResponseEntity.ok(rotationPlanProcessor.getRotationSemaphoreItems(farmId).orElse(List.of()));
+    }
+
+    @PostMapping("/{pastureId}/events")
+    public ResponseEntity<PastureEventResponseDTO> applyEvent(
+            @PathVariable("farmId") String farmId,
+            @PathVariable("pastureId") String pastureId,
+            @RequestBody PastureEventRequestDTO request
+    ) {
+        lambdaContext.logInfo(LogType.CONTROLLER, String.format("Aplicando evento '%s' al potrero '%s' de la finca '%s'", request.getEventType(), pastureId, farmId));
+        return ResponseEntity.ok(pastureEventProcessor.applyEvent(farmId, pastureId, request));
     }
 }

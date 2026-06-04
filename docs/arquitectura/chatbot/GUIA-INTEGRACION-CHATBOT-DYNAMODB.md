@@ -58,7 +58,7 @@ La integración depende de variables de entorno y configuración visibles en có
 
 - El chatbot está integrado en el backend principal.
 - Existe capa de intención, contexto y ejecución de modelo.
-- Existen servicios de consulta para contexto de bovinos, milking y potreros.
+- Existen servicios de consulta para contexto de bovinos, milkingProd y potreros.
 - Existe integración con Knowledge Base y retorno de citaciones.
 
 ## Qué sigue pendiente o débil

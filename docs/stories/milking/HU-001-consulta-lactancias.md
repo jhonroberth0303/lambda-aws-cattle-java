@@ -86,12 +86,12 @@ La funcionalidad principal de esta historia ya se encuentra implementada.
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/site/{siteId}/milking` | Lista vacas con lactancias registradas |
-| GET | `/site/{siteId}/milking/{idBovine}/lactation/{lactationNumber}` | Obtiene registros de ordeño por lactancia |
-| POST | `/site/{siteId}/milking` | Registra un ordeño y asigna la lactancia activa |
+| GET | `/site/{siteId}/milkingProd` | Lista vacas con lactancias registradas |
+| GET | `/site/{siteId}/milkingProd/{idBovine}/lactation/{lactationNumber}` | Obtiene registros de ordeño por lactancia |
+| POST | `/site/{siteId}/milkingProd` | Registra un ordeño y asigna la lactancia activa |
 
 ### Reglas de comportamiento relevantes
-- El listado de vacas con lactancias se expone en la raíz del recurso `milking`, no en `/milking/cows`.
+- El listado de vacas con lactancias se expone en la raíz del recurso `milkingProd`, no en `/milkingProd/cows`.
 - El número de lactancia de entrada se normaliza antes de ejecutar la consulta por GSI2.
 - El parámetro `shift` sigue siendo opcional en la consulta por lactancia.
 - Los errores de validación del flujo de registro deben devolverse como respuesta de cliente inválido.

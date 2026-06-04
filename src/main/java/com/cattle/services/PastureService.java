@@ -23,6 +23,8 @@ public class PastureService {
 
     public Optional<List<Pasture>> getPastures(String farmId) {
 
+        lambdaContext.logInfo(LogType.SERVICE, "Getting pastures for farmId: " + farmId);
+
         if (farmId == null || farmId.trim().isEmpty()) {
             throw new IllegalArgumentException("El campo farmId es requerido");
         }

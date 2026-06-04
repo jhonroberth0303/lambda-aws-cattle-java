@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ============================================================================
-Script para migrar registros de milking existentes agregando GSI2PK y GSI2SK
+Script para migrar registros de milkingProd existentes agregando GSI2PK y GSI2SK
 HU-001: Consulta de Registros de Ordeño por Lactancia
 ============================================================================
 
@@ -11,11 +11,11 @@ PREREQUISITOS:
 - AWS CLI configurado con credenciales válidas
 
 USO:
-python migrate-milking-records.py [--dry-run] [--table-milking TABLE] [--table-bovineIdentityItems TABLE]
+python migrate-milkingProd-records.py [--dry-run] [--table-milkingProd TABLE] [--table-bovineIdentityItems TABLE]
 
 EJEMPLO:
-python migrate-milking-records.py --dry-run
-python migrate-milking-records.py --table-milking cattle-milking-records-dev
+python migrate-milkingProd-records.py --dry-run
+python migrate-milkingProd-records.py --table-milkingProd cattle-milkingProd-records-dev
 
 ============================================================================
 """
@@ -26,7 +26,7 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 
 # Configuración por defecto
-DEFAULT_TABLE_MILKING = "cattle-milking-records"
+DEFAULT_TABLE_MILKING = "cattle-milkingProd-records"
 DEFAULT_TABLE_BOVINES = "cattle-bovineIdentityItems"
 
 
@@ -72,7 +72,7 @@ def get_lactation_for_bovine(bovines_table, bovine_id: int) -> Optional[Dict[str
 
 def generate_gsi2_keys(bovine_id: int, lactation_number: int, date: str, shift: str) -> tuple:
     """
-    Genera las claves GSI2PK y GSI2SK para un registro de milking.
+    Genera las claves GSI2PK y GSI2SK para un registro de milkingProd.
     
     GSI2PK: BOVINE#<id>#LACT#<nn>
     GSI2SK: <date>#<shift>
@@ -85,7 +85,7 @@ def generate_gsi2_keys(bovine_id: int, lactation_number: int, date: str, shift: 
 
 def migrate_record(milking_table, bovines_table, item: Dict[str, Any], dry_run: bool = False) -> bool:
     """
-    Migra un registro de milking agregando GSI2PK, GSI2SK y lactationNumber.
+    Migra un registro de milkingProd agregando GSI2PK, GSI2SK y lactationNumber.
     Retorna True si se migró exitosamente.
     """
     pk = item.get('PK')
@@ -148,11 +148,11 @@ def scan_all_records(table) -> List[Dict[str, Any]]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Migrar registros de milking con GSI2')
+    parser = argparse.ArgumentParser(description='Migrar registros de milkingProd con GSI2')
     parser.add_argument('--dry-run', action='store_true', 
                         help='Simular migración sin hacer cambios')
-    parser.add_argument('--table-milking', default=DEFAULT_TABLE_MILKING,
-                        help=f'Nombre de la tabla de milking (default: {DEFAULT_TABLE_MILKING})')
+    parser.add_argument('--table-milkingProd', default=DEFAULT_TABLE_MILKING,
+                        help=f'Nombre de la tabla de milkingProd (default: {DEFAULT_TABLE_MILKING})')
     parser.add_argument('--table-bovineIdentityItems', default=DEFAULT_TABLE_BOVINES,
                         help=f'Nombre de la tabla de bovinos (default: {DEFAULT_TABLE_BOVINES})')
     
@@ -171,7 +171,7 @@ def main():
     milking_table = dynamodb.Table(args.table_milking)
     bovines_table = dynamodb.Table(args.table_bovines)
     
-    print("[1/3] Escaneando registros de milking...")
+    print("[1/3] Escaneando registros de milkingProd...")
     records = scan_all_records(milking_table)
     print(f"  Encontrados: {len(records)} registros")
     print()

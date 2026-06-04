@@ -9,7 +9,7 @@
 ## Trazabilidad
 
 - HU frontend relacionada: `cattle-front/docs/stories/HU-20260429-panel-ventas-leche.md`
-- Dominio funcional relacionado: `milking`
+- Dominio funcional relacionado: `milkingProd`
 - Dependencia de integración: consumidor frontend del panel de ventas de leche
 - Modelo reusable relacionado: `SiteSetting`
 
@@ -46,7 +46,7 @@ Situación actual:
 
 Evidencia técnica revisada:
 
-- el módulo `milking` ya expone rutas por `siteId` para operación y consulta
+- el módulo `milkingProd` ya expone rutas por `siteId` para operación y consulta
 - el repositorio usa DynamoDB Enhanced Client con entidades anotadas y repositorios especializados
 - `BaseDdbItem` define un patrón reutilizable de `PK`, `SK`, `GSI1PK`, `GSI1SK`, `createdAt`, `updatedAt`
 - no se evidenció en `lambda-aws-cattle-java/src/**` una superficie existente de configuración por sitio reutilizable para `milkPricePerLiter`
@@ -88,7 +88,7 @@ No incluye:
 5. El backend valida que `milkPricePerLiter` sea numérico y no negativo.
 6. La respuesta expone al menos `siteId`, `milkPricePerLiter`, `updatedAt` y `updatedBy` si está disponible.
 7. El modelo deja prevista una forma de registrar histórico futuro sin rediseñar la clave principal del setting.
-8. La implementación no rompe las rutas actuales del módulo `milking`.
+8. La implementación no rompe las rutas actuales del módulo `milkingProd`.
 9. Existen pruebas backend que cubren lectura, actualización y validaciones básicas.
 10. El consumidor frontend no depende de `404` para inicializar el precio de leche.
 
@@ -573,7 +573,7 @@ La HU puede considerarse lista para integración cuando:
 - la persistencia por `siteId` funciona de forma estable sobre un modelo genérico de settings
 - el contrato devuelto es consistente con lo esperado por frontend
 - la estructura de claves deja previsto `CURRENT` e `HISTORY` para el setting sin rediseño adicional
-- el cambio no rompe el slice actual de `milking`
+- el cambio no rompe el slice actual de `milkingProd`
 
 ## Evidencia de implementación y cierre
 

@@ -146,7 +146,7 @@ Se encontraron **17+ ocurrencias** de `System.getenv()` en repositorios y servic
 public class TablesConfig {
     private String bovineIdentityItems;
     private String pasture;
-    private String milking;
+    private String milkingProd;
     private String counters;
     private String plan;
 }

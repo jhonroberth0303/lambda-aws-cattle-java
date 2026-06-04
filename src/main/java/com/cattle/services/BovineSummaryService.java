@@ -70,6 +70,7 @@ public class BovineSummaryService {
      */
     public List<BovineSummaryDTO> findAll() {
         try {
+            lambdaContext.logInfo(LogType.SERVICE, "Fetching all bovine summaries");
             List<BovineSummary> summaries = summaryRepository.findAll();
             return summaries.stream()
                     .map(mapper::toDTO)

@@ -136,7 +136,7 @@ class BovineIdentityItemTest {
         // Act
         BovineIdentityItem bovineIdentityItem = new BovineIdentityItem(
             1, "FARM-001", "name", "female", "breed", null, "2020-01-01", "color", "born",
-            "father", "fatherName", "mother", "motherName"
+            "father", "fatherName", "mother", "motherName", "PURE"
         );
         bovineIdentityItem.setPk("pk");
         bovineIdentityItem.setSk("sk");

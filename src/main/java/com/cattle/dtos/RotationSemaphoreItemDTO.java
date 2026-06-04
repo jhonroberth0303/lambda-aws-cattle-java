@@ -16,8 +16,11 @@ public class RotationSemaphoreItemDTO {
     public String status;
     public String substatus;
     public boolean blocked;
+    public String blockReason;
     public Integer etaOpenDays;
     public String readyAt;
+    public String holdUntil;
+    public String lastUseAt;
     public Integer currentHeightCm;
     public Integer daysRest;
     public Integer entryHeightCm;
@@ -25,5 +28,6 @@ public class RotationSemaphoreItemDTO {
     public Integer restDaysMin;
     public Integer cutIntervalDays;
     public String warn;
+    public String notes;
     private Double areaHa;
 }

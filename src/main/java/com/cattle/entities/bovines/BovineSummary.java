@@ -1,5 +1,6 @@
 package com.cattle.entities.bovines;
 
+import com.cattle.entities.BaseDdbItem;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;

@@ -1,6 +1,10 @@
 package com.cattle.controller;
 
+import com.cattle.config.LambdaContext;
+import com.cattle.dtos.PastureEventRequestDTO;
+import com.cattle.dtos.PastureEventResponseDTO;
 import com.cattle.dtos.RotationSemaphoreItemDTO;
+import com.cattle.processor.PastureEventProcessor;
 import com.cattle.processor.RotationPlanProcessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -32,12 +36,18 @@ class PastureControllerTest {
     @Mock
     private RotationPlanProcessor rotationPlanProcessor;
 
+    @Mock
+    private PastureEventProcessor pastureEventProcessor;
+
+    @Mock
+    private LambdaContext lambdaContext;
+
     private PastureController pastureController;
 
     @BeforeEach
     void setUp() {
         openMocks(this);
-        pastureController = new PastureController(rotationPlanProcessor);
+        pastureController = new PastureController(rotationPlanProcessor, pastureEventProcessor, lambdaContext);
     }
 
     // ==================== getRotationSemaphore Tests ====================
@@ -154,6 +164,33 @@ class PastureControllerTest {
         // Assert
         assertTrue(response.getBody().isEmpty());
         assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void applyEvent_delegatesToProcessorAndReturnsOk() {
+        String farmId = "farm-001";
+        String pastureId = "P-01";
+        PastureEventRequestDTO request = new PastureEventRequestDTO();
+        request.setEventType("OPEN");
+        PastureEventRequestDTO.Payload payload = new PastureEventRequestDTO.Payload();
+        payload.setLotId("L-001");
+        payload.setAnimals(10);
+        request.setPayload(payload);
+
+        PastureEventResponseDTO responseDTO = PastureEventResponseDTO.builder()
+                .eventId("evt-1")
+                .eventType("OPEN")
+                .pasture(createRotationItem("P-01", "EN_USO"))
+                .build();
+
+        when(pastureEventProcessor.applyEvent(farmId, pastureId, request)).thenReturn(responseDTO);
+
+        ResponseEntity<PastureEventResponseDTO> response = pastureController.applyEvent(farmId, pastureId, request);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("evt-1", response.getBody().getEventId());
+        verify(pastureEventProcessor).applyEvent(farmId, pastureId, request);
     }
 
     // ==================== Helper Methods ====================

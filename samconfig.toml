@@ -20,7 +20,8 @@ parameter_overrides = """
   TablePasture="Pastures" \
   TablePlan="Plans" \
   TableCounters="counters" \
-  TableSiteSettings="SiteSettings"
+  TableSiteSettings="SiteSettings" \
+  TableEvents="Events"
 """
 image_repositories = []
 
@@ -42,7 +43,8 @@ parameter_overrides = """
   TablePasture="Pastures" \
   TablePlan="Plans" \
   TableCounters="counters" \
-  TableSiteSettings="SiteSettings"
+  TableSiteSettings="SiteSettings" \
+  TableEvents="Events"
 """
 
 [prod.deploy.parameters]
@@ -61,5 +63,6 @@ parameter_overrides = """
   TablePasture="Pastures" \
   TablePlan="Plans" \
   TableCounters="counters" \
-  TableSiteSettings="SiteSettings"
+  TableSiteSettings="SiteSettings" \
+  TableEvents="Events"
 """

@@ -1,11 +1,9 @@
 package com.cattle.entities.bovines;
 
+import com.cattle.entities.BaseDdbItem;
 import com.cattle.enums.EventSource;
-import com.cattle.events.payloads.EventPayload;
-import com.cattle.events.payloads.EventPayloadConverter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
 
 import java.time.Instant;
 

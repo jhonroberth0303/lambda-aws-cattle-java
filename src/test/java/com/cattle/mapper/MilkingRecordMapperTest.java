@@ -32,8 +32,8 @@ class MilkingRecordMapperTest {
     void toDTO_validFarmMilking_returnsMilkingDTO() {
         // Arrange
         MilkingRecord milkingRecord = MilkingRecord.builder()
-                .PK("BOVINE#1")
-                .SK("MILKING#2026-01-20#AM")
+                .pk("BOVINE#1")
+                .sk("MILKING#2026-01-20#AM")
                 .bovineId(1)
                 .date("2026-01-20")
                 .shift("AM")
@@ -116,8 +116,8 @@ class MilkingRecordMapperTest {
         assertEquals("Test observation", result.getObservations());
         assertEquals("Jane", result.getRecordedBy());
         // PK, SK y createdAt son ignorados en el mapping
-        assertNull(result.getPK());
-        assertNull(result.getSK());
+        assertNull(result.getPk());
+        assertNull(result.getSk());
         assertNull(result.getCreatedAt());
     }
 
@@ -134,8 +134,8 @@ class MilkingRecordMapperTest {
     void roundTrip_entityToDtoToEntity_preservesCoreData() {
         // Arrange
         MilkingRecord original = MilkingRecord.builder()
-                .PK("BOVINE#10")
-                .SK("MILKING#2026-01-20#PM")
+                .pk("BOVINE#10")
+                .sk("MILKING#2026-01-20#PM")
                 .bovineId(10)
                 .date("2026-01-20")
                 .shift("PM")
@@ -160,8 +160,8 @@ class MilkingRecordMapperTest {
         assertEquals(original.getObservations(), result.getObservations());
         assertEquals(original.getRecordedBy(), result.getRecordedBy());
         // PK, SK y createdAt no se preservan en round trip
-        assertNull(result.getPK());
-        assertNull(result.getSK());
+        assertNull(result.getPk());
+        assertNull(result.getSk());
         assertNull(result.getCreatedAt());
     }
 }

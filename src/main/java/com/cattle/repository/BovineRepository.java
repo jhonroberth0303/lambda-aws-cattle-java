@@ -25,7 +25,7 @@ public class BovineRepository {
     private static final String STATUS_SUCCESS = "200";
     private static final String BOVINE_WAS_DELETE_SUCCESSFULLY = "Bovine was delete successfully: ";
     private static final String IDENTITY = "IDENTITY";
-    private static final String GSI1_BOVINES = "GSI1";
+    private static final String GSI1_BOVINES = "gsi1";
     private static final String PREFIX_BOVINE = "BOVINE#";
     private static final String SUMMARY = "SUMMARY";
     private final LambdaContext lambdaContext;
@@ -40,12 +40,15 @@ public class BovineRepository {
 
     public Optional<List<BovineIdentityItem>> findAll() {
         try {
+            lambdaContext.logInfo(LogType.REPOSITORY, "Received request to find all bovines");
             QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
-                    .partitionValue(IDENTITY).build());
+                    .partitionValue(IDENTITY)
+                    .build());
 
             Page<BovineIdentityItem> result = table
                     .index(GSI1_BOVINES) // apuntamos al índice
-                    .query(r -> r.limit(15).queryConditional(queryConditional)).iterator().next();
+                    .query(r -> r.limit(15).queryConditional(queryConditional))
+                    .iterator().next();
 
             List<BovineIdentityItem> bovineIdentityItems = new ArrayList<>(result.items());
 
@@ -202,7 +205,9 @@ public class BovineRepository {
                     .partitionValue(IDENTITY)
                     .build());
 
-            var iterator = table.index(GSI1_BOVINES).query(r -> r.queryConditional(queryConditional)).iterator();
+            var iterator = table.index(GSI1_BOVINES)
+                    .query(r -> r.queryConditional(queryConditional))
+                    .iterator();
 
             while (iterator.hasNext()) {
                 Page<BovineIdentityItem> page = iterator.next();

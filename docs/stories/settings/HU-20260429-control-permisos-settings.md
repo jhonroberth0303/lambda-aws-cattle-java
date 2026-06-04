@@ -8,7 +8,7 @@
 
 ## Trazabilidad
 
-- HU relacionada: `lambda-aws-cattle-java/docs/stories/milking/HU-20260429-configuracion-precio-leche-por-sitio.md`
+- HU relacionada: `lambda-aws-cattle-java/docs/stories/milkingProd/HU-20260429-configuracion-precio-leche-por-sitio.md`
 - Consumidor impactado inicialmente: `cattle-front/docs/stories/HU-20260429-panel-ventas-leche.md`
 
 ## Contexto de negocio

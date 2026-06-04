@@ -24,7 +24,7 @@ El flujo responde operativamente:
 
 ### 1. Consulta base del dashboard de lactancia
 
-- El frontend solicita `GET /site/{siteId}/milking`.
+- El frontend solicita `GET /site/{siteId}/milkingProd`.
 - `MilkingController` delega en `MilkingProcessor.getCowsWithLactations(siteId)`.
 - El processor consulta lactancias y agrupa por bovino.
 - Devuelve `CowWithLactationsDTO` con sus lactancias activas e históricas.
@@ -33,14 +33,14 @@ Resultado: el frontend recibe el conjunto base para seleccionar bovinos producti
 
 ### 2. Consulta del historial por lactancia
 
-- Cuando el usuario selecciona una vaca y una lactancia, el frontend invoca `GET /site/{siteId}/milking/{idBovine}/lactation/{lactationNumber}`.
+- Cuando el usuario selecciona una vaca y una lactancia, el frontend invoca `GET /site/{siteId}/milkingProd/{idBovine}/lactation/{lactationNumber}`.
 - `MilkingProcessor` consulta registros de ordeño asociados al bovino y a la lactancia solicitada.
 
 Resultado: el módulo obtiene la serie necesaria para historia, tabla y curva.
 
 ### 3. Registro de un ordeño
 
-- El frontend envía `POST /site/{siteId}/milking` con un `MilkingDTO`.
+- El frontend envía `POST /site/{siteId}/milkingProd` con un `MilkingDTO`.
 - `MilkingController` valida el body y delega en `MilkingProcessor.createMilking`.
 - El processor:
   - valida `bovineId`, fecha y turno
@@ -69,19 +69,19 @@ sequenceDiagram
     participant REPO as Repositorios/Servicios
     participant DDB as DynamoDB
 
-    FE->>APIGW: GET /site/{siteId}/milking
+    FE->>APIGW: GET /site/{siteId}/milkingProd
     APIGW->>CTRL: request
     CTRL->>PROC: getCowsWithLactations(siteId)
     PROC->>REPO: consultar lactancias
     REPO->>DDB: query
     DDB-->>FE: vacas con lactancias
-    FE->>APIGW: POST /site/{siteId}/milking
+    FE->>APIGW: POST /site/{siteId}/milkingProd
     APIGW->>CTRL: request
     CTRL->>PROC: createMilking(dto)
     PROC->>REPO: validar lactancia y persistir
     REPO->>DDB: put item
     DDB-->>FE: registro guardado
-    FE->>APIGW: GET /site/{siteId}/milking/{id}/lactation/{n}
+    FE->>APIGW: GET /site/{siteId}/milkingProd/{id}/lactation/{n}
     APIGW->>CTRL: request
     CTRL->>PROC: getMilkingByLactation(...)
     PROC->>DDB: query historial

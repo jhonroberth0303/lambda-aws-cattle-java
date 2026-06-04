@@ -292,7 +292,7 @@ public class MilkingQueryService implements DomainQueryService<MilkingContextDTO
     
     @Override
     public List<MilkingContextDTO> buildContext(String farmId) {
-        log.info("Building milking context for farm: {}", farmId);
+        log.info("Building milkingProd context for farm: {}", farmId);
         // Implementación similar a BovineQueryService
         return getMilkingStatistics(farmId);
     }
@@ -421,7 +421,7 @@ public class ContextBuilderService {
     private String buildGeneralContext(String farmId) {
         // Obtener datos de todos los servicios
         List<BovineContextDTO> bovineIdentityItems = bovineQueryService.buildContext(farmId);
-        List<MilkingContextDTO> milking = milkingQueryService.buildContext(farmId);
+        List<MilkingContextDTO> milkingProd = milkingQueryService.buildContext(farmId);
         List<PastureContextDTO> pastures = pastureQueryService.buildContext(farmId);
         // ...
     }
@@ -727,7 +727,7 @@ mvn jacoco:report
 
 # Verify no breaking changes
 # - Acceder a /bovineIdentityItems endpoint → debe funcionar igual
-# - Acceder a /milking endpoint → debe funcionar igual
+# - Acceder a /milkingProd endpoint → debe funcionar igual
 # - POST /chat/message → debe funcionar igual (con ContextBuilder refactorizado)
 ```
 

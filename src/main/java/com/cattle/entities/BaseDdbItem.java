@@ -1,4 +1,4 @@
-package com.cattle.entities.bovines;
+package com.cattle.entities;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -24,12 +24,12 @@ public class BaseDdbItem {
     private String updatedAt;
 
     @DynamoDbPartitionKey
-    @DynamoDbAttribute("PK")
+    @DynamoDbAttribute("pk")
     public String getPk() { return pk; }
     public void setPk(String pk) { this.pk = pk; }
 
     @DynamoDbSortKey
-    @DynamoDbAttribute("SK")
+    @DynamoDbAttribute("sk")
     public String getSk() { return sk; }
     public void setSk(String sk) { this.sk = sk; }
 
@@ -42,9 +42,9 @@ public class BaseDdbItem {
     public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 
     // ==== GSI ATTRS ====
-    @DynamoDbSecondaryPartitionKey(indexNames = "GSI1")
-    @DynamoDbAttribute("GSI1PK") public String getGsi1pk() { return gsi1pk; }
+    @DynamoDbSecondaryPartitionKey(indexNames = "gsi1")
+    @DynamoDbAttribute("gsi1pk") public String getGsi1pk() { return gsi1pk; }
 
-    @DynamoDbSecondarySortKey(indexNames = "GSI1")
-    @DynamoDbAttribute("GSI1SK") public String getGsi1sk() { return gsi1sk; }
+    @DynamoDbSecondarySortKey(indexNames = "gsi1")
+    @DynamoDbAttribute("gsi1sk") public String getGsi1sk() { return gsi1sk; }
 }

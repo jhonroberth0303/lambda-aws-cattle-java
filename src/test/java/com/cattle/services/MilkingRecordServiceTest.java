@@ -54,8 +54,8 @@ class MilkingRecordServiceTest {
         List<MilkingRecord> milkingRecords = new ArrayList<>();
         
         MilkingRecord milkingRecord = MilkingRecord.builder()
-                .PK(pk)
-                .SK("MILKING#2026-01-20#AM")
+                .pk(pk)
+                .sk("MILKING#2026-01-20#AM")
                 .bovineId(1)
                 .date("2026-01-20")
                 .shift("AM")
@@ -111,8 +111,8 @@ class MilkingRecordServiceTest {
         String lactationNumber = "002";
         List<MilkingRecord> milkingRecords = List.of(
                 MilkingRecord.builder()
-                        .PK("BOVINE#1")
-                        .SK("MILKING#2026-01-20#AM")
+                        .pk("BOVINE#1")
+                        .sk("MILKING#2026-01-20#AM")
                         .bovineId(1)
                         .date("2026-01-20")
                         .shift("AM")
@@ -167,8 +167,8 @@ class MilkingRecordServiceTest {
     void createMilking_validData_createsSuccessfully() {
         // Arrange
         MilkingRecord milkingRecord = MilkingRecord.builder()
-                .PK("BOVINE#1")
-                .SK("MILKING#2026-01-20#PM")
+                .pk("BOVINE#1")
+                .sk("MILKING#2026-01-20#PM")
                 .bovineId(1)
                 .date("2026-01-20")
                 .shift("PM")
@@ -193,8 +193,8 @@ class MilkingRecordServiceTest {
     void createMilking_duplicateEntry_throwsException() {
         // Arrange
         MilkingRecord milkingRecord = MilkingRecord.builder()
-                .PK("BOVINE#1")
-                .SK("MILKING#2026-01-20#AM")
+                .pk("BOVINE#1")
+                .sk("MILKING#2026-01-20#AM")
                 .bovineId(1)
                 .build();
 
@@ -210,8 +210,8 @@ class MilkingRecordServiceTest {
     void createMilking_invalidLiters_throwsValidationException() {
         // Arrange
         MilkingRecord milkingRecord = MilkingRecord.builder()
-                .PK("BOVINE#1")
-                .SK("MILKING#2026-01-20#AM")
+                .pk("BOVINE#1")
+                .sk("MILKING#2026-01-20#AM")
                 .bovineId(1)
                 .liters(-5.0) // Invalid negative value
                 .build();
@@ -227,8 +227,8 @@ class MilkingRecordServiceTest {
     void createMilking_setsPkSk_correctly() {
         // Arrange
         MilkingRecord milkingRecord = MilkingRecord.builder()
-                .PK("BOVINE#42")
-                .SK("MILKING#2026-01-20#AM")
+                .pk("BOVINE#42")
+                .sk("MILKING#2026-01-20#AM")
                 .bovineId(42)
                 .date("2026-01-20")
                 .shift("AM")
@@ -242,16 +242,16 @@ class MilkingRecordServiceTest {
 
         // Assert
         assertTrue(result.isPresent());
-        assertEquals("BOVINE#42", result.get().getPK());
-        assertEquals("MILKING#2026-01-20#AM", result.get().getSK());
+        assertEquals("BOVINE#42", result.get().getPk());
+        assertEquals("MILKING#2026-01-20#AM", result.get().getSk());
     }
 
     @Test
     void createMilking_assignsLactationNumber() {
         // Arrange
         MilkingRecord milkingRecord = MilkingRecord.builder()
-                .PK("BOVINE#1")
-                .SK("MILKING#2026-01-20#AM")
+                .pk("BOVINE#1")
+                .sk("MILKING#2026-01-20#AM")
                 .bovineId(1)
                 .liters(20.0)
                 .build();
@@ -270,8 +270,8 @@ class MilkingRecordServiceTest {
     void repositoryFailure_throwsServiceException() {
         // Arrange
         MilkingRecord milkingRecord = MilkingRecord.builder()
-                .PK("BOVINE#1")
-                .SK("MILKING#2026-01-20#AM")
+                .pk("BOVINE#1")
+                .sk("MILKING#2026-01-20#AM")
                 .build();
 
         when(milkingRepository.save(any(MilkingRecord.class)))
@@ -288,8 +288,8 @@ class MilkingRecordServiceTest {
     void createMilking_nullValues_throwsException() {
         // Arrange
         MilkingRecord milkingRecord = MilkingRecord.builder()
-                .PK(null) // Null PK
-                .SK("MILKING#2026-01-20#AM")
+                .pk(null) // Null PK
+                .sk("MILKING#2026-01-20#AM")
                 .build();
 
         when(milkingRepository.save(any(MilkingRecord.class)))

@@ -252,6 +252,38 @@ class RotationPlanProcessorTest {
         assertEquals(25, dto.getCurrentHeightCm());
     }
 
+        @Test
+        void getRotationSemaphoreItems_usesStableBusinessIdentifiersAndDetailFields() throws ServiceException {
+                String farmId = "farm-001";
+                Pasture pasture = createPasture("P-07", "MANTENIMIENTO", "CUBA22");
+                pasture.setLastUseAt("2026-05-10");
+                pasture.setHoldUntil("2026-05-25");
+                pasture.setBlockReason("HUMEDO");
+                pasture.setNotes("Pendiente secado");
+                pasture.setGsi2pk("farm#F001#blocked#true");
+
+                Plan plan = createPlan("CUBA22", 40, 10, 21);
+
+                when(pastureService.getPastures(farmId)).thenReturn(Optional.of(List.of(pasture)));
+                when(planService.getPlans(farmId)).thenReturn(Optional.of(List.of(plan)));
+                when(pastureStatusEngine.autoUpdateStatusTickByHoldUntil(any(), any()))
+                                .thenReturn(new EntityPatch(Map.of(), List.of()));
+                when(pastureStatusEngine.deriveEffectiveStatus(any(), anyInt()))
+                                .thenReturn(com.cattle.enums.PastureStatus.MANTENIMIENTO);
+
+                Optional<List<RotationSemaphoreItemDTO>> result = rotationPlanProcessor.getRotationSemaphoreItems(farmId);
+
+                assertTrue(result.isPresent());
+                RotationSemaphoreItemDTO dto = result.get().get(0);
+                assertEquals("P-07", dto.getId());
+                assertEquals("P-07", dto.getPastureId());
+                assertEquals("2026-05-10", dto.getLastUseAt());
+                assertEquals("2026-05-25", dto.getHoldUntil());
+                assertEquals("HUMEDO", dto.getBlockReason());
+                assertEquals("Pendiente secado", dto.getNotes());
+                assertTrue(dto.isBlocked());
+        }
+
     // ==================== Helper Methods ====================
 
     private Pasture createPasture(String id, String status, String species) {

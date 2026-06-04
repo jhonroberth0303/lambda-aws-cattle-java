@@ -30,9 +30,19 @@ public final class LambdaContext {
         }
         sb.append(message);
         if (ex != null) {
-            sb.append("\n").append(getTrace(ex));
+            sb.append("\n").append(getExceptionDetails(ex));
         }
         return sb.toString();
+    }
+
+    private String getExceptionDetails(Exception ex) {
+        String message = ex.getMessage();
+        StringBuilder details = new StringBuilder(ex.getClass().getName());
+        if (message != null && !message.isBlank()) {
+            details.append(": ").append(message);
+        }
+        details.append("\n").append(getTrace(ex));
+        return details.toString();
     }
 
     private String getTrace(Exception ex) {

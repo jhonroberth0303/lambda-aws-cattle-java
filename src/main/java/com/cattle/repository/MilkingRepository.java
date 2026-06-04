@@ -21,7 +21,7 @@ import java.util.Optional;
 public class MilkingRepository {
 
     private static final String TABLE_FARM_MILKING = System.getenv("TABLE_FARM_MILKING");
-    private static final String GSI2 = "GSI2-bovine-lactation-index";
+    private static final String GSI1 = "gsi1";
     public static final String MILKING_NOT_EXIST_IN_DYNAMO_DB = "Milking not exist in DynamoDB";
     public static final String STATUS_SUCCESS = "200";
     public static final String MILKING_WAS_DELETE_SUCCESSFULLY = "Milking was delete successfully: ";
@@ -106,26 +106,41 @@ public class MilkingRepository {
 
     public Optional<List<MilkingRecord>> getMilkingByBovineAndLactation(Integer bovineId, String lactationNumber) {
         try {
-            String gsi2pk = "BOVINE#" + bovineId + "#LACT#" + lactationNumber;
+            String gsi1pk = "BOVINE#" + bovineId + "#LACT#" + lactationNumber;
 
-            lambdaContext.logInfo(LogType.REPOSITORY, "getMilkingByBovineAndLactation: Searching with GSI2PK: " + gsi2pk);
+            lambdaContext.logInfo(LogType.REPOSITORY, "getMilkingByBovineAndLactation: Searching with gsi1pk: " + gsi1pk);
 
             QueryConditional queryConditional = QueryConditional.keyEqualTo(
-                    Key.builder().partitionValue(gsi2pk).build());
+                    Key.builder().partitionValue(gsi1pk).build());
 
             List<MilkingRecord> records = new ArrayList<>();
-            table.index(GSI2)
+            table.index(GSI1)
                     .query(r -> r.queryConditional(queryConditional))
                     .forEach(page -> records.addAll(page.items()));
 
             lambdaContext.logInfo(LogType.REPOSITORY, "getMilkingByBovineAndLactation: " + records.size() + " records found");
             return Optional.of(records);
         } catch (ResourceNotFoundException e) {
-            lambdaContext.logException(LogType.REPOSITORY, "GSI2 index not found", e);
+            lambdaContext.logException(LogType.REPOSITORY, "gsi1 index not found", e);
             return Optional.empty();
         } catch (DynamoDbException ex) {
             lambdaContext.logException(LogType.REPOSITORY, "Unexpected error getMilkingByBovineAndLactation", ex);
             throw new RepositoryException("Unexpected error finding milking by bovine and lactation", ex);
+        }
+    }
+
+    public Optional<List<MilkingRecord>> findAllScan() {
+        try {
+            List<MilkingRecord> milkingRecords = new ArrayList<>();
+            table.scan().items().forEach(milkingRecords::add);
+            lambdaContext.logInfo(LogType.REPOSITORY, "findAllScan: " + milkingRecords.size() + " records found in table: " + TABLE_FARM_MILKING);
+            return Optional.of(milkingRecords);
+        } catch (ResourceNotFoundException e) {
+            lambdaContext.logException(LogType.REPOSITORY, "FarmMilking table not found", e);
+            return Optional.empty();
+        } catch (DynamoDbException ex) {
+            lambdaContext.logException(LogType.REPOSITORY, "Unexpected error finding all farmMilking", ex);
+            throw new RepositoryException("Unexpected error finding all farmMilking", ex);
         }
     }
 }

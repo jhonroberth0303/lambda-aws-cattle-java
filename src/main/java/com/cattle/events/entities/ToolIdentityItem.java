@@ -1,6 +1,6 @@
 package com.cattle.events.entities;
 
-import com.cattle.entities.bovines.BaseDdbItem;
+import com.cattle.entities.BaseDdbItem;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 

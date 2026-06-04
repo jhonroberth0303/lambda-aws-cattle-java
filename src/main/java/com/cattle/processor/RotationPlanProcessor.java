@@ -20,7 +20,6 @@ import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.cattle.events.PatchApplier.applyLocal;
@@ -50,8 +49,11 @@ public class RotationPlanProcessor {
      */
     public Optional<List<RotationSemaphoreItemDTO>> getRotationSemaphoreItems(String farmId) {
         try {
+            lambdaContext.logInfo(LogType.PROCESSOR, "Obteniendo semáforo de rotación para farmId: " + farmId);
             List<Pasture> pastures = pastureService.getPastures(farmId).orElse(Collections.emptyList());
+            pastures.stream().forEach(p -> lambdaContext.logInfo(LogType.PROCESSOR, "Pasture found: " + p.getId() + ", species: " + p.getSpecies()));
             List<Plan> plans = planService.getPlans(farmId).orElse(Collections.emptyList());
+            plans.stream().forEach(plan -> lambdaContext.logInfo(LogType.PROCESSOR, "Plan found: " + plan.getPk() + ", species: " + plan.getSpecies()));
 
             if (pastures.isEmpty()) {
                 lambdaContext.logInfo(LogType.PROCESSOR, "No se encontraron pasturas para farmId: " + farmId);
@@ -99,8 +101,9 @@ public class RotationPlanProcessor {
     }
 
     private Plan findPlanForSpecies(List<Plan> plans, String species) {
+        lambdaContext.logInfo(LogType.PROCESSOR, "Finding plan for species: " + species);
         return plans.stream()
-                .filter(plan -> species != null && species.equals(plan.getSpecies()))
+                .filter(plan -> species != null && species.contains(plan.getSpecies()))
                 .findFirst()
                 .orElse(null);
     }
@@ -110,7 +113,7 @@ public class RotationPlanProcessor {
         LocalDate now = LocalDate.now(ZoneOffset.UTC);
         Integer etaOpenDays = EtaCalculator.etaOpenDays(pasture, plan);
 
-        dto.setId(UUID.randomUUID().toString());
+        dto.setId(pasture.getId());
         dto.setFarmId(pasture.getFarmId());
         dto.setPastureId(pasture.getId());
         dto.setName(pasture.getName());
@@ -118,10 +121,14 @@ public class RotationPlanProcessor {
         dto.setStatus(pasture.getStatus());
         dto.setSubstatus(pasture.getSubstatus());
         dto.setBlocked(pasture.getGsi2pk() != null && pasture.getGsi2pk().contains("true"));
+        dto.setBlockReason(pasture.getBlockReason());
         dto.setEtaOpenDays(etaOpenDays);
         dto.setReadyAt(etaOpenDays != null ? now.plusDays(etaOpenDays.longValue()).toString() : null);
+        dto.setHoldUntil(pasture.getHoldUntil());
+        dto.setLastUseAt(pasture.getLastUseAt());
         dto.setCurrentHeightCm(pasture.getCurrentHeightCm());
         dto.setAreaHa(pasture.getAreaHa());
+        dto.setNotes(pasture.getNotes());
 
         if (plan != null && plan.getRules() != null) {
             dto.setDaysRest(plan.getRules().getRestDaysMin());

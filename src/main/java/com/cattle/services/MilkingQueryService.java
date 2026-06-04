@@ -230,7 +230,7 @@ public class MilkingQueryService {
         }
         
         return MilkingContextDTO.builder()
-                .milkingId(milkingRecord.getPK() + "#" + milkingRecord.getSK())
+                .milkingId(milkingRecord.getPk() + "#" + milkingRecord.getSk())
                 .bovineId(String.valueOf(milkingRecord.getBovineId()))
                 .bovineName("Bovino " + milkingRecord.getBovineId())
                 .milkingDate(milkingDate)

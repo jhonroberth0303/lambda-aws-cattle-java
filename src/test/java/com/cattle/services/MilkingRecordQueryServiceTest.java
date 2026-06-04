@@ -320,8 +320,8 @@ class MilkingRecordQueryServiceTest {
 
     private MilkingRecord createMilking(Double liters) {
         return MilkingRecord.builder()
-                .PK("BOVINE#1")
-                .SK("MILKING#2026-01-20#AM")
+                .pk("BOVINE#1")
+                .sk("MILKING#2026-01-20#AM")
                 .bovineId(1)
                 .date("2026-01-20")
                 .shift("AM")

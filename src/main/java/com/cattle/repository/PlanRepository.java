@@ -22,7 +22,7 @@ import java.util.Optional;
 public class PlanRepository {
     private static final String TABLE_PLAN = System.getenv("TABLE_PLAN");
     private static final String PLAN_NOT_EXIST_IN_DYNAMO_DB = "Plan not exist in DynamoDB";
-    private static final String GSI1_FARM_ID = "farmId";
+    private static final String GSI1_FARM_ID = "gsi1";
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<Plan> table;
 
@@ -33,14 +33,15 @@ public class PlanRepository {
 
     public Optional<List<Plan>> findPlans(String farmId) {
         try {
+            lambdaContext.logInfo(LogType.REPOSITORY, "Finding plans for farmId: " + farmId);
             List<Plan> plans;
 
-            QueryConditional queryConditional = QueryConditional.keyEqualTo(
-                    Key.builder().partitionValue(farmId).build()
+            QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+                    .partitionValue("farm#"+farmId)
+                    .build()
             );
 
             Page<Plan> result = table
-                    .index(GSI1_FARM_ID)
                     .query(r -> r.limit(20).queryConditional(queryConditional))
                     .iterator()
                     .next();

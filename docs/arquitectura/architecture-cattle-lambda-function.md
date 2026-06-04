@@ -27,7 +27,7 @@ El servicio concentra responsabilidades de backend para dominios operativos y an
 - chatbot transaccional y consultas a knowledge base
 - seguridad, rate limiting y logging de auditoría
 
-No es solo una Lambda delgada de passthrough. El código refleja una capa de negocio no trivial, especialmente en bovinos, milking, resumen y chatbot.
+No es solo una Lambda delgada de passthrough. El código refleja una capa de negocio no trivial, especialmente en bovinos, milkingProd, resumen y chatbot.
 
 ## Stack tecnológico
 
@@ -80,7 +80,7 @@ Controladores confirmados:
 - `/actuator/ping` en `PingController`
 - `/bovines` en `BovineController`
 - `/summary` en `BovinesSummaryController`
-- `/site/{siteId}/milking` en `MilkingController`
+- `/site/{siteId}/milkingProd` en `MilkingController`
 - `/farms/{farmId}/pastures` en `PastureController`
 - `/api/chat` en `ChatbotController`
 
@@ -177,10 +177,10 @@ Contratos confirmados en código:
 - `PUT /summary/{id}/refresh`
 - `POST /summary/refresh`
 - `GET /summary/categories`
-- `POST /site/{siteId}/milking`
-- `GET /site/{siteId}/milking`
-- `GET /site/{siteId}/milking/{idBovine}`
-- `GET /site/{siteId}/milking/{idBovine}/lactation/{lactationNumber}`
+- `POST /site/{siteId}/milkingProd`
+- `GET /site/{siteId}/milkingProd`
+- `GET /site/{siteId}/milkingProd/{idBovine}`
+- `GET /site/{siteId}/milkingProd/{idBovine}/lactation/{lactationNumber}`
 - `GET /farms/{farmId}/pastures`
 - `POST /api/chat/message`
 - `POST /api/chat/knowledge`
@@ -265,7 +265,7 @@ Configuración relevante en propiedades:
 
 - `template.yml` no declara variables de entorno para `TABLE_BOVINES`, `TABLE_FARM_MILKING`, `TABLE_PASTURE`, `TABLE_PLAN` ni `TABLE_COUNTERS`, aunque el código las necesita para operar.
 - `template.yml` tampoco declara `JWT_SECRET`; en producción eso debe resolverse fuera de este template o el servicio dependerá del valor por defecto, lo que es inaceptable para un entorno real.
-- `SecurityConfig` protege `/milking/**`, pero el controlador real usa `/site/{siteId}/milking/**`. Esa discrepancia puede dejar desalineada la seguridad respecto a las rutas reales.
+- `SecurityConfig` protege `/milkingProd/**`, pero el controlador real usa `/site/{siteId}/milkingProd/**`. Esa discrepancia puede dejar desalineada la seguridad respecto a las rutas reales.
 - El template SAM no crea tablas DynamoDB; la arquitectura depende de infraestructura previa o administrada por fuera de este repositorio.
 - La documentación raíz `README.md` del backend contiene afirmaciones que no coinciden completamente con el árbol actual y no debe usarse como única fuente de verdad.
 - Al empaquetar Spring Boot dentro de Lambdas Java, el riesgo de cold start y crecimiento del artefacto sigue siendo alto frente a un diseño más segmentado.
@@ -276,4 +276,4 @@ El siguiente paso útil es alinear documentación y operación en tres frentes:
 
 1. Documentar explícitamente la infraestructura requerida por ambiente: tablas DynamoDB, secretos JWT y parámetros de Bedrock.
 2. Corregir la matriz de seguridad para que las rutas protegidas coincidan con los controladores reales.
-3. Bajar esta arquitectura base a documentos por dominio: bovinos, milking, pastures y chatbot/knowledge base.
+3. Bajar esta arquitectura base a documentos por dominio: bovinos, milkingProd, pastures y chatbot/knowledge base.

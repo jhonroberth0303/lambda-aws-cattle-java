@@ -22,7 +22,7 @@ graph TB
     APIGW[API Gateway proxy]
     LAMBDA[cattle-lambda-function\nSpring Boot en AWS Lambda]
     CHAT[ChatbotController + servicios chatbot]
-    DOMAIN[Servicios de bovinos, milking y potreros]
+    DOMAIN[Servicios de bovinos, milkingProd y potreros]
     DDB[DynamoDB]
     BEDROCK[Amazon Bedrock]
     KB[Bedrock Knowledge Base]
@@ -63,7 +63,7 @@ graph TB
 ### Backend
 
 - concentra la API, seguridad, lógica de negocio y capacidades Bedrock
-- reutiliza datos de bovinos, milking y potreros para enriquecer prompts
+- reutiliza datos de bovinos, milkingProd y potreros para enriquecer prompts
 
 ### AWS
 
