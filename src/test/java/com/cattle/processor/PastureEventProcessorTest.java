@@ -1,5 +1,6 @@
 package com.cattle.processor;
 
+import com.cattle.config.LambdaContext;
 import com.cattle.dtos.PastureEventRequestDTO;
 import com.cattle.dtos.PastureEventResponseDTO;
 import com.cattle.dtos.RotationSemaphoreItemDTO;
@@ -50,6 +51,9 @@ class PastureEventProcessorTest {
     @Mock
     private RotationPlanProcessor rotationPlanProcessor;
 
+    @Mock
+    private LambdaContext lambdaContext;
+
     private PastureEventProcessor pastureEventProcessor;
 
     @BeforeEach
@@ -61,7 +65,8 @@ class PastureEventProcessorTest {
                 pastureStatusEngine,
                 pastureEventService,
                 rotationPlanProcessor,
-                new ObjectMapper()
+                new ObjectMapper(),
+                lambdaContext
         );
     }
 

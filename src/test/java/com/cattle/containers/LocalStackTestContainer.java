@@ -108,7 +108,7 @@ public class LocalStackTestContainer {
             gsi1KeySchema.add(KeySchemaElement.builder().attributeName("gsi1sk").keyType(KeyType.RANGE).build());
             
             GlobalSecondaryIndex gsi1 = GlobalSecondaryIndex.builder()
-                    .indexName("GSI1")
+                    .indexName("gsi1")
                     .keySchema(gsi1KeySchema)
                     .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
                     .provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(5L).writeCapacityUnits(5L).build())

@@ -213,9 +213,9 @@ class MilkingRecordRepositoryTest {
 
         assertTrue(result.isPresent());
         assertEquals(2, result.get().size());
-        verify(table).index("GSI2-bovine-lactation-index");
+        verify(table).index("gsi1");
         verify(index).query(any(java.util.function.Consumer.class));
-        verify(lambdaContext, atLeastOnce()).logInfo(eq(LogType.REPOSITORY), contains("GSI2PK"));
+        verify(lambdaContext, atLeastOnce()).logInfo(eq(LogType.REPOSITORY), contains("gsi1pk"));
     }
 
     @Test
@@ -251,8 +251,8 @@ class MilkingRecordRepositoryTest {
 
     private MilkingRecord createFarmMilking(Integer bovineId, String date, String shift) {
         return MilkingRecord.builder()
-                .PK("BOVINE#" + bovineId)
-                .SK("MILK#" + date + "#" + shift)
+                .pk("BOVINE#" + bovineId)
+                .sk("MILK#" + date + "#" + shift)
                 .bovineId(bovineId)
                 .date(date)
                 .shift(shift)

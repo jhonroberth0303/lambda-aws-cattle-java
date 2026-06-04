@@ -1,5 +1,6 @@
 package com.cattle.controller;
 
+import com.cattle.config.LambdaContext;
 import com.cattle.dtos.PastureEventRequestDTO;
 import com.cattle.dtos.PastureEventResponseDTO;
 import com.cattle.dtos.RotationSemaphoreItemDTO;
@@ -38,12 +39,15 @@ class PastureControllerTest {
     @Mock
     private PastureEventProcessor pastureEventProcessor;
 
+    @Mock
+    private LambdaContext lambdaContext;
+
     private PastureController pastureController;
 
     @BeforeEach
     void setUp() {
         openMocks(this);
-        pastureController = new PastureController(rotationPlanProcessor, pastureEventProcessor);
+        pastureController = new PastureController(rotationPlanProcessor, pastureEventProcessor, lambdaContext);
     }
 
     // ==================== getRotationSemaphore Tests ====================

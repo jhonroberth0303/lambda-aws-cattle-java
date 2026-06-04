@@ -59,10 +59,10 @@ sam local start-api
 | PUT | `/summary/{id}/refresh` | Regenerar resumen |
 | POST | `/summary/refresh` | Regenerar todos los resúmenes |
 | GET | `/summary/categories` | Regenerar categorías |
-| POST | `/site/{siteId}/milking` | Registrar ordeño |
-| GET | `/site/{siteId}/milking` | Vacas con lactancias |
-| GET | `/site/{siteId}/milking/{idBovine}` | Historial de ordeño |
-| GET | `/site/{siteId}/milking/{idBovine}/lactation/{lactationNumber}` | Ordeño por lactancia |
+| POST | `/site/{siteId}/milkingProd` | Registrar ordeño |
+| GET | `/site/{siteId}/milkingProd` | Vacas con lactancias |
+| GET | `/site/{siteId}/milkingProd/{idBovine}` | Historial de ordeño |
+| GET | `/site/{siteId}/milkingProd/{idBovine}/lactation/{lactationNumber}` | Ordeño por lactancia |
 | GET | `/farms/{farmId}/pastures` | Estado de potreros |
 | POST | `/api/chat/message` | Chat sobre datos de finca |
 | POST | `/api/chat/knowledge` | Consulta a Knowledge Base |

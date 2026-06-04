@@ -1,5 +1,6 @@
 package com.cattle.entities.bovines;
 
+import com.cattle.entities.BaseDdbItem;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
@@ -12,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @DynamoDbBean
-public class BovineIdentityItem extends BaseDdbItem{
+public class BovineIdentityItem extends BaseDdbItem {
 
     private Integer bovineId;
     private String farmId;
@@ -27,5 +28,5 @@ public class BovineIdentityItem extends BaseDdbItem{
     private String fatherNameSnapshot;
     private String motherId;
     private String motherNameSnapshot;
-
+    private String breedType;
 }

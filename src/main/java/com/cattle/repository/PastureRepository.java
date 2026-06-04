@@ -35,6 +35,7 @@ public class PastureRepository {
 
     public Optional<List<Pasture>> findPastures(String farmId) {
         try {
+            lambdaContext.logInfo(LogType.REPOSITORY, "Querying pastures for farmId: " + farmId);
             List<Pasture> pastures = new ArrayList<>();
             pastures.addAll(queryPasturesByBlocked(farmId, false));
             pastures.addAll(queryPasturesByBlocked(farmId, true));

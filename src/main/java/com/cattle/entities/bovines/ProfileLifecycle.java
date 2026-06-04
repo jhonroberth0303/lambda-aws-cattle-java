@@ -1,5 +1,6 @@
 package com.cattle.entities.bovines;
 
+import com.cattle.entities.BaseDdbItem;
 import com.cattle.enums.profiles.BovineCategory;
 import com.cattle.enums.profiles.LifeStage;
 import com.cattle.enums.profiles.LifecycleStatus;

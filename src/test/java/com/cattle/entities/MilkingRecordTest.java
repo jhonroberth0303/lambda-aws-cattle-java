@@ -17,8 +17,8 @@ class MilkingRecordTest {
     void farmMilking_builder_createsInstance() {
         // Act
         MilkingRecord milkingRecord = MilkingRecord.builder()
-                .PK("BOVINE#123")
-                .SK("LACTANCIA#2026-01-20#AM")
+                .pk("BOVINE#123")
+                .sk("LACTANCIA#2026-01-20#AM")
                 .bovineId(123)
                 .date("2026-01-20")
                 .shift("AM")
@@ -31,7 +31,7 @@ class MilkingRecordTest {
 
         // Assert
         assertNotNull(milkingRecord);
-        assertEquals("BOVINE#123", milkingRecord.getPK());
+        assertEquals("BOVINE#123", milkingRecord.getPk());
         assertEquals(123, milkingRecord.getBovineId());
         assertEquals(15.5, milkingRecord.getLiters());
     }
@@ -43,7 +43,7 @@ class MilkingRecordTest {
 
         // Assert
         assertNotNull(milkingRecord);
-        assertNull(milkingRecord.getPK());
+        assertNull(milkingRecord.getPk());
     }
 
     @Test
@@ -52,8 +52,8 @@ class MilkingRecordTest {
         MilkingRecord milkingRecord = new MilkingRecord();
 
         // Act
-        milkingRecord.setPK("BOVINE#456");
-        milkingRecord.setSK("LACTANCIA#2026-01-21#PM");
+        milkingRecord.setPk("BOVINE#456");
+        milkingRecord.setSk("LACTANCIA#2026-01-21#PM");
         milkingRecord.setBovineId(456);
         milkingRecord.setDate("2026-01-21");
         milkingRecord.setShift("PM");
@@ -63,7 +63,7 @@ class MilkingRecordTest {
         milkingRecord.setRecordedBy("user-002");
 
         // Assert
-        assertEquals("BOVINE#456", milkingRecord.getPK());
+        assertEquals("BOVINE#456", milkingRecord.getPk());
         assertEquals("PM", milkingRecord.getShift());
         assertEquals(12.0, milkingRecord.getLiters());
         assertEquals("parcial", milkingRecord.getStatus());
@@ -73,12 +73,12 @@ class MilkingRecordTest {
     void farmMilking_getPK_isPartitionKey() {
         // Arrange
         MilkingRecord milkingRecord = MilkingRecord.builder()
-                .PK("BOVINE#789")
-                .SK("LACTANCIA#2026-01-22#AM")
+                .pk("BOVINE#789")
+                .sk("LACTANCIA#2026-01-22#AM")
                 .build();
 
         // Assert
-        assertEquals("BOVINE#789", milkingRecord.getPK());
-        assertEquals("LACTANCIA#2026-01-22#AM", milkingRecord.getSK());
+        assertEquals("BOVINE#789", milkingRecord.getPk());
+        assertEquals("LACTANCIA#2026-01-22#AM", milkingRecord.getSk());
     }
 }

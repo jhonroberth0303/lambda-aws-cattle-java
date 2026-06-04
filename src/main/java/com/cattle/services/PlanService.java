@@ -21,6 +21,7 @@ public class PlanService {
     private final LambdaContext lambdaContext;
 
     public Optional<List<Plan>> getPlans(String farmId) {
+        lambdaContext.logInfo(LogType.SERVICE, "Received request to get plans for farmId: " + farmId);
 
         if (farmId == null || farmId.trim().isEmpty()) {
             throw new IllegalArgumentException("El campo farmId es requerido");

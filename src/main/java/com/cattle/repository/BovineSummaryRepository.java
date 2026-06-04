@@ -20,9 +20,8 @@ import java.util.*;
 public class BovineSummaryRepository {
 
     private static final String TABLE_BOVINES = System.getenv("TABLE_BOVINES");
-    private static final String GSI1_BOVINES = "GSI1";
-    private static final String GSI1PK_SUMMARY = "SUMMARY";
-    private static final String SK_SUMMARY = "SUMMARY";
+    private static final String GSI1_BOVINES = "gsi1";
+    private static final String SUMMARY = "SUMMARY";
 
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<BovineSummary> table;
@@ -38,9 +37,10 @@ public class BovineSummaryRepository {
      */
     public List<BovineSummary> findAll() {
         try {
-            QueryConditional queryConditional = QueryConditional.keyEqualTo(
-                Key.builder().partitionValue(GSI1PK_SUMMARY).build()
-            );
+            lambdaContext.logInfo(LogType.REPOSITORY, "Finding all bovine summaries using " + GSI1_BOVINES);
+            QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+                    .partitionValue(SUMMARY)
+                    .build());
 
             List<BovineSummary> results = new ArrayList<>();
             table.index(GSI1_BOVINES)
@@ -55,6 +55,9 @@ public class BovineSummaryRepository {
         } catch (DynamoDbException ex) {
             lambdaContext.logException(LogType.REPOSITORY, "Error finding summaries", ex);
             throw new RepositoryException("Unexpected error finding summaries", ex);
+        } catch (Exception ex) {
+            lambdaContext.logException(LogType.REPOSITORY, "Unexpected error finding summaries", ex);
+            throw new RepositoryException("Unexpected error finding summaries", ex);
         }
     }
 
@@ -67,7 +70,7 @@ public class BovineSummaryRepository {
     public Page<BovineSummary> findAllPaginated(int limit, Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue> lastEvaluatedKey) {
         try {
             QueryConditional queryConditional = QueryConditional.keyEqualTo(
-                Key.builder().partitionValue(GSI1PK_SUMMARY).build()
+                Key.builder().partitionValue(SUMMARY).build()
             );
 
             QueryEnhancedRequest.Builder requestBuilder = QueryEnhancedRequest.builder()
@@ -103,7 +106,7 @@ public class BovineSummaryRepository {
     public Optional<BovineSummary> findById(String bovineId) {
         try {
             String pk = "BOVINE#" + bovineId;
-            Key key = Key.builder().partitionValue(pk).sortValue(SK_SUMMARY).build();
+            Key key = Key.builder().partitionValue(pk).sortValue(SUMMARY).build();
             BovineSummary item = table.getItem(key);
             return Optional.ofNullable(item);
         } catch (ResourceNotFoundException e) {
@@ -147,6 +150,7 @@ public class BovineSummaryRepository {
      */
     public int saveAll(List<BovineSummary> entities) {
         try {
+            lambdaContext.logInfo(LogType.REPOSITORY, "Saving batch of BovineSummary: " + entities.size() + " records");
             for (BovineSummary entity : entities) {
                 table.putItem(entity);
             }
@@ -165,7 +169,7 @@ public class BovineSummaryRepository {
     public void delete(String bovineId) {
         try {
             String pk = "BOVINE#" + bovineId;
-            Key key = Key.builder().partitionValue(pk).sortValue(SK_SUMMARY).build();
+            Key key = Key.builder().partitionValue(pk).sortValue(SUMMARY).build();
             table.deleteItem(key);
             lambdaContext.logInfo(LogType.REPOSITORY, "BovineSummary deleted for: " + pk);
         } catch (DynamoDbException ex) {

@@ -42,9 +42,6 @@ class PlanRepositoryTest {
     private DynamoDbTable<Plan> table;
 
     @Mock
-    private DynamoDbIndex<Plan> gsi1Index;
-
-    @Mock
     private PageIterable<Plan> pageIterable;
 
     @Mock
@@ -66,9 +63,8 @@ class PlanRepositoryTest {
         // Arrange
         String farmId = "farm-001";
         List<Plan> plans = createPlanList(farmId, 3);
-        
-        when(table.index(anyString())).thenReturn(gsi1Index);
-        when(gsi1Index.query(any(java.util.function.Consumer.class))).thenReturn(pageIterable);
+
+        doReturn(pageIterable).when(table).query(any(java.util.function.Consumer.class));
         when(pageIterable.iterator()).thenReturn(List.of(page).iterator());
         when(page.items()).thenReturn(plans);
 
@@ -78,17 +74,18 @@ class PlanRepositoryTest {
         // Assert
         assertTrue(result.isPresent());
         assertEquals(3, result.get().size());
+        verify(table, times(1)).query(any(java.util.function.Consumer.class));
     }
 
     @Test
     void findPlans_emptyResult_returnsEmptyList() {
         // Arrange
         String farmId = "farm-empty";
-        
-        when(table.index(anyString())).thenReturn(gsi1Index);
-        when(gsi1Index.query(any(java.util.function.Consumer.class))).thenReturn(pageIterable);
-        when(pageIterable.iterator()).thenReturn(List.of(page).iterator());
-        when(page.items()).thenReturn(new ArrayList<>());
+        Page<Plan> emptyPage = mock(Page.class);
+        when(emptyPage.items()).thenReturn(new ArrayList<>());
+
+        doReturn(pageIterable).when(table).query(any(java.util.function.Consumer.class));
+        when(pageIterable.iterator()).thenReturn(List.of(emptyPage).iterator());
 
         // Act
         Optional<List<Plan>> result = planRepository.findPlans(farmId);
@@ -102,9 +99,8 @@ class PlanRepositoryTest {
     void findPlans_resourceNotFoundException_throwsRepositoryException() {
         // Arrange
         String farmId = "farm-001";
-        when(table.index(anyString())).thenReturn(gsi1Index);
-        when(gsi1Index.query(any(java.util.function.Consumer.class)))
-                .thenThrow(ResourceNotFoundException.builder().message("Table not found").build());
+        doThrow(ResourceNotFoundException.builder().message("Table not found").build())
+                .when(table).query(any(java.util.function.Consumer.class));
 
         // Act & Assert
         assertThrows(RepositoryException.class, () -> planRepository.findPlans(farmId));
@@ -115,9 +111,8 @@ class PlanRepositoryTest {
     void findPlans_dynamoDbException_throwsRepositoryException() {
         // Arrange
         String farmId = "farm-001";
-        when(table.index(anyString())).thenReturn(gsi1Index);
-        when(gsi1Index.query(any(java.util.function.Consumer.class)))
-                .thenThrow(DynamoDbException.builder().message("DynamoDB error").build());
+        doThrow(DynamoDbException.builder().message("DynamoDB error").build())
+                .when(table).query(any(java.util.function.Consumer.class));
 
         // Act & Assert
         assertThrows(RepositoryException.class, () -> planRepository.findPlans(farmId));
@@ -128,9 +123,8 @@ class PlanRepositoryTest {
     void findPlans_unexpectedException_throwsRepositoryException() {
         // Arrange
         String farmId = "farm-001";
-        when(table.index(anyString())).thenReturn(gsi1Index);
-        when(gsi1Index.query(any(java.util.function.Consumer.class)))
-                .thenThrow(new RuntimeException("Unexpected error"));
+        doThrow(new RuntimeException("Unexpected error"))
+                .when(table).query(any(java.util.function.Consumer.class));
 
         // Act & Assert
         assertThrows(RepositoryException.class, () -> planRepository.findPlans(farmId));

@@ -15,8 +15,8 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 @NoArgsConstructor
 public class MilkingRecord {
 
-    private String PK;          // Partition Key: BOVINE#<id>
-    private String SK;          // Sort Key: LACTANCIA#YYYY-MM-DD#AM|PM
+    private String pk;          // Partition Key: BOVINE#<id>
+    private String sk;          // Sort Key: LACTANCIA#YYYY-MM-DD#AM|PM
     private Integer bovineId;   // Id numérico redundante para GSIs
     private String date;        // YYYY-MM-DD
     private String shift;       // AM | PM
@@ -26,26 +26,26 @@ public class MilkingRecord {
     private String recordedBy;  // usuario que registró
     private String createdAt;   // timestamp ISO
     private Integer lactationNumber; // Número de lactancia (1, 2, 3...)
-    private String gsi2pk;      // BOVINE#<id>#LACT#<nn>
-    private String gsi2sk;      // YYYY-MM-DD#AM|PM
+    private String gsi1pk;      // BOVINE#<id>#LACT#<nn>
+    private String gsi1sk;      // YYYY-MM-DD#AM|PM
 
     @DynamoDbPartitionKey
-    public String getPK() {
-        return PK;
+    public String getPk() {
+        return pk;
     }
 
     @DynamoDbSortKey
-    public String getSK() {
-        return SK;
+    public String getSk() {
+        return sk;
     }
 
-    @DynamoDbSecondaryPartitionKey(indexNames = "GSI2-bovine-lactation-index")
-    public String getGsi2pk() {
-        return gsi2pk;
+    @DynamoDbSecondaryPartitionKey(indexNames = "gsi1")
+    public String getGsi1pk() {
+        return gsi1pk;
     }
 
-    @DynamoDbSecondarySortKey(indexNames = "GSI2-bovine-lactation-index")
-    public String getGsi2sk() {
-        return gsi2sk;
+    @DynamoDbSecondarySortKey(indexNames = "gsi1")
+    public String getGsi1sk() {
+        return gsi1sk;
     }
 }

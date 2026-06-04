@@ -44,10 +44,10 @@ public class PastureStatusEngine {
                     entityPatch.set("holdUntil", m.holdUntil());
                 }
                 // Activar índice de bloqueados (sparse)
-                entityPatch.set("gsi2pk", "farm#" + pasture.getFarmId() + "#blocked#true");
+                entityPatch.set("gsi1pk", "farm#" + pasture.getFarmId() + "#blocked#true");
                 // Si quieres ordenar por ETA dentro del GSI:
                 int eta = EtaCalculator.etaOpenDays(pasture, plan);
-                entityPatch.set("gsi2sk", Math.max(eta, 0));
+                entityPatch.set("gsi1sk", Math.max(eta, 0));
             }
             case MAINTENANCE_CLEAR -> {
                 entityPatch.set("substatus", PastureStatus.NINGUNO.name());
@@ -57,8 +57,8 @@ public class PastureStatusEngine {
                 PastureStatus next = (eta <= 0) ? PastureStatus.DISPONIBLE : PastureStatus.EN_DESCANSO;
                 entityPatch.set("status", next.name());
                 // Remover del GSI de bloqueados
-                entityPatch.remove("gsi2pk");
-                entityPatch.remove("gsi2sk");
+                entityPatch.remove("gsi1pk");
+                entityPatch.remove("gsi1sk");
             }
         }
         return entityPatch;
@@ -76,8 +76,8 @@ public class PastureStatusEngine {
             int eta = EtaCalculator.etaOpenDays(pasture, plan);
             PastureStatus next = (eta <= 0) ? PastureStatus.DISPONIBLE : PastureStatus.EN_DESCANSO;
             entityPatch.set("status", next.name());
-            entityPatch.set("gsi2pk", "farm#" + pasture.getFarmId() + "#blocked#false");
-            entityPatch.remove("gsi2sk");
+            entityPatch.set("gsi1pk", "farm#" + pasture.getFarmId() + "#blocked#false");
+            entityPatch.remove("gsi1sk");
         }
 
         // (Opcional) si estaba EN_USO y reportas cierre automático por tiempo, podrías manejarlo aquí.

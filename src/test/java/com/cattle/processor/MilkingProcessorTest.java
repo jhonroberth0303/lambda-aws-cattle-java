@@ -130,8 +130,8 @@ class MilkingProcessorTest {
         MilkingDTO inputDTO = createMilkingDTO(1, "2026-01-20", "AM", 20.5);
         MilkingRecord entity = createFarmMilking(1, "2026-01-20", "AM", 20.5);
         MilkingRecord savedEntity = createFarmMilking(1, "2026-01-20", "AM", 20.5);
-        savedEntity.setPK("BOVINE#1");
-        savedEntity.setSK("MILKING#2026-01-20#AM");
+        savedEntity.setPk("BOVINE#1");
+        savedEntity.setSk("MILKING#2026-01-20#AM");
         MilkingDTO outputDTO = createMilkingDTO(1, "2026-01-20", "AM", 20.5);
         ProfileLactancy openLactation = ProfileLactancy.builder()
                 .pk("BOVINE#1")
@@ -201,8 +201,8 @@ class MilkingProcessorTest {
         MilkingDTO inputDTO = createMilkingDTO(42, "2026-01-20", "PM", 22.0);
         MilkingRecord entity = createFarmMilking(42, "2026-01-20", "PM", 22.0);
         MilkingRecord savedEntity = createFarmMilking(42, "2026-01-20", "PM", 22.0);
-        savedEntity.setPK("BOVINE#42");
-        savedEntity.setSK("MILKING#2026-01-20#PM");
+        savedEntity.setPk("BOVINE#42");
+        savedEntity.setSk("MILKING#2026-01-20#PM");
         MilkingDTO outputDTO = createMilkingDTO(42, "2026-01-20", "PM", 22.0);
         ProfileLactancy openLactation = ProfileLactancy.builder()
                 .pk("BOVINE#42")
@@ -223,14 +223,14 @@ class MilkingProcessorTest {
         Optional<MilkingDTO> result = milkingProcessor.createMilking(inputDTO);
         assertTrue(result.isPresent());
         verify(milkingService).save(argThat(fm -> 
-            "BOVINE#42".equals(fm.getPK()) && 
-            fm.getSK() != null && 
-            fm.getSK().startsWith("MILKING#")
+            "BOVINE#42".equals(fm.getPk()) &&
+            fm.getSk() != null &&
+            fm.getSk().startsWith("MILKING#")
         ));
     }
 
     @Test
-    void createMilking_formatsGsi2pkWithThreeDigits() {
+    void createMilking_formatsGsi1pkWithThreeDigits() {
         MilkingDTO inputDTO = createMilkingDTO(167, "2026-04-25", "AM", 3.0);
         MilkingRecord entity = createFarmMilking(167, "2026-04-25", "AM", 3.0);
         MilkingRecord savedEntity = createFarmMilking(167, "2026-04-25", "AM", 3.0);
@@ -256,8 +256,8 @@ class MilkingProcessorTest {
 
         assertTrue(result.isPresent());
         verify(milkingService).save(argThat(fm ->
-                "BOVINE#167#LACT#002".equals(fm.getGsi2pk())
-                        && "2026-04-25#AM".equals(fm.getGsi2sk())
+                "BOVINE#167#LACT#002".equals(fm.getGsi1pk())
+                        && "2026-04-25#AM".equals(fm.getGsi1sk())
                         && Integer.valueOf(2).equals(fm.getLactationNumber())
         ));
     }

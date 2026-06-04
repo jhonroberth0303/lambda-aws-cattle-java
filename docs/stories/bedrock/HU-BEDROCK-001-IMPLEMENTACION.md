@@ -50,7 +50,7 @@ Se considera cubierto mientras existan y operen:
 
 ### CA-002: Construcción de contexto con datos reales
 
-El chatbot debe poder enriquecer prompts con datos operativos reales de bovinos, milking o potreros.
+El chatbot debe poder enriquecer prompts con datos operativos reales de bovinos, milkingProd o potreros.
 
 Se considera cubierto mientras `ContextBuilderService` delegue en:
 

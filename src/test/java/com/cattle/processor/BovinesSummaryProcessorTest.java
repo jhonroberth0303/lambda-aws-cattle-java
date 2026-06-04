@@ -1,5 +1,6 @@
 package com.cattle.processor;
 
+import com.cattle.config.LambdaContext;
 import com.cattle.dtos.BovineSummaryDTO;
 import com.cattle.services.BovineSummaryService;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,13 +26,15 @@ class BovinesSummaryProcessorTest {
 
     @Mock
     private BovineSummaryService bovineSummaryService;
+    @Mock
+    private LambdaContext lambdaContext;
 
     private BovinesSummaryProcessor processor;
 
     @BeforeEach
     void setUp() {
         openMocks(this);
-        processor = new BovinesSummaryProcessor(bovineSummaryService);
+        processor = new BovinesSummaryProcessor(bovineSummaryService, lambdaContext);
     }
 
     @Test

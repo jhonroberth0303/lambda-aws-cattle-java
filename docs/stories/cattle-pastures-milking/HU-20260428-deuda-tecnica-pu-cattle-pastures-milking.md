@@ -1,6 +1,6 @@
  # HU-20260428: Deuda Técnica de Pruebas Unitarias Cattle, Pastures y Milking
 
-**ID**: HU-20260428-deuda-tecnica-pu-cattle-pastures-milking  
+**ID**: HU-20260428-deuda-tecnica-pu-cattle-pastures-milkingProd  
 **Tipo**: Technical Debt / Unit Testing / Coverage  
 **Prioridad**: Alta  
 **Fecha**: 2026-04-28  
@@ -18,12 +18,12 @@
 | 2026-04-28 | 1.5 | Verificación final de cobertura y cierre de HU | HU cerrada |
 | 2026-04-28 | 1.6 | Análisis adicional de cobertura global posterior al cierre | Backlog adicional priorizado |
 | 2026-04-28 | 1.7 | Ejecución adicional sobre ChatbotController | Cobertura global incrementada |
-| 2026-04-28 | 1.8 | Ejecución adicional sobre servicios de contexto, pastures, bovines y milking | Cobertura global incrementada |
+| 2026-04-28 | 1.8 | Ejecución adicional sobre servicios de contexto, pastures, bovines y milkingProd | Cobertura global incrementada |
 | 2026-04-28 | 1.9 | Cierre editorial y consolidación final de la HU | HU cerrada |
 
 ## Objetivo
 
-Incrementar la cobertura unitaria en los componentes backend de los dominios `cattle`, `pastures` y `milking` que hoy están por debajo de `50%` de cobertura de líneas en JaCoCo, priorizando clases con lógica de mapeo, repositorio, eventos y contratos de payload que impactan flujos operativos reales.
+Incrementar la cobertura unitaria en los componentes backend de los dominios `cattle`, `pastures` y `milkingProd` que hoy están por debajo de `50%` de cobertura de líneas en JaCoCo, priorizando clases con lógica de mapeo, repositorio, eventos y contratos de payload que impactan flujos operativos reales.
 
 ## Fuente de evidencia
 
@@ -40,7 +40,7 @@ Artefactos usados como evidencia:
 
 ## Regla de selección usada
 
-Se incluyeron únicamente clases con cobertura de líneas menor a `50%` que pertenecen de forma directa a los dominios `cattle`, `pastures` o `milking`, o que actúan como infraestructura compartida de eventos para esos dominios.
+Se incluyeron únicamente clases con cobertura de líneas menor a `50%` que pertenecen de forma directa a los dominios `cattle`, `pastures` o `milkingProd`, o que actúan como infraestructura compartida de eventos para esos dominios.
 
 ## Componentes seleccionados
 
@@ -63,7 +63,7 @@ Se incluyeron únicamente clases con cobertura de líneas menor a `50%` que pert
 | cattle/pastures compartido | `com/cattle/events/EventOrigin` | `0/4` - `0%` | enum compartido por infraestructura de eventos |
 | cattle/pastures compartido | `com/cattle/events/payloads/EventPayloadConverter` | `0/9` - `0%` | conversión de payloads sin validación visible |
 | cattle/pastures compartido | `com/cattle/events/payloads/EventPayloadMapper` | `0/14` - `0%` | mapeo central de payloads sin pruebas |
-| milking | `com/cattle/repository/ProfileLactancyRepository` | `5/71` - `7.04%` | repositorio de lactancia con baja cobertura |
+| milkingProd | `com/cattle/repository/ProfileLactancyRepository` | `5/71` - `7.04%` | repositorio de lactancia con baja cobertura |
 
 ## Componentes excluidos de esta HU
 
@@ -103,7 +103,7 @@ Quedaron fuera, aunque también estén por debajo de `50%`, porque no pertenecen
 
 ### Estrategia de ejecución
 
-- mantener el criterio de selección original: solo componentes `< 50%` dentro del alcance `cattle`, `pastures` y `milking`
+- mantener el criterio de selección original: solo componentes `< 50%` dentro del alcance `cattle`, `pastures` y `milkingProd`
 - priorizar primero repositorios y mappers con comportamiento observable antes que payloads y enums contractuales
 - agrupar las clases contractuales de eventos en suites compactas para subir cobertura con bajo costo de mantenimiento
 - validar por bloques de dominio antes de ejecutar el `jacocoTestReport` global
@@ -213,7 +213,7 @@ Objetivo del bloque:
 
 | Fase | Alcance | Entregable técnico |
 |------|---------|--------------------|
-| F1 | Repositorios cattle y milking | suites nuevas y validación focal de repositorios |
+| F1 | Repositorios cattle y milkingProd | suites nuevas y validación focal de repositorios |
 | F2 | Mapper bovino e infraestructura compartida | suites nuevas para mappers/converters/enums compartidos |
 | F3 | Entidades y payloads cattle | suites contractuales del bloque bovino |
 | F4 | Entidades y payloads pastures | suites contractuales del bloque potreros |
@@ -257,7 +257,7 @@ Riesgo Medio-Alto
 
 | Fase | Alcance | SP | Horas |
 |------|---------|----|-------|
-| F1 | Repositorios cattle y milking | 5 | 36h |
+| F1 | Repositorios cattle y milkingProd | 5 | 36h |
 | F2 | Mapper bovino e infraestructura compartida | 3 | 20h |
 | F3 | Entidades y payloads cattle | 2 | 16h |
 | F4 | Entidades y payloads pastures | 2 | 16h |

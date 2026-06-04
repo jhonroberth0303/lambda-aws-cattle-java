@@ -269,7 +269,7 @@ domains/
 │   ├── dto/
 │   └── entity/
 │
-├── milking/             ← Auto-contenido, puede ser Lambda separada
+├── milkingProd/             ← Auto-contenido, puede ser Lambda separada
 │   ├── controller/
 │   ├── service/
 │   └── ...

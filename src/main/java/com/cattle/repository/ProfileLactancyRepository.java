@@ -19,7 +19,7 @@ import java.util.*;
 @Repository
 public class ProfileLactancyRepository {
     private static final String TABLE_BOVINES = System.getenv("TABLE_BOVINES");
-    private static final String GSI1 = "GSI1";
+    private static final String GSI1 = "gsi1";
     private static final String LACT_PREFIX = "LACT#";
     private static final String LACT_FARM_PREFIX = "LACT#FARM#";
     private final LambdaContext lambdaContext;

@@ -223,7 +223,7 @@
 │  │  ▼                   ▼                   ▼               │ │ │
 │  │  ┌────────────────┐ ┌────────────────┐ ┌─────────────┐ │ │ │
 │  │  │ domains/       │ │ domains/       │ │ domains/    │ │ │ │
-│  │  │  bovineIdentityItem/       │ │  milking/      │ │  pasture/   │ │ │ │
+│  │  │  bovineIdentityItem/       │ │  milkingProd/      │ │  pasture/   │ │ │ │
 │  │  ├────────────────┤ ├────────────────┤ ├─────────────┤ │ │ │
 │  │  │ ├─ controller/ │ │ ├─ controller/ │ │├─controller/│ │ │ │
 │  │  │ │  ├─ Bovine   │ │ │  ├─ Milking  │ ││├─Pasture   │ │ │ │

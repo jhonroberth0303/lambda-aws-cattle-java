@@ -10,10 +10,10 @@ public interface MilkingMapper {
 
     MilkingDTO toDTO(MilkingRecord source);
 
-    @Mapping(target = "PK", ignore = true)
-    @Mapping(target = "SK", ignore = true)
+    @Mapping(target = "pk", ignore = true)
+    @Mapping(target = "sk", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "gsi2pk", ignore = true)
-    @Mapping(target = "gsi2sk", ignore = true)
+    @Mapping(target = "gsi1pk", ignore = true)
+    @Mapping(target = "gsi1sk", ignore = true)
     MilkingRecord toEntity(MilkingDTO source);
 }

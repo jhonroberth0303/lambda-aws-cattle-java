@@ -91,8 +91,8 @@ public class MilkingProcessor {
             throw new IllegalArgumentException("El campo date debe tener el formato YYYY-MM-DD.");
         }
 
-        entity.setPK(PK_PREFIX + bovineId);
-        entity.setSK(SK_PREFIX + date + HASH_TAG + shift);
+        entity.setPk(PK_PREFIX + bovineId);
+        entity.setSk(SK_PREFIX + date + HASH_TAG + shift);
         entity.setCreatedAt(Instant.now().toString());
 
         assignLactationToMilking(entity, bovineId);
@@ -123,8 +123,8 @@ public class MilkingProcessor {
 
         entity.setLactationNumber(lactNum);
         String lactNumStr = String.format("%03d", lactNum);
-        entity.setGsi2pk(PK_PREFIX + bovineId + HASH_TAG + LACT_PREFIX + lactNumStr);
-        entity.setGsi2sk(entity.getDate() + HASH_TAG + entity.getShift());
+        entity.setGsi1pk(PK_PREFIX + bovineId + HASH_TAG + LACT_PREFIX + lactNumStr);
+        entity.setGsi1sk(entity.getDate() + HASH_TAG + entity.getShift());
     }
 
     public Optional<List<CowWithLactationsDTO>> getCowsWithLactations(String siteId) {

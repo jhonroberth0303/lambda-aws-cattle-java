@@ -49,8 +49,11 @@ public class RotationPlanProcessor {
      */
     public Optional<List<RotationSemaphoreItemDTO>> getRotationSemaphoreItems(String farmId) {
         try {
+            lambdaContext.logInfo(LogType.PROCESSOR, "Obteniendo semáforo de rotación para farmId: " + farmId);
             List<Pasture> pastures = pastureService.getPastures(farmId).orElse(Collections.emptyList());
+            pastures.stream().forEach(p -> lambdaContext.logInfo(LogType.PROCESSOR, "Pasture found: " + p.getId() + ", species: " + p.getSpecies()));
             List<Plan> plans = planService.getPlans(farmId).orElse(Collections.emptyList());
+            plans.stream().forEach(plan -> lambdaContext.logInfo(LogType.PROCESSOR, "Plan found: " + plan.getPk() + ", species: " + plan.getSpecies()));
 
             if (pastures.isEmpty()) {
                 lambdaContext.logInfo(LogType.PROCESSOR, "No se encontraron pasturas para farmId: " + farmId);
@@ -98,8 +101,9 @@ public class RotationPlanProcessor {
     }
 
     private Plan findPlanForSpecies(List<Plan> plans, String species) {
+        lambdaContext.logInfo(LogType.PROCESSOR, "Finding plan for species: " + species);
         return plans.stream()
-                .filter(plan -> species != null && species.equals(plan.getSpecies()))
+                .filter(plan -> species != null && species.contains(plan.getSpecies()))
                 .findFirst()
                 .orElse(null);
     }

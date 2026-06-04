@@ -227,8 +227,8 @@ class MilkingQueryServiceTest {
 
     private MilkingRecord createMilking(Integer bovineId, String date, String shift, Double liters) {
         return MilkingRecord.builder()
-                .PK("FARM#farm-001")
-                .SK("MILKING#" + date + "#" + shift)
+                .pk("FARM#farm-001")
+                .sk("MILKING#" + date + "#" + shift)
                 .bovineId(bovineId)
                 .date(date)
                 .shift(shift)

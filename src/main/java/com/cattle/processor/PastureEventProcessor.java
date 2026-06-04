@@ -1,5 +1,6 @@
 package com.cattle.processor;
 
+import com.cattle.config.LambdaContext;
 import com.cattle.dtos.PastureEventRequestDTO;
 import com.cattle.dtos.PastureEventResponseDTO;
 import com.cattle.dtos.RotationSemaphoreItemDTO;
@@ -7,6 +8,7 @@ import com.cattle.entities.Pasture;
 import com.cattle.entities.Plan;
 import com.cattle.enums.EventSource;
 import com.cattle.enums.EventType;
+import com.cattle.enums.LogType;
 import com.cattle.enums.PastureSubstatus;
 import com.cattle.events.CloseEvent;
 import com.cattle.events.EntityPatch;
@@ -42,6 +44,7 @@ public class PastureEventProcessor {
     private final PastureEventService pastureEventService;
     private final RotationPlanProcessor rotationPlanProcessor;
     private final ObjectMapper objectMapper;
+    private final LambdaContext lambdaContext;
 
     public PastureEventProcessor(
             PastureService pastureService,
@@ -49,7 +52,7 @@ public class PastureEventProcessor {
             PastureStatusEngine pastureStatusEngine,
             PastureEventService pastureEventService,
             RotationPlanProcessor rotationPlanProcessor,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper, LambdaContext lambdaContext
     ) {
         this.pastureService = pastureService;
         this.planService = planService;
@@ -57,9 +60,12 @@ public class PastureEventProcessor {
         this.pastureEventService = pastureEventService;
         this.rotationPlanProcessor = rotationPlanProcessor;
         this.objectMapper = objectMapper;
+        this.lambdaContext = lambdaContext;
     }
 
     public PastureEventResponseDTO applyEvent(String farmId, String pastureId, PastureEventRequestDTO request) {
+
+        lambdaContext.logInfo(LogType.PROCESSOR, "Aplicando evento al potrero. farmId: " + farmId + ", pastureId: " + pastureId + ", eventType: " + (request != null ? request.getEventType() : "null"));
         validateIdentifiers(farmId, pastureId);
         validateRequest(request);
 

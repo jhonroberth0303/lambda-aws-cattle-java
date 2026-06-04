@@ -93,7 +93,7 @@ ANTES (Por capa):
 DESPUÉS (Por dominio):
   domains/
     ├─ bovineIdentityItem/    {controller, service, processor, repository, dto, entity}
-    ├─ milking/   {controller, service, processor, repository, dto, entity}
+    ├─ milkingProd/   {controller, service, processor, repository, dto, entity}
     ├─ pasture/   {controller, service, processor, repository, dto, entity}
     ├─ chatbot/   {controller, service}
     └─ shared/    {config, security, abstractions}

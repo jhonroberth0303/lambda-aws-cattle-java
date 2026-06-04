@@ -80,8 +80,8 @@ class PastureStatusEngineTest {
         assertEquals(PastureStatus.MANTENIMIENTO.name(), patch.set().get("status"));
         assertEquals(PastureSubstatus.FERTILIZACION.name(), patch.set().get("substatus"));
         assertEquals("2025-12-31", patch.set().get("holdUntil"));
-        assertEquals("farm#" + pasture.getFarmId() + "#blocked#true", patch.set().get("gsi2pk"));
-        assertNotNull(patch.set().get("gsi2sk"));
+        assertEquals("farm#" + pasture.getFarmId() + "#blocked#true", patch.set().get("gsi1pk"));
+        assertNotNull(patch.set().get("gsi1sk"));
     }
 
     // Test para evento MAINTENANCE_CLEAR
@@ -121,7 +121,7 @@ class PastureStatusEngineTest {
         // Con altura de 5cm, el potrero está listo y pasa a DISPONIBLE
         assertEquals(PastureStatus.DISPONIBLE.name(), patch.set().get("status"));
         assertEquals(PastureSubstatus.NINGUNO.name(), patch.set().get("substatus"));
-        assertEquals("farm#F001#blocked#false", patch.set().get("gsi2pk"));
+        assertEquals("farm#F001#blocked#false", patch.set().get("gsi1pk"));
         assertNotNull(patch.set().get("status"));
     }
 
@@ -140,7 +140,7 @@ class PastureStatusEngineTest {
 
         assertEquals(PastureStatus.DISPONIBLE.name(), patch.set().get("status"));
         assertEquals(PastureSubstatus.NINGUNO.name(), patch.set().get("substatus"));
-        assertEquals("farm#F001#blocked#false", patch.set().get("gsi2pk"));
+        assertEquals("farm#F001#blocked#false", patch.set().get("gsi1pk"));
         assertNotNull(patch.set().get("status"));
     }
 
