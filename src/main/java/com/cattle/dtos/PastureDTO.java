@@ -13,6 +13,7 @@ import lombok.*;
 @Schema(description = "Datos de registro de Pasturas")
 public class PastureDTO {
     private String pk;
+    private String sk;
     private String farmId;
     private String id;
     private String name;

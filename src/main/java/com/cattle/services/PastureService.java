@@ -31,7 +31,7 @@ public class PastureService {
 
         try {
             lambdaContext.logInfo(LogType.SERVICE, "farm#" + farmId);
-            return pastureRepository.findPastures(farmId);
+            return pastureRepository.findPastures2(farmId);
         } catch (RepositoryException e) {
             String logMsg = String.format("Repository error getting pastures for farmId=%s: %s",
                     farmId, e.getMessage()

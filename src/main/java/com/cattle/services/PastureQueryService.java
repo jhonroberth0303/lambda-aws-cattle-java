@@ -31,7 +31,7 @@ public class PastureQueryService {
     public List<PastureContextDTO> getAvailablePastures(String farmId) throws RepositoryException {
         log.info("Getting available pastures for farmId: {}", farmId);
         
-        Optional<List<Pasture>> pasturesOpt = pastureRepository.findPastures(farmId);
+        Optional<List<Pasture>> pasturesOpt = pastureRepository.findPastures2(farmId);
         
         if (pasturesOpt.isEmpty()) {
             log.info("No pastures found for farmId: {}", farmId);
@@ -51,7 +51,7 @@ public class PastureQueryService {
     public List<PastureContextDTO> getPasturesInUse(String farmId) throws RepositoryException {
         log.info("Getting pastures in use for farmId: {}", farmId);
         
-        Optional<List<Pasture>> pasturesOpt = pastureRepository.findPastures(farmId);
+        Optional<List<Pasture>> pasturesOpt = pastureRepository.findPastures2(farmId);
         
         if (pasturesOpt.isEmpty()) {
             log.info("No pastures found for farmId: {}", farmId);
@@ -100,7 +100,7 @@ public class PastureQueryService {
     public Map<String, Integer> getPastureCountByStatus(String farmId) throws RepositoryException {
         log.info("Getting pasture count by status for farmId: {}", farmId);
         
-        Optional<List<Pasture>> pasturesOpt = pastureRepository.findPastures(farmId);
+        Optional<List<Pasture>> pasturesOpt = pastureRepository.findPastures2(farmId);
         
         if (pasturesOpt.isEmpty()) {
             log.info("No pastures found for farmId: {}", farmId);
@@ -138,7 +138,7 @@ public class PastureQueryService {
     public List<PastureContextDTO> getAllPastures(String farmId) throws RepositoryException {
         log.info("Getting all pastures for farmId: {}", farmId);
         
-        Optional<List<Pasture>> pasturesOpt = pastureRepository.findPastures(farmId);
+        Optional<List<Pasture>> pasturesOpt = pastureRepository.findPastures2(farmId);
         
         if (pasturesOpt.isEmpty()) {
             log.info("No pastures found for farmId: {}", farmId);

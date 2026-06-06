@@ -61,21 +61,21 @@ class PastureQueryServiceTest {
         pastures.add(createPastureWithStatus("EN_USO", 8.0));
         pastures.add(createPastureWithStatus("AVAILABLE", 12.0));
 
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         List<PastureContextDTO> result = pastureQueryService.getAvailablePastures(farmId);
 
         // Assert
         assertEquals(2, result.size());
-        verify(pastureRepository, times(1)).findPastures(farmId);
+        verify(pastureRepository, times(1)).findPastures2(farmId);
     }
 
     @Test
     void getAvailablePastures_noPastures_returnsEmptyList() throws RepositoryException {
         // Arrange
         String farmId = "farm-empty";
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.empty());
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.empty());
 
         // Act
         List<PastureContextDTO> result = pastureQueryService.getAvailablePastures(farmId);
@@ -92,7 +92,7 @@ class PastureQueryServiceTest {
         pastures.add(createPastureWithStatus("EN_USO", 10.0));
         pastures.add(createPastureWithStatus("OCUPADO", 15.0));
 
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         List<PastureContextDTO> result = pastureQueryService.getAvailablePastures(farmId);
@@ -113,7 +113,7 @@ class PastureQueryServiceTest {
         pastures.add(createPastureWithStatus("IN_USE", 12.0));
         pastures.add(createPastureWithStatus("OCUPADO", 7.5));
 
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         List<PastureContextDTO> result = pastureQueryService.getPasturesInUse(farmId);
@@ -126,7 +126,7 @@ class PastureQueryServiceTest {
     void getPasturesInUse_noPastures_returnsEmptyList() throws RepositoryException {
         // Arrange
         String farmId = "farm-empty";
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.empty());
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.empty());
 
         // Act
         List<PastureContextDTO> result = pastureQueryService.getPasturesInUse(farmId);
@@ -143,7 +143,7 @@ class PastureQueryServiceTest {
         pastures.add(createPastureWithStatus("DISPONIBLE", 10.0));
         pastures.add(createPastureWithStatus("AVAILABLE", 15.0));
 
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         List<PastureContextDTO> result = pastureQueryService.getPasturesInUse(farmId);
@@ -163,7 +163,7 @@ class PastureQueryServiceTest {
         pastures.add(createPastureWithStatus("IN_USE", 15.0));
         pastures.add(createPastureWithStatus("DISPONIBLE", 20.0)); // No se cuenta
 
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         Double result = pastureQueryService.getTotalHectaresInUse(farmId);
@@ -179,7 +179,7 @@ class PastureQueryServiceTest {
         List<Pasture> pastures = new ArrayList<>();
         pastures.add(createPastureWithStatus("DISPONIBLE", 10.0));
 
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         Double result = pastureQueryService.getTotalHectaresInUse(farmId);
@@ -196,7 +196,7 @@ class PastureQueryServiceTest {
         pastures.add(createPastureWithStatus("EN_USO", 10.5));
         pastures.add(createPastureWithStatus("EN_USO", null));
 
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         Double result = pastureQueryService.getTotalHectaresInUse(farmId);
@@ -209,7 +209,7 @@ class PastureQueryServiceTest {
     void getTotalHectaresInUse_emptyFarm_returnsZero() throws RepositoryException {
         // Arrange
         String farmId = "farm-empty";
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.empty());
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.empty());
 
         // Act
         Double result = pastureQueryService.getTotalHectaresInUse(farmId);
@@ -229,7 +229,7 @@ class PastureQueryServiceTest {
         pastures.add(createPastureWithStatus("AVAILABLE", 15.0));
         pastures.add(createPastureWithStatus("EN_USO", 20.0)); // No se cuenta
 
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         Double result = pastureQueryService.getTotalAvailableHectares(farmId);
@@ -245,7 +245,7 @@ class PastureQueryServiceTest {
         List<Pasture> pastures = new ArrayList<>();
         pastures.add(createPastureWithStatus("EN_USO", 10.0));
 
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         Double result = pastureQueryService.getTotalAvailableHectares(farmId);
@@ -266,7 +266,7 @@ class PastureQueryServiceTest {
         pastures.add(createPastureWithStatus("EN_USO", 8.0));
         pastures.add(createPastureWithStatus("DESCANSO", 15.0));
 
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         java.util.Map<String, Integer> result = pastureQueryService.getPastureCountByStatus(farmId);
@@ -281,7 +281,7 @@ class PastureQueryServiceTest {
     void getPastureCountByStatus_noPastures_returnsEmptyMap() throws RepositoryException {
         // Arrange
         String farmId = "farm-empty";
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.empty());
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.empty());
 
         // Act
         java.util.Map<String, Integer> result = pastureQueryService.getPastureCountByStatus(farmId);
@@ -301,7 +301,7 @@ class PastureQueryServiceTest {
                 createPasture("MAINTENANCE", 7.0, null, 25),
                 createPasture(null, 5.0, null, 25)
         );
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         Map<String, Integer> result = pastureQueryService.getPastureCountByStatus(farmId);
 
@@ -318,7 +318,7 @@ class PastureQueryServiceTest {
                 createPasture("OCUPADO", 7.0, LocalDate.now().minusDays(12).toString(), 12),
                 createPasture("DISPONIBLE", 9.0, null, 30)
         );
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         List<PastureContextDTO> result = pastureQueryService.getPasturesNeedingRotation(farmId, 10);
 
@@ -333,7 +333,7 @@ class PastureQueryServiceTest {
                 createPasture("AVAILABLE", 10.0, LocalDate.now().minusDays(3).toString(), 26),
                 createPasture("EN_USO", 8.0, "fecha-invalida", null)
         );
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         List<PastureContextDTO> result = pastureQueryService.getAllPastures(farmId);
 
@@ -345,7 +345,7 @@ class PastureQueryServiceTest {
 
     @Test
     void getAllPastures_emptyOptional_returnsEmptyList() throws RepositoryException {
-        when(pastureRepository.findPastures("farm-empty")).thenReturn(Optional.empty());
+        when(pastureRepository.findPastures2("farm-empty")).thenReturn(Optional.empty());
 
         List<PastureContextDTO> result = pastureQueryService.getAllPastures("farm-empty");
 
