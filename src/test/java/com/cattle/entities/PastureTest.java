@@ -143,7 +143,7 @@ class PastureTest {
     void allArgsConstructor_setsAllFields() {
         // Act
         Pasture pasture = new Pasture(
-                "pk", "gsi1pk", "gsi2pk", 1, 2,
+                "pk", "sk", "gsi1pk", "gsi2pk", 1, 2,
                 "farm", "id", "name", "species", "status", "substatus",
                 5.0, 20, "lastUse", "notes", "blockReason",
                 "establishment", "holdUntil"

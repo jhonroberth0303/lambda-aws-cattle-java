@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Repository
 public class PastureRepository {
     private static final String TABLE_PASTURE = System.getenv("TABLE_PASTURE");
-    private static final String GSI2_SPECIES_ETA = "gsi2-farm-blocked-eta";
+    //private static final String GSI2_SPECIES_ETA = "gsi2";
     private static final String PASTURE_NOT_EXIST_IN_DYNAMO_DB = "Pasture not exist in DynamoDB";
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<Pasture> table;
@@ -33,12 +33,21 @@ public class PastureRepository {
         this.dynamoDbClient = dynamoDbClient;
     }
 
-    public Optional<List<Pasture>> findPastures(String farmId) {
+    public Optional<List<Pasture>> findPastures2(String farmId) {
         try {
-            lambdaContext.logInfo(LogType.REPOSITORY, "Querying pastures for farmId: " + farmId);
-            List<Pasture> pastures = new ArrayList<>();
-            pastures.addAll(queryPasturesByBlocked(farmId, false));
-            pastures.addAll(queryPasturesByBlocked(farmId, true));
+            lambdaContext.logInfo(LogType.REPOSITORY, "Finding pastures for farmId: " + farmId);
+            List<Pasture> pastures;
+
+            QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+                    .partitionValue("farm#"+farmId)
+                    .build()
+            );
+
+            Page<Pasture> result = table
+                    .query(r -> r.limit(20).queryConditional(queryConditional))
+                    .iterator()
+                    .next();
+            pastures = new ArrayList<>(result.items());
 
             return Optional.of(pastures);
         } catch (ResourceNotFoundException e) {
@@ -51,26 +60,47 @@ public class PastureRepository {
             lambdaContext.logException(LogType.REPOSITORY, "Unexpected error: " + e.getMessage());
             throw new RepositoryException("Unexpected error: " + e.getMessage(), e);
         }
+
     }
+//
+//    public Optional<List<Pasture>> findPastures(String farmId) {
+//        try {
+//            lambdaContext.logInfo(LogType.REPOSITORY, "Querying pastures for farmId: " + farmId);
+//            List<Pasture> pastures = new ArrayList<>();
+//            pastures.addAll(queryPasturesByBlocked(farmId, false));
+//            pastures.addAll(queryPasturesByBlocked(farmId, true));
+//
+//            return Optional.of(pastures);
+//        } catch (ResourceNotFoundException e) {
+//            lambdaContext.logException(LogType.REPOSITORY, PASTURE_NOT_EXIST_IN_DYNAMO_DB);
+//            throw new RepositoryException(PASTURE_NOT_EXIST_IN_DYNAMO_DB, e);
+//        } catch (DynamoDbException e) {
+//            lambdaContext.logException(LogType.REPOSITORY, "DynamoDB error: " + e.getMessage());
+//            throw new RepositoryException("DynamoDB error: " + e.getMessage(), e);
+//        } catch (Exception e) {
+//            lambdaContext.logException(LogType.REPOSITORY, "Unexpected error: " + e.getMessage());
+//            throw new RepositoryException("Unexpected error: " + e.getMessage(), e);
+//        }
+//    }
 
-    private List<Pasture> queryPasturesByBlocked(String farmId, boolean blocked) {
-        QueryConditional queryConditional = QueryConditional.keyEqualTo(
-                Key.builder()
-                        .partitionValue("farm#" + farmId + "#blocked#" + blocked)
-                        .build()
-        );
-
-        Iterator<Page<Pasture>> iterator = table
-                .index(GSI2_SPECIES_ETA)
-                .query(r -> r.limit(50).queryConditional(queryConditional))
-                .iterator();
-
-        if (!iterator.hasNext()) {
-            return List.of();
-        }
-
-        return new ArrayList<>(iterator.next().items());
-    }
+//    private List<Pasture> queryPasturesByBlocked(String farmId, boolean blocked) {
+//        QueryConditional queryConditional = QueryConditional.keyEqualTo(
+//                Key.builder()
+//                        .partitionValue("farm#" + farmId + "#blocked#" + blocked)
+//                        .build()
+//        );
+//
+//        Iterator<Page<Pasture>> iterator = table
+//                .index(GSI2_SPECIES_ETA)
+//                .query(r -> r.limit(50).queryConditional(queryConditional))
+//                .iterator();
+//
+//        if (!iterator.hasNext()) {
+//            return List.of();
+//        }
+//
+//        return new ArrayList<>(iterator.next().items());
+//    }
 
 
     /** Aplica el patch a un ítem identificado por pk. */
@@ -97,7 +127,24 @@ public class PastureRepository {
                     ue.append(nKey).append(" = ").append(vKey);
 
                     names.put(nKey, field);
-                    values.put(vKey, toAttr(val));
+                    // Validate numeric GSI sort keys before converting to AttributeValue
+                    if ("gsi1sk".equals(field) || "gsi2sk".equals(field)) {
+                        if (val == null) {
+                            values.put(vKey, AttributeValue.builder().nul(true).build());
+                        } else if (val instanceof Number n) {
+                            values.put(vKey, AttributeValue.builder().n(String.valueOf(n.intValue())).build());
+                        } else {
+                            try {
+                                int parsed = Integer.parseInt(String.valueOf(val));
+                                values.put(vKey, AttributeValue.builder().n(String.valueOf(parsed)).build());
+                            } catch (NumberFormatException ex) {
+                                lambdaContext.logException(LogType.REPOSITORY, "Invalid numeric value for " + field + ": " + val);
+                                throw new RepositoryException("Invalid numeric value for field " + field + ": " + val, ex);
+                            }
+                        }
+                    } else {
+                        values.put(vKey, toAttr(val));
+                    }
                     i++;
                 }
             }

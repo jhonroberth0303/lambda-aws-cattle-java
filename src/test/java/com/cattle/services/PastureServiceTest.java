@@ -65,7 +65,7 @@ class PastureServiceTest {
                 .build();
         
         pastures.add(pasture);
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         Optional<List<Pasture>> result = pastureService.getPastures(farmId);
@@ -74,21 +74,21 @@ class PastureServiceTest {
         assertTrue(result.isPresent());
         assertEquals(1, result.get().size());
         assertEquals("Potrero 1", result.get().get(0).getName());
-        verify(pastureRepository, times(1)).findPastures(farmId);
+        verify(pastureRepository, times(1)).findPastures2(farmId);
     }
 
     @Test
     void findPastures_emptyFarm_returnsEmptyList() {
         // Arrange
         String farmId = "farm-empty";
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.empty());
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.empty());
 
         // Act
         Optional<List<Pasture>> result = pastureService.getPastures(farmId);
 
         // Assert
         assertTrue(result.isEmpty());
-        verify(pastureRepository, times(1)).findPastures(farmId);
+        verify(pastureRepository, times(1)).findPastures2(farmId);
     }
 
     @Test
@@ -97,7 +97,7 @@ class PastureServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> pastureService.getPastures(null));
         assertTrue(exception.getMessage().contains("farmId"));
-        verify(pastureRepository, never()).findPastures(any());
+        verify(pastureRepository, never()).findPastures2(any());
     }
 
     @Test
@@ -106,27 +106,27 @@ class PastureServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> pastureService.getPastures("  "));
         assertTrue(exception.getMessage().contains("farmId"));
-        verify(pastureRepository, never()).findPastures(any());
+        verify(pastureRepository, never()).findPastures2(any());
     }
 
     @Test
     void findPastures_repositoryException_throwsServiceException() {
         // Arrange
         String farmId = "farm-001";
-        when(pastureRepository.findPastures(farmId)).thenThrow(new RepositoryException("DB Error"));
+        when(pastureRepository.findPastures2(farmId)).thenThrow(new RepositoryException("DB Error"));
 
         // Act & Assert
         assertThrows(ServiceException.class, () -> pastureService.getPastures(farmId));
-        verify(pastureRepository, times(1)).findPastures(farmId);
+        verify(pastureRepository, times(1)).findPastures2(farmId);
     }
 
     @Test
     void findPastures_unexpectedException_throwsProcessingException() {
         String farmId = "farm-001";
-        when(pastureRepository.findPastures(farmId)).thenThrow(new RuntimeException("boom"));
+        when(pastureRepository.findPastures2(farmId)).thenThrow(new RuntimeException("boom"));
 
         assertThrows(ProcessingException.class, () -> pastureService.getPastures(farmId));
-        verify(pastureRepository).findPastures(farmId);
+        verify(pastureRepository).findPastures2(farmId);
     }
 
     // ==================== applyPatch Tests ====================
@@ -288,7 +288,7 @@ class PastureServiceTest {
         pastures.add(available);
         pastures.add(maintenance);
         
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         Optional<List<Pasture>> result = pastureService.getPastures(farmId);
@@ -308,7 +308,7 @@ class PastureServiceTest {
         pastures.add(Pasture.builder().farmId(farmId).areaHa(15.5).build());
         pastures.add(Pasture.builder().farmId(farmId).areaHa(8.3).build());
         
-        when(pastureRepository.findPastures(farmId)).thenReturn(Optional.of(pastures));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
 
         // Act
         Optional<List<Pasture>> result = pastureService.getPastures(farmId);
