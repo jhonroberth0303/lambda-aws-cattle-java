@@ -47,7 +47,7 @@ public class PastureService {
         }
     }
 
-    public void applyPatch(String pk, EntityPatch patch) {
+    public void applyPatch(String pk, String sk, EntityPatch patch) {
         if (Strings.isBlank(pk) || pk.trim().isEmpty()) {
             throw new IllegalArgumentException("El campo pk es requerido");
         }
@@ -57,7 +57,7 @@ public class PastureService {
 
         try {
             lambdaContext.logInfo(LogType.SERVICE, "Applying patch to pasture with pk: " + pk);
-            pastureRepository.applyPatch(pk, patch);
+            pastureRepository.applyPatch(pk, sk, patch);
         } catch (RepositoryException e) {
             String logMsg = String.format("Repository error applying patch to pasture with pk=%s: %s",
                     pk, e.getMessage()

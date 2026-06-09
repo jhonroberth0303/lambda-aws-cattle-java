@@ -103,8 +103,8 @@ public class PastureRepository {
 //    }
 
 
-    /** Aplica el patch a un ítem identificado por pk. */
-    public void applyPatch(String pk, EntityPatch patch) {
+    /** Aplica el patch a un ítem identificado por pk + sk. */
+    public void applyPatch(String pk, String sk, EntityPatch patch) {
         if (patch == null || patch.isEmpty()) return;
 
         try {
@@ -127,24 +127,7 @@ public class PastureRepository {
                     ue.append(nKey).append(" = ").append(vKey);
 
                     names.put(nKey, field);
-                    // Validate numeric GSI sort keys before converting to AttributeValue
-                    if ("gsi1sk".equals(field) || "gsi2sk".equals(field)) {
-                        if (val == null) {
-                            values.put(vKey, AttributeValue.builder().nul(true).build());
-                        } else if (val instanceof Number n) {
-                            values.put(vKey, AttributeValue.builder().n(String.valueOf(n.intValue())).build());
-                        } else {
-                            try {
-                                int parsed = Integer.parseInt(String.valueOf(val));
-                                values.put(vKey, AttributeValue.builder().n(String.valueOf(parsed)).build());
-                            } catch (NumberFormatException ex) {
-                                lambdaContext.logException(LogType.REPOSITORY, "Invalid numeric value for " + field + ": " + val);
-                                throw new RepositoryException("Invalid numeric value for field " + field + ": " + val, ex);
-                            }
-                        }
-                    } else {
-                        values.put(vKey, toAttr(val));
-                    }
+                    values.put(vKey, toAttr(val));
                     i++;
                 }
             }
@@ -162,8 +145,12 @@ public class PastureRepository {
                 }
             }
 
-            // 2) Clave primaria
-            Map<String, AttributeValue> key = Map.of("pk", AttributeValue.builder().s(pk).build());
+            // 2) Clave primaria compuesta (pk + sk requeridos por el esquema de la tabla)
+            Map<String, AttributeValue> key = new LinkedHashMap<>();
+            key.put("pk", AttributeValue.builder().s(pk).build());
+            if (sk != null && !sk.isBlank()) {
+                key.put("sk", AttributeValue.builder().s(sk).build());
+            }
 
             // 3) Construir request (puedes agregar ConditionExpression si quieres bloqueo optimista)
             UpdateItemRequest req = UpdateItemRequest.builder()

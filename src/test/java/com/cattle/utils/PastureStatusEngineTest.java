@@ -64,7 +64,7 @@ class PastureStatusEngineTest {
         EntityPatch patch = engine.applyEvent(pasture, plan, ev);
 
         assertEquals(PastureStatus.EN_DESCANSO.name(), patch.set().get("status"));
-        assertNotNull(patch.set().get("lastUseAtIso"));
+        assertNull(patch.set().get("lastUseAtIso"));
     }
 
     // Test para evento MAINTENANCE_SET

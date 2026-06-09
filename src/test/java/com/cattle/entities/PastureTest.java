@@ -146,7 +146,7 @@ class PastureTest {
                 "pk", "sk", "gsi1pk", "gsi2pk", 1, 2,
                 "farm", "id", "name", "species", "status", "substatus",
                 5.0, 20, "lastUse", "notes", "blockReason",
-                "establishment", "holdUntil"
+                "establishment", "holdUntil", "{\"completedAt\":\"2026-06-09T10:00:00Z\"}"
         );
 
         // Assert
@@ -163,5 +163,6 @@ class PastureTest {
         assertEquals("substatus", pasture.getSubstatus());
         assertEquals(5.0, pasture.getAreaHa());
         assertEquals(20, pasture.getCurrentHeightCm());
+        assertEquals("{\"completedAt\":\"2026-06-09T10:00:00Z\"}", pasture.getLastPreEntryCheckJson());
     }
 }

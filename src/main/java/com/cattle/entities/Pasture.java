@@ -32,6 +32,7 @@ public class Pasture {
     private String blockReason;
     private String establishmentDate;
     private String holdUntil;
+    private String lastPreEntryCheckJson;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("pk")
