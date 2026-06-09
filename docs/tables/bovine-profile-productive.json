@@ -1,8 +1,0 @@
-{
- "PK": "BOVINE#167",
- "SK": "PROFILE#REPRODUCTIVE",
- "currentPregnancyId": "PREG#2025-07-06",
- "GSI1PK": "PROFILE",
- "GSI1SK": "BOVINE#167#REPRODUCTIVE",
- "updatedAt": "2025-07-06T08:00:00Z"
-}
