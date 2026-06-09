@@ -31,10 +31,7 @@ public class PastureStatusEngine {
                 // Podrías registrar un evento aparte (GRAZING_START / CUT_START)
             }
             case CLOSE -> {
-                // Cierre → descanso
                 entityPatch.set("status", PastureStatus.EN_DESCANSO.name());
-                entityPatch.set("lastUseAtIso", now.toString());
-                // Podrías crear tarea de fertilización post-uso aquí (fuera del motor)
             }
             case MAINTENANCE_SET -> {
                 MaintenanceSetEvent m = (MaintenanceSetEvent) ev;
@@ -43,11 +40,9 @@ public class PastureStatusEngine {
                 if (m.holdUntil() != null && !m.holdUntil().isBlank()) {
                     entityPatch.set("holdUntil", m.holdUntil());
                 }
-                // Activar índice de bloqueados (sparse)
                 entityPatch.set("gsi1pk", "farm#" + pasture.getFarmId() + "#blocked#true");
-                // Si quieres ordenar por ETA dentro del GSI:
                 int eta = EtaCalculator.etaOpenDays(pasture, plan);
-                entityPatch.set("gsi1sk", Math.max(eta, 0));
+                entityPatch.set("gsi1sk", String.valueOf(Math.max(eta, 0)));
             }
             case MAINTENANCE_CLEAR -> {
                 entityPatch.set("substatus", PastureStatus.NINGUNO.name());
@@ -59,6 +54,9 @@ public class PastureStatusEngine {
                 // Remover del GSI de bloqueados
                 entityPatch.remove("gsi1pk");
                 entityPatch.remove("gsi1sk");
+            }
+            case PRE_ENTRY_CHECK -> {
+                // Solo registro de inspección — no muta el estado operativo del potrero
             }
         }
         return entityPatch;

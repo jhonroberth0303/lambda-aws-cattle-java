@@ -1,6 +1,7 @@
 package com.cattle.processor;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.dtos.LastPreEntryCheckDTO;
 import com.cattle.dtos.RotationSemaphoreItemDTO;
 import com.cattle.entities.Pasture;
 import com.cattle.entities.Plan;
@@ -13,6 +14,7 @@ import com.cattle.services.PastureService;
 import com.cattle.services.PlanService;
 import com.cattle.utils.EtaCalculator;
 import com.cattle.utils.PastureStatusEngine;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -31,17 +33,20 @@ public class RotationPlanProcessor {
     private final PlanService planService;
     private final PastureStatusEngine pastureStatusEngine;
     private final LambdaContext lambdaContext;
+    private final ObjectMapper objectMapper;
 
     public RotationPlanProcessor(
             PastureService pastureService,
             PlanService planService,
             PastureStatusEngine pastureStatusEngine,
-            LambdaContext lambdaContext
+            LambdaContext lambdaContext,
+            ObjectMapper objectMapper
     ) {
         this.pastureService = pastureService;
         this.planService = planService;
         this.pastureStatusEngine = pastureStatusEngine;
         this.lambdaContext = lambdaContext;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -66,7 +71,7 @@ public class RotationPlanProcessor {
                         int eta = EtaCalculator.etaOpenDays(pasture, plan);
                         EntityPatch aut = pastureStatusEngine.autoUpdateStatusTickByHoldUntil(pasture, plan);
                         if (!aut.isEmpty()) {
-                            pastureService.applyPatch(pasture.getPk(), aut);
+                            pastureService.applyPatch(pasture.getPk(), pasture.getSk(), aut);
                             applyLocal(pasture, aut);
                         }
                         PastureStatus status = pastureStatusEngine.deriveEffectiveStatus(pasture, eta);
@@ -100,6 +105,15 @@ public class RotationPlanProcessor {
         }
     }
 
+    private LastPreEntryCheckDTO parseLastPreEntryCheck(String json) {
+        if (json == null || json.isBlank()) return null;
+        try {
+            return objectMapper.readValue(json, LastPreEntryCheckDTO.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private Plan findPlanForSpecies(List<Plan> plans, String species) {
         lambdaContext.logInfo(LogType.PROCESSOR, "Finding plan for species: " + species);
         return plans.stream()
@@ -120,7 +134,7 @@ public class RotationPlanProcessor {
         dto.setSpecies(pasture.getSpecies());
         dto.setStatus(pasture.getStatus());
         dto.setSubstatus(pasture.getSubstatus());
-        dto.setBlocked(pasture.getGsi2pk() != null && pasture.getGsi2pk().contains("true"));
+        dto.setBlocked(pastureStatusEngine.isBlockedEffective(pasture));
         dto.setBlockReason(pasture.getBlockReason());
         dto.setEtaOpenDays(etaOpenDays);
         dto.setReadyAt(etaOpenDays != null ? now.plusDays(etaOpenDays.longValue()).toString() : null);
@@ -129,6 +143,7 @@ public class RotationPlanProcessor {
         dto.setCurrentHeightCm(pasture.getCurrentHeightCm());
         dto.setAreaHa(pasture.getAreaHa());
         dto.setNotes(pasture.getNotes());
+        dto.setLastPreEntryCheck(parseLastPreEntryCheck(pasture.getLastPreEntryCheckJson()));
 
         if (plan != null && plan.getRules() != null) {
             dto.setDaysRest(plan.getRules().getRestDaysMin());

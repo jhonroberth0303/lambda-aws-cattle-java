@@ -30,4 +30,5 @@ public class RotationSemaphoreItemDTO {
     public String warn;
     public String notes;
     private Double areaHa;
+    public LastPreEntryCheckDTO lastPreEntryCheck;
 }

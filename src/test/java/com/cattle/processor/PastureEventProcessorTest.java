@@ -82,7 +82,7 @@ class PastureEventProcessorTest {
         when(pastureService.getPastures(farmId)).thenReturn(Optional.of(List.of(pasture)));
         when(planService.getPlans(farmId)).thenReturn(Optional.of(List.of(plan)));
         when(pastureStatusEngine.applyEvent(eq(pasture), eq(plan), any())).thenReturn(patch);
-        doNothing().when(pastureService).applyPatch(eq(pasture.getPk()), any());
+        doNothing().when(pastureService).applyPatch(eq(pasture.getPk()), eq(pasture.getSk()), any());
         doNothing().when(pastureEventService).save(any());
         when(rotationPlanProcessor.getRotationSemaphoreItems(farmId)).thenReturn(Optional.of(List.of(
                 RotationSemaphoreItemDTO.builder().pastureId(pastureId).status("EN_USO").build()
@@ -101,7 +101,7 @@ class PastureEventProcessorTest {
 
         assertEquals("OPEN", response.getEventType());
         assertEquals("EN_USO", response.getPasture().getStatus());
-        verify(pastureService, times(1)).applyPatch(eq(pasture.getPk()), any());
+        verify(pastureService, times(1)).applyPatch(eq(pasture.getPk()), eq(pasture.getSk()), any());
         verify(pastureEventService, times(1)).save(any());
     }
 
@@ -128,7 +128,7 @@ class PastureEventProcessorTest {
         when(pastureService.getPastures(farmId)).thenReturn(Optional.of(List.of(pasture)));
         when(planService.getPlans(farmId)).thenReturn(Optional.of(List.of(plan)));
         when(pastureStatusEngine.applyEvent(eq(pasture), eq(plan), any())).thenReturn(patch);
-        doNothing().when(pastureService).applyPatch(eq(pasture.getPk()), any());
+        doNothing().when(pastureService).applyPatch(eq(pasture.getPk()), eq(pasture.getSk()), any());
         doNothing().when(pastureEventService).save(any());
         when(rotationPlanProcessor.getRotationSemaphoreItems(farmId)).thenReturn(Optional.of(List.of(
                 RotationSemaphoreItemDTO.builder().pastureId(pastureId).status("MANTENIMIENTO").substatus(PastureSubstatus.FERTILIZACION.name()).build()
@@ -149,7 +149,8 @@ class PastureEventProcessorTest {
 
     private Pasture createPasture(String id, String status) {
         return Pasture.builder()
-                .pk("farm#F001#pasture#" + id)
+                .pk("farm#F001")
+                .sk("pasture#" + id)
                 .farmId("F001")
                 .id(id)
                 .name("Potrero " + id)

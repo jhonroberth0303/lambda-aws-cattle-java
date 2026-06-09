@@ -138,13 +138,13 @@ class PastureServiceTest {
         EntityPatch patch = EntityPatch.of();
         patch.set("status", "EN_USO");
         
-        doNothing().when(pastureRepository).applyPatch(pk, patch);
+        doNothing().when(pastureRepository).applyPatch(eq(pk), any(), eq(patch));
 
         // Act
-        pastureService.applyPatch(pk, patch);
+        pastureService.applyPatch(pk, null, patch);
 
         // Assert
-        verify(pastureRepository, times(1)).applyPatch(pk, patch);
+        verify(pastureRepository, times(1)).applyPatch(eq(pk), any(), eq(patch));
     }
 
     @Test
@@ -155,13 +155,13 @@ class PastureServiceTest {
         patch.set("status", "EN_DESCANSO");
         patch.set("lastUseAtIso", "2026-01-20T10:00:00Z");
         
-        doNothing().when(pastureRepository).applyPatch(pk, patch);
+        doNothing().when(pastureRepository).applyPatch(eq(pk), any(), eq(patch));
 
         // Act
-        pastureService.applyPatch(pk, patch);
+        pastureService.applyPatch(pk, null, patch);
 
         // Assert
-        verify(pastureRepository, times(1)).applyPatch(pk, patch);
+        verify(pastureRepository, times(1)).applyPatch(eq(pk), any(), eq(patch));
     }
 
     @Test
@@ -173,13 +173,13 @@ class PastureServiceTest {
         patch.set("substatus", "FERTILIZACION");
         patch.set("holdUntil", "2026-02-28");
         
-        doNothing().when(pastureRepository).applyPatch(pk, patch);
+        doNothing().when(pastureRepository).applyPatch(eq(pk), any(), eq(patch));
 
         // Act
-        pastureService.applyPatch(pk, patch);
+        pastureService.applyPatch(pk, null, patch);
 
         // Assert
-        verify(pastureRepository, times(1)).applyPatch(pk, patch);
+        verify(pastureRepository, times(1)).applyPatch(eq(pk), any(), eq(patch));
     }
 
     @Test
@@ -190,13 +190,13 @@ class PastureServiceTest {
         patch.set("substatus", "NINGUNO");
         patch.remove("holdUntil");
         
-        doNothing().when(pastureRepository).applyPatch(pk, patch);
+        doNothing().when(pastureRepository).applyPatch(eq(pk), any(), eq(patch));
 
         // Act
-        pastureService.applyPatch(pk, patch);
+        pastureService.applyPatch(pk, null, patch);
 
         // Assert
-        verify(pastureRepository, times(1)).applyPatch(pk, patch);
+        verify(pastureRepository, times(1)).applyPatch(eq(pk), any(), eq(patch));
     }
 
     @Test
@@ -207,9 +207,9 @@ class PastureServiceTest {
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> pastureService.applyPatch(null, patch));
+                () -> pastureService.applyPatch(null, null, patch));
         assertTrue(exception.getMessage().contains("pk"));
-        verify(pastureRepository, never()).applyPatch(any(), any());
+        verify(pastureRepository, never()).applyPatch(any(), any(), any());
     }
 
     @Test
@@ -220,9 +220,9 @@ class PastureServiceTest {
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> pastureService.applyPatch(pk, emptyPatch));
+                () -> pastureService.applyPatch(pk, null, emptyPatch));
         assertTrue(exception.getMessage().contains("patch"));
-        verify(pastureRepository, never()).applyPatch(any(), any());
+        verify(pastureRepository, never()).applyPatch(any(), any(), any());
     }
 
     @Test
@@ -231,14 +231,14 @@ class PastureServiceTest {
         patch.set("status", "EN_USO");
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> pastureService.applyPatch("   ", patch));
+                () -> pastureService.applyPatch("   ", null, patch));
         assertTrue(exception.getMessage().contains("pk"));
     }
 
     @Test
     void applyPatch_nullPatch_throwsException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> pastureService.applyPatch("PASTURE#1", null));
+                () -> pastureService.applyPatch("PASTURE#1", null, null));
         assertTrue(exception.getMessage().contains("patch"));
     }
 
@@ -249,11 +249,11 @@ class PastureServiceTest {
         EntityPatch patch = EntityPatch.of();
         patch.set("status", "EN_USO");
         
-        doThrow(new RepositoryException("DB Error")).when(pastureRepository).applyPatch(pk, patch);
+        doThrow(new RepositoryException("DB Error")).when(pastureRepository).applyPatch(eq(pk), any(), eq(patch));
 
         // Act & Assert
-        assertThrows(ServiceException.class, () -> pastureService.applyPatch(pk, patch));
-        verify(pastureRepository, times(1)).applyPatch(pk, patch);
+        assertThrows(ServiceException.class, () -> pastureService.applyPatch(pk, null, patch));
+        verify(pastureRepository, times(1)).applyPatch(eq(pk), any(), eq(patch));
     }
 
     @Test
@@ -261,10 +261,10 @@ class PastureServiceTest {
         String pk = "PASTURE#pasture-1";
         EntityPatch patch = EntityPatch.of();
         patch.set("status", "EN_USO");
-        doThrow(new RuntimeException("boom")).when(pastureRepository).applyPatch(pk, patch);
+        doThrow(new RuntimeException("boom")).when(pastureRepository).applyPatch(eq(pk), any(), eq(patch));
 
-        assertThrows(ProcessingException.class, () -> pastureService.applyPatch(pk, patch));
-        verify(pastureRepository).applyPatch(pk, patch);
+        assertThrows(ProcessingException.class, () -> pastureService.applyPatch(pk, null, patch));
+        verify(pastureRepository).applyPatch(eq(pk), any(), eq(patch));
     }
 
     @Test
@@ -330,12 +330,12 @@ class PastureServiceTest {
         patch.set("substatus", "NINGUNO");
         patch.remove("holdUntil");
         
-        doNothing().when(pastureRepository).applyPatch(pk, patch);
+        doNothing().when(pastureRepository).applyPatch(eq(pk), any(), eq(patch));
 
         // Act
-        pastureService.applyPatch(pk, patch);
+        pastureService.applyPatch(pk, null, patch);
 
         // Assert
-        verify(pastureRepository, times(1)).applyPatch(pk, patch);
+        verify(pastureRepository, times(1)).applyPatch(eq(pk), any(), eq(patch));
     }
 }

@@ -15,6 +15,7 @@ import com.cattle.events.EntityPatch;
 import com.cattle.events.MaintenanceClearEvent;
 import com.cattle.events.MaintenanceSetEvent;
 import com.cattle.events.OpenEvent;
+import com.cattle.events.PreEntryCheckEvent;
 import com.cattle.events.PastureEvent;
 import com.cattle.events.entities.PastureEventItem;
 import com.cattle.services.PastureEventService;
@@ -26,6 +27,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +96,7 @@ public class PastureEventProcessor {
 
         enrichPatchForOperationalFields(request, event, patch);
 
-        pastureService.applyPatch(pasture.getPk(), patch);
+        pastureService.applyPatch(pasture.getPk(), pasture.getSk(), patch);
         applyLocal(pasture, patch);
 
         String eventId = persistEvent(farmId, pastureId, request, event);
@@ -161,6 +164,11 @@ public class PastureEventProcessor {
                 yield new MaintenanceSetEvent(createdBy, substatus, blankToNull(payload.getHoldUntil()));
             }
             case MAINTENANCE_CLEAR -> new MaintenanceClearEvent(createdBy);
+            case PRE_ENTRY_CHECK -> new PreEntryCheckEvent(
+                    createdBy,
+                    Boolean.TRUE.equals(payload.getAllCriticalOk()),
+                    payload.getCompletedAt()
+            );
         };
     }
 
@@ -169,7 +177,7 @@ public class PastureEventProcessor {
 
         if (event.type() == EventType.CLOSE) {
             patch.remove("blockReason");
-            patch.set("lastUseAt", Instant.now().toString());
+            patch.set("lastUseAt", LocalDate.now(ZoneOffset.UTC).toString());
         }
 
         if (event.type() == EventType.MAINTENANCE_SET) {
@@ -190,6 +198,25 @@ public class PastureEventProcessor {
         if (event.type() == EventType.CLOSE && payload.getNotes() != null && !payload.getNotes().isBlank()) {
             patch.set("notes", payload.getNotes().trim());
         }
+
+        if (event.type() == EventType.PRE_ENTRY_CHECK) {
+            try {
+                String checkJson = objectMapper.writeValueAsString(buildCheckSummary(request));
+                patch.set("lastPreEntryCheckJson", checkJson);
+            } catch (JsonProcessingException ex) {
+                lambdaContext.logInfo(LogType.PROCESSOR, "No fue posible serializar lastPreEntryCheck: " + ex.getMessage());
+            }
+        }
+    }
+
+    private Map<String, Object> buildCheckSummary(PastureEventRequestDTO request) {
+        PastureEventRequestDTO.Payload p = request.getPayload() != null ? request.getPayload() : new PastureEventRequestDTO.Payload();
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("completedAt", p.getCompletedAt());
+        summary.put("performedBy", blankToNull(p.getPerformedBy()));
+        summary.put("allCriticalOk", p.getAllCriticalOk());
+        summary.put("items", p.getItems());
+        return summary;
     }
 
     private String persistEvent(String farmId, String pastureId, PastureEventRequestDTO request, PastureEvent event) {
@@ -228,6 +255,10 @@ public class PastureEventProcessor {
             payloadMap.put("substatus", blankToNull(payload.getSubstatus()));
             payloadMap.put("holdUntil", blankToNull(payload.getHoldUntil()));
             payloadMap.put("notes", blankToNull(payload.getNotes()));
+            payloadMap.put("completedAt", payload.getCompletedAt());
+            payloadMap.put("allCriticalOk", payload.getAllCriticalOk());
+            payloadMap.put("performedBy", blankToNull(payload.getPerformedBy()));
+            payloadMap.put("items", payload.getItems());
             return objectMapper.writeValueAsString(payloadMap);
         } catch (JsonProcessingException ex) {
             throw new IllegalArgumentException("No fue posible serializar el payload del evento", ex);

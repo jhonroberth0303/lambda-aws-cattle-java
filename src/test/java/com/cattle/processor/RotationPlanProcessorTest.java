@@ -10,6 +10,7 @@ import com.cattle.exceptions.ServiceException;
 import com.cattle.services.PastureService;
 import com.cattle.services.PlanService;
 import com.cattle.utils.PastureStatusEngine;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,9 @@ class RotationPlanProcessorTest {
     @Mock
     private LambdaContext lambdaContext;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
     private RotationPlanProcessor rotationPlanProcessor;
 
     @BeforeEach
@@ -54,7 +58,8 @@ class RotationPlanProcessorTest {
                 pastureService,
                 planService,
                 pastureStatusEngine,
-                lambdaContext
+                lambdaContext,
+                objectMapper
         );
     }
 
@@ -149,7 +154,7 @@ class RotationPlanProcessorTest {
 
         // Assert
         assertTrue(result.isPresent());
-        verify(pastureService, times(1)).applyPatch(eq(pasture.getPk()), eq(patch));
+        verify(pastureService, times(1)).applyPatch(eq(pasture.getPk()), eq(pasture.getSk()), eq(patch));
     }
 
     @Test
@@ -177,19 +182,20 @@ class RotationPlanProcessorTest {
     }
 
     @Test
-    void getRotationSemaphoreItems_pastureWithGsi2pk_setsBlocked() throws ServiceException {
+    void getRotationSemaphoreItems_pastureBlocked_setsBlocked() throws ServiceException {
         // Arrange
         String farmId = "farm-001";
-        Pasture pasture = createPasture("P-01", "DISPONIBLE", "RYEGRASS");
-        pasture.setGsi2pk("farm#F001#blocked#true");
+        Pasture pasture = createPasture("P-01", "MANTENIMIENTO", "RYEGRASS");
+        pasture.setSubstatus("FERTILIZACION");
         Plan plan = createPlan("RYEGRASS", 30, 7, 35);
-        
+
         when(pastureService.getPastures(farmId)).thenReturn(Optional.of(List.of(pasture)));
         when(planService.getPlans(farmId)).thenReturn(Optional.of(List.of(plan)));
         when(pastureStatusEngine.autoUpdateStatusTickByHoldUntil(any(), any()))
                 .thenReturn(new EntityPatch(Map.of(), List.of()));
         when(pastureStatusEngine.deriveEffectiveStatus(any(), anyInt()))
-                .thenReturn(com.cattle.enums.PastureStatus.DISPONIBLE);
+                .thenReturn(com.cattle.enums.PastureStatus.MANTENIMIENTO);
+        when(pastureStatusEngine.isBlockedEffective(any())).thenReturn(true);
 
         // Act
         Optional<List<RotationSemaphoreItemDTO>> result = rotationPlanProcessor.getRotationSemaphoreItems(farmId);
@@ -260,7 +266,7 @@ class RotationPlanProcessorTest {
                 pasture.setHoldUntil("2026-05-25");
                 pasture.setBlockReason("HUMEDO");
                 pasture.setNotes("Pendiente secado");
-                pasture.setGsi2pk("farm#F001#blocked#true");
+                pasture.setSubstatus("HUMEDO");
 
                 Plan plan = createPlan("CUBA22", 40, 10, 21);
 
@@ -270,6 +276,7 @@ class RotationPlanProcessorTest {
                                 .thenReturn(new EntityPatch(Map.of(), List.of()));
                 when(pastureStatusEngine.deriveEffectiveStatus(any(), anyInt()))
                                 .thenReturn(com.cattle.enums.PastureStatus.MANTENIMIENTO);
+                when(pastureStatusEngine.isBlockedEffective(any())).thenReturn(true);
 
                 Optional<List<RotationSemaphoreItemDTO>> result = rotationPlanProcessor.getRotationSemaphoreItems(farmId);
 
@@ -288,7 +295,8 @@ class RotationPlanProcessorTest {
 
     private Pasture createPasture(String id, String status, String species) {
         return Pasture.builder()
-                .pk("farm#F001#pasture#" + id)
+                .pk("farm#F001")
+                .sk("pasture#" + id)
                 .farmId("F001")
                 .id(id)
                 .name("Potrero " + id)
