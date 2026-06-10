@@ -10,6 +10,7 @@ import java.util.List;
 public class PastureEventRequestDTO {
     private String eventType;
     private String createdBy;
+    private String eventAt;
     private Payload payload = new Payload();
 
     @Getter
