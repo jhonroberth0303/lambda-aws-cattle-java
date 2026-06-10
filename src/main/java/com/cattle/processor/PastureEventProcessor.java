@@ -33,7 +33,6 @@ import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import static com.cattle.events.PatchApplier.applyLocal;
@@ -247,18 +246,19 @@ public class PastureEventProcessor {
 
     private String persistEvent(String farmId, String pastureId, PastureEventRequestDTO request, PastureEvent event) {
         String eventId = UUID.randomUUID().toString();
+        Instant eventInstant = resolveEventAt(request.getEventAt());
         Instant now = Instant.now();
         PastureEventRequestDTO.Payload payload = request.getPayload() != null ? request.getPayload() : new PastureEventRequestDTO.Payload();
         String payloadJson = serializePayload(payload);
 
         PastureEventItem item = new PastureEventItem();
         item.setPk("PASTURE#" + pastureId);
-        item.setSk("EVT#" + now.toString() + "#" + event.type().name() + "#" + eventId);
+        item.setSk("EVT#" + eventInstant.toString() + "#" + event.type().name() + "#" + eventId);
         item.setPastureId(pastureId);
         item.setFarmId(farmId);
         item.setEventId(eventId);
         item.setEventType(event.type().name());
-        item.setEventAt(now);
+        item.setEventAt(eventInstant);
         item.setSource(EventSource.MANUAL);
         item.setCreatedBy(normalizeCreatedBy(request.getCreatedBy()));
         item.setPayloadJson(payloadJson);
@@ -266,10 +266,20 @@ public class PastureEventProcessor {
         item.setCreatedAt(now.toString());
         item.setUpdatedAt(now.toString());
         item.setGsi1pk("farm#" + farmId + "#type#" + event.type().name());
-        item.setGsi1sk(now.toString());
+        item.setGsi1sk(eventInstant.toString());
 
         pastureEventService.save(item);
         return eventId;
+    }
+
+    private Instant resolveEventAt(String eventAt) {
+        if (eventAt == null || eventAt.isBlank()) return Instant.now();
+        try {
+            return LocalDate.parse(eventAt).atStartOfDay(ZoneOffset.UTC).toInstant();
+        } catch (Exception ex) {
+            lambdaContext.logInfo(LogType.PROCESSOR, "eventAt inválido '" + eventAt + "', usando Instant.now()");
+            return Instant.now();
+        }
     }
 
     private String serializePayload(PastureEventRequestDTO.Payload payload) {
