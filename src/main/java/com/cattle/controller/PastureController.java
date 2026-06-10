@@ -1,12 +1,14 @@
 package com.cattle.controller;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.dtos.PastureEventHistoryItemDTO;
 import com.cattle.dtos.PastureEventRequestDTO;
 import com.cattle.dtos.PastureEventResponseDTO;
 import com.cattle.dtos.RotationSemaphoreItemDTO;
 import com.cattle.enums.LogType;
 import com.cattle.processor.PastureEventProcessor;
 import com.cattle.processor.RotationPlanProcessor;
+import com.cattle.services.PastureEventService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,11 +27,13 @@ public class PastureController {
 
     private final RotationPlanProcessor rotationPlanProcessor;
     private final PastureEventProcessor pastureEventProcessor;
+    private final PastureEventService pastureEventService;
     private final LambdaContext lambdaContext;
 
-    public PastureController(RotationPlanProcessor rotationPlanProcessor, PastureEventProcessor pastureEventProcessor, LambdaContext lambdaContext) {
+    public PastureController(RotationPlanProcessor rotationPlanProcessor, PastureEventProcessor pastureEventProcessor, PastureEventService pastureEventService, LambdaContext lambdaContext) {
         this.rotationPlanProcessor = rotationPlanProcessor;
         this.pastureEventProcessor = pastureEventProcessor;
+        this.pastureEventService = pastureEventService;
         this.lambdaContext = lambdaContext;
     }
 
@@ -47,6 +51,14 @@ public class PastureController {
             @PathVariable("farmId") String farmId) {
         lambdaContext.logInfo(LogType.CONTROLLER, "Obteniendo semáforo de rotación para finca: " + farmId);
         return ResponseEntity.ok(rotationPlanProcessor.getRotationSemaphoreItems(farmId).orElse(List.of()));
+    }
+
+    @GetMapping("/{pastureId}/events")
+    public ResponseEntity<List<PastureEventHistoryItemDTO>> getEventHistory(
+            @PathVariable("farmId") String farmId,
+            @PathVariable("pastureId") String pastureId) {
+        lambdaContext.logInfo(LogType.CONTROLLER, "Obteniendo historial de eventos para potrero: " + pastureId + " finca: " + farmId);
+        return ResponseEntity.ok(pastureEventService.findByPasture(farmId, pastureId, 20));
     }
 
     @PostMapping("/{pastureId}/events")

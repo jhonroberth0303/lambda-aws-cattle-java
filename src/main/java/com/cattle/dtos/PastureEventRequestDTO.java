@@ -28,6 +28,11 @@ public class PastureEventRequestDTO {
         private String completedAt;
         private Boolean allCriticalOk;
         private String performedBy;
+
+        // Campos de labores de pradera (FERTILIZED, LIMED, HEIGHT_MEASURED)
+        private Integer heightCm;
+        private String productName;
+        private Double quantityKg;
     }
 
     @Getter

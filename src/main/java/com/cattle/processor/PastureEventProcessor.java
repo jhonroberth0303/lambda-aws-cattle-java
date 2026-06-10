@@ -12,6 +12,7 @@ import com.cattle.enums.LogType;
 import com.cattle.enums.PastureSubstatus;
 import com.cattle.events.CloseEvent;
 import com.cattle.events.EntityPatch;
+import com.cattle.events.LaborEvent;
 import com.cattle.events.MaintenanceClearEvent;
 import com.cattle.events.MaintenanceSetEvent;
 import com.cattle.events.OpenEvent;
@@ -87,6 +88,22 @@ public class PastureEventProcessor {
                 .orElse(null);
 
         PastureEvent event = toDomainEvent(request);
+
+        if (event instanceof LaborEvent) {
+            String eventId = persistEvent(farmId, pastureId, request, event);
+            RotationSemaphoreItemDTO currentPasture = rotationPlanProcessor.getRotationSemaphoreItems(farmId)
+                    .orElse(List.of())
+                    .stream()
+                    .filter(item -> pastureId.equals(item.getPastureId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("No se encontró el potrero " + pastureId + " en la finca " + farmId));
+            return PastureEventResponseDTO.builder()
+                    .eventId(eventId)
+                    .eventType(event.type().name())
+                    .pasture(currentPasture)
+                    .build();
+        }
+
         EntityPatch patch;
         try {
             patch = pastureStatusEngine.applyEvent(pasture, plan, event);
@@ -169,6 +186,15 @@ public class PastureEventProcessor {
                     Boolean.TRUE.equals(payload.getAllCriticalOk()),
                     payload.getCompletedAt()
             );
+            case FERTILIZED, LIMED -> new LaborEvent(eventType, createdBy);
+            case HEIGHT_MEASURED -> {
+                requirePositive(payload.getHeightCm(), "heightCm");
+                yield new LaborEvent(eventType, createdBy);
+            }
+            case OBSERVATION_ADDED -> {
+                requireNonBlank(payload.getNotes(), "notes");
+                yield new LaborEvent(eventType, createdBy);
+            }
         };
     }
 
@@ -259,6 +285,9 @@ public class PastureEventProcessor {
             payloadMap.put("allCriticalOk", payload.getAllCriticalOk());
             payloadMap.put("performedBy", blankToNull(payload.getPerformedBy()));
             payloadMap.put("items", payload.getItems());
+            payloadMap.put("heightCm", payload.getHeightCm());
+            payloadMap.put("productName", blankToNull(payload.getProductName()));
+            payloadMap.put("quantityKg", payload.getQuantityKg());
             return objectMapper.writeValueAsString(payloadMap);
         } catch (JsonProcessingException ex) {
             throw new IllegalArgumentException("No fue posible serializar el payload del evento", ex);

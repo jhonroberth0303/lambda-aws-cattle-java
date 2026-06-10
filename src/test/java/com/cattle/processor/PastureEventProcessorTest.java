@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -145,6 +146,89 @@ class PastureEventProcessorTest {
 
         assertEquals("MANTENIMIENTO", response.getPasture().getStatus());
         assertEquals(PastureSubstatus.FERTILIZACION.name(), response.getPasture().getSubstatus());
+    }
+
+    @Test
+    void applyEvent_laborEventFertilized_persistsEventWithoutMutatingState() {
+        String farmId = "F001";
+        String pastureId = "P-03";
+        Pasture pasture = createPasture(pastureId, "EN_DESCANSO");
+
+        when(pastureService.getPastures(farmId)).thenReturn(Optional.of(List.of(pasture)));
+        when(planService.getPlans(farmId)).thenReturn(Optional.of(List.of(createPlan("RYEGRASS"))));
+        doNothing().when(pastureEventService).save(any());
+        when(rotationPlanProcessor.getRotationSemaphoreItems(farmId)).thenReturn(Optional.of(List.of(
+                RotationSemaphoreItemDTO.builder().pastureId(pastureId).status("EN_DESCANSO").build()
+        )));
+
+        PastureEventRequestDTO request = new PastureEventRequestDTO();
+        request.setEventType("FERTILIZED");
+        request.setCreatedBy("operario@finca.test");
+        PastureEventRequestDTO.Payload payload = new PastureEventRequestDTO.Payload();
+        payload.setProductName("Urea 46%");
+        payload.setQuantityKg(50.0);
+        payload.setNotes("Aplicación en todo el potrero");
+        request.setPayload(payload);
+
+        PastureEventResponseDTO response = pastureEventProcessor.applyEvent(farmId, pastureId, request);
+
+        assertEquals("FERTILIZED", response.getEventType());
+        assertEquals("EN_DESCANSO", response.getPasture().getStatus());
+        verify(pastureService, never()).applyPatch(any(), any(), any());
+        verify(pastureEventService, times(1)).save(any());
+    }
+
+    @Test
+    void applyEvent_laborEventHeightMeasured_persistsEventWithoutMutatingState() {
+        String farmId = "F001";
+        String pastureId = "P-04";
+        Pasture pasture = createPasture(pastureId, "EN_DESCANSO");
+
+        when(pastureService.getPastures(farmId)).thenReturn(Optional.of(List.of(pasture)));
+        when(planService.getPlans(farmId)).thenReturn(Optional.of(List.of(createPlan("RYEGRASS"))));
+        doNothing().when(pastureEventService).save(any());
+        when(rotationPlanProcessor.getRotationSemaphoreItems(farmId)).thenReturn(Optional.of(List.of(
+                RotationSemaphoreItemDTO.builder().pastureId(pastureId).status("EN_DESCANSO").build()
+        )));
+
+        PastureEventRequestDTO request = new PastureEventRequestDTO();
+        request.setEventType("HEIGHT_MEASURED");
+        PastureEventRequestDTO.Payload payload = new PastureEventRequestDTO.Payload();
+        payload.setHeightCm(22);
+        payload.setNotes("Medición en punto central");
+        request.setPayload(payload);
+
+        PastureEventResponseDTO response = pastureEventProcessor.applyEvent(farmId, pastureId, request);
+
+        assertEquals("HEIGHT_MEASURED", response.getEventType());
+        verify(pastureService, never()).applyPatch(any(), any(), any());
+        verify(pastureEventService, times(1)).save(any());
+    }
+
+    @Test
+    void applyEvent_observationAdded_persistsEventWithoutMutatingState() {
+        String farmId = "F001";
+        String pastureId = "P-05";
+        Pasture pasture = createPasture(pastureId, "DISPONIBLE");
+
+        when(pastureService.getPastures(farmId)).thenReturn(Optional.of(List.of(pasture)));
+        when(planService.getPlans(farmId)).thenReturn(Optional.of(List.of(createPlan("RYEGRASS"))));
+        doNothing().when(pastureEventService).save(any());
+        when(rotationPlanProcessor.getRotationSemaphoreItems(farmId)).thenReturn(Optional.of(List.of(
+                RotationSemaphoreItemDTO.builder().pastureId(pastureId).status("DISPONIBLE").build()
+        )));
+
+        PastureEventRequestDTO request = new PastureEventRequestDTO();
+        request.setEventType("OBSERVATION_ADDED");
+        PastureEventRequestDTO.Payload payload = new PastureEventRequestDTO.Payload();
+        payload.setNotes("Se detectó presencia de kikuyo en el borde norte");
+        request.setPayload(payload);
+
+        PastureEventResponseDTO response = pastureEventProcessor.applyEvent(farmId, pastureId, request);
+
+        assertEquals("OBSERVATION_ADDED", response.getEventType());
+        verify(pastureService, never()).applyPatch(any(), any(), any());
+        verify(pastureEventService, times(1)).save(any());
     }
 
     private Pasture createPasture(String id, String status) {
