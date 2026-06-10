@@ -1,11 +1,13 @@
 package com.cattle.controller;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.dtos.PastureEventHistoryItemDTO;
 import com.cattle.dtos.PastureEventRequestDTO;
 import com.cattle.dtos.PastureEventResponseDTO;
 import com.cattle.dtos.RotationSemaphoreItemDTO;
 import com.cattle.processor.PastureEventProcessor;
 import com.cattle.processor.RotationPlanProcessor;
+import com.cattle.services.PastureEventService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -40,6 +43,9 @@ class PastureControllerTest {
     private PastureEventProcessor pastureEventProcessor;
 
     @Mock
+    private PastureEventService pastureEventService;
+
+    @Mock
     private LambdaContext lambdaContext;
 
     private PastureController pastureController;
@@ -47,7 +53,7 @@ class PastureControllerTest {
     @BeforeEach
     void setUp() {
         openMocks(this);
-        pastureController = new PastureController(rotationPlanProcessor, pastureEventProcessor, lambdaContext);
+        pastureController = new PastureController(rotationPlanProcessor, pastureEventProcessor, pastureEventService, lambdaContext);
     }
 
     // ==================== getRotationSemaphore Tests ====================
@@ -191,6 +197,35 @@ class PastureControllerTest {
         assertNotNull(response.getBody());
         assertEquals("evt-1", response.getBody().getEventId());
         verify(pastureEventProcessor).applyEvent(farmId, pastureId, request);
+    }
+
+    @Test
+    void getEventHistory_returnsOkWithList() {
+        String farmId = "farm-001";
+        String pastureId = "P-01";
+        List<PastureEventHistoryItemDTO> history = List.of(
+                PastureEventHistoryItemDTO.builder().eventId("e1").eventType("OPEN").createdBy("op1").build(),
+                PastureEventHistoryItemDTO.builder().eventId("e2").eventType("CLOSE").createdBy("op1").build()
+        );
+        when(pastureEventService.findByPasture(farmId, pastureId, 20)).thenReturn(history);
+
+        ResponseEntity<List<PastureEventHistoryItemDTO>> response = pastureController.getEventHistory(farmId, pastureId);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(2, response.getBody().size());
+        assertEquals("OPEN", response.getBody().get(0).getEventType());
+        verify(pastureEventService).findByPasture(farmId, pastureId, 20);
+    }
+
+    @Test
+    void getEventHistory_emptyHistory_returnsOkWithEmptyList() {
+        when(pastureEventService.findByPasture(anyString(), anyString(), eq(20))).thenReturn(List.of());
+
+        ResponseEntity<List<PastureEventHistoryItemDTO>> response = pastureController.getEventHistory("farm-001", "P-99");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().isEmpty());
     }
 
     // ==================== Helper Methods ====================
