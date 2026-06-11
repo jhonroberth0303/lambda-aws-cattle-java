@@ -203,6 +203,10 @@ public class PastureEventProcessor {
         if (event.type() == EventType.CLOSE) {
             patch.remove("blockReason");
             patch.set("lastUseAt", LocalDate.now(ZoneOffset.UTC).toString());
+            patch.set("currentHeightCm", ((CloseEvent) event).residualCm());
+            if (payload.getNotes() != null && !payload.getNotes().isBlank()) {
+                patch.set("notes", payload.getNotes().trim());
+            }
         }
 
         if (event.type() == EventType.MAINTENANCE_SET) {
@@ -217,10 +221,6 @@ public class PastureEventProcessor {
         }
 
         if (event.type() == EventType.OPEN && payload.getNotes() != null && !payload.getNotes().isBlank()) {
-            patch.set("notes", payload.getNotes().trim());
-        }
-
-        if (event.type() == EventType.CLOSE && payload.getNotes() != null && !payload.getNotes().isBlank()) {
             patch.set("notes", payload.getNotes().trim());
         }
 
