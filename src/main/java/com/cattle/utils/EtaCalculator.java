@@ -77,16 +77,13 @@ public class EtaCalculator {
 
     /** ETA para ensilaje (maíz): por días a cosecha */
     private static int etaSilage(Pasture p, Plan plan) {
-        LocalDate now = LocalDate.now(ZoneOffset.UTC);
-        Integer das = plan.getRules().getHarvestDaysAfterSowing();
-        if ((das == null || das < 0) && p.getEstablishmentDate() != null) {
-            LocalDate sow = Dates.parseDate(p.getEstablishmentDate());
-            if (sow != null) das = (int) Dates.daysBetween(sow, now);
-        }
+        Integer harvestDays = plan.getRules().getHarvestDaysAfterSowing();
+        if (harvestDays == null || p.getEstablishmentDate() == null) return 0;
 
-        if (plan.getRules().getHarvestDaysAfterSowing() != null && das != null) {
-            return Math.max(0, plan.getRules().getHarvestDaysAfterSowing() - das);
-        }
-        return 0; // si falta info, devuélvelo como listo por defecto
+        LocalDate sow = Dates.parseDate(p.getEstablishmentDate());
+        if (sow == null) return 0;
+
+        int daysSinceSowing = (int) Dates.daysBetween(sow, LocalDate.now(ZoneOffset.UTC));
+        return Math.max(0, harvestDays - daysSinceSowing);
     }
 }
