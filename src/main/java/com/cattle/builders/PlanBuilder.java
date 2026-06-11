@@ -27,7 +27,7 @@ public class PlanBuilder {
                 .notes("Evitar ingreso con suelo húmedo.")
                 .planType("GRAZING")
                 .rules(Plan.Rules.builder()
-                        .entryHeightCm(30)
+                        .entryHeightCm(20)
                         .exitResidualCm(7)
                         .restDaysMin(35)
                         .build())
