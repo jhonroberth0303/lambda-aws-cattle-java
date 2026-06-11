@@ -146,7 +146,7 @@ class PastureTest {
                 "pk", "sk", "gsi1pk", "gsi2pk", 1, 2,
                 "farm", "id", "name", "species", "status", "substatus",
                 5.0, 20, "lastUse", "notes", "blockReason",
-                "establishment", "holdUntil", "{\"completedAt\":\"2026-06-09T10:00:00Z\"}"
+                "establishment", "holdUntil", "{\"completedAt\":\"2026-06-09T10:00:00Z\"}", null
         );
 
         // Assert

@@ -144,6 +144,7 @@ public class RotationPlanProcessor {
         dto.setAreaHa(pasture.getAreaHa());
         dto.setNotes(pasture.getNotes());
         dto.setLastPreEntryCheck(parseLastPreEntryCheck(pasture.getLastPreEntryCheckJson()));
+        dto.setEntityType(pasture.getEntityType());
 
         if (plan != null && plan.getRules() != null) {
             dto.setDaysRest(plan.getRules().getRestDaysMin());

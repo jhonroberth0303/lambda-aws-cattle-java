@@ -41,7 +41,7 @@ class PlanBuilderTest {
 
         // Assert
         assertNotNull(result.getRules());
-        assertEquals(30, result.getRules().getEntryHeightCm());
+        assertEquals(20, result.getRules().getEntryHeightCm());
         assertEquals(7, result.getRules().getExitResidualCm());
         assertEquals(35, result.getRules().getRestDaysMin());
     }

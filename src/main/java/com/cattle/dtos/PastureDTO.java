@@ -30,6 +30,7 @@ public class PastureDTO {
     private String gsi2pk;
     private Integer gsi1sk;
     private Integer gsi2sk;
+    private String entityType;
 
     // Lombok @ToString y @EqualsAndHashCode generarán los métodos automáticamente
 }

@@ -31,4 +31,5 @@ public class RotationSemaphoreItemDTO {
     public String notes;
     private Double areaHa;
     public LastPreEntryCheckDTO lastPreEntryCheck;
+    public String entityType;
 }
