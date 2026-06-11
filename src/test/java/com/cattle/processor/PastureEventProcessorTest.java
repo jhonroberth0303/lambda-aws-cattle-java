@@ -22,6 +22,8 @@ import org.mockito.Mock;
 import java.util.List;
 import java.util.Optional;
 
+import org.mockito.ArgumentCaptor;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -229,6 +231,59 @@ class PastureEventProcessorTest {
         assertEquals("OBSERVATION_ADDED", response.getEventType());
         verify(pastureService, never()).applyPatch(any(), any(), any());
         verify(pastureEventService, times(1)).save(any());
+    }
+
+    @Test
+    void applyEvent_closeEvent_updatesCurrentHeightCmToResidualCm() {
+        String farmId = "F001";
+        String pastureId = "P-04";
+        Pasture pasture = createPasture(pastureId, "EN_USO");
+        Plan plan = createPlan("RYEGRASS");
+        EntityPatch patch = EntityPatch.of();
+        patch.set("status", "EN_DESCANSO");
+
+        when(pastureService.getPastures(farmId)).thenReturn(Optional.of(List.of(pasture)));
+        when(planService.getPlans(farmId)).thenReturn(Optional.of(List.of(plan)));
+        when(pastureStatusEngine.applyEvent(eq(pasture), eq(plan), any())).thenReturn(patch);
+        doNothing().when(pastureService).applyPatch(eq(pasture.getPk()), eq(pasture.getSk()), any());
+        doNothing().when(pastureEventService).save(any());
+        when(rotationPlanProcessor.getRotationSemaphoreItems(farmId)).thenReturn(Optional.of(List.of(
+                RotationSemaphoreItemDTO.builder().pastureId(pastureId).status("EN_DESCANSO").build()
+        )));
+
+        PastureEventRequestDTO request = new PastureEventRequestDTO();
+        request.setEventType("CLOSE");
+        request.setCreatedBy("operario@finca.test");
+        PastureEventRequestDTO.Payload payload = new PastureEventRequestDTO.Payload();
+        payload.setLotId("L01");
+        payload.setAnimals(3);
+        payload.setResidualCm(8);
+        request.setPayload(payload);
+
+        ArgumentCaptor<EntityPatch> patchCaptor = ArgumentCaptor.forClass(EntityPatch.class);
+
+        PastureEventResponseDTO response = pastureEventProcessor.applyEvent(farmId, pastureId, request);
+
+        verify(pastureService).applyPatch(eq(pasture.getPk()), eq(pasture.getSk()), patchCaptor.capture());
+        EntityPatch appliedPatch = patchCaptor.getValue();
+
+        assertEquals("CLOSE", response.getEventType());
+        assertEquals("EN_DESCANSO", response.getPasture().getStatus());
+        assertEquals(8, appliedPatch.set().get("currentHeightCm"));
+        assertEquals(true, appliedPatch.set().containsKey("lastUseAt"));
+        assertEquals(true, appliedPatch.remove().contains("blockReason"));
+    }
+
+    @Test
+    void applyEvent_closeEvent_rejectsNullResidualCm() {
+        PastureEventRequestDTO request = new PastureEventRequestDTO();
+        request.setEventType("CLOSE");
+        PastureEventRequestDTO.Payload payload = new PastureEventRequestDTO.Payload();
+        payload.setResidualCm(null);
+        request.setPayload(payload);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> pastureEventProcessor.applyEvent("F001", "P-04", request));
     }
 
     private Pasture createPasture(String id, String status) {
