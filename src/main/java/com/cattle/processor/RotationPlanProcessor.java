@@ -140,6 +140,7 @@ public class RotationPlanProcessor {
         dto.setReadyAt(etaOpenDays != null ? now.plusDays(etaOpenDays.longValue()).toString() : null);
         dto.setHoldUntil(pasture.getHoldUntil());
         dto.setLastUseAt(pasture.getLastUseAt());
+        dto.setEstablishmentDate(pasture.getEstablishmentDate());
         dto.setCurrentHeightCm(pasture.getCurrentHeightCm());
         dto.setAreaHa(pasture.getAreaHa());
         dto.setNotes(pasture.getNotes());

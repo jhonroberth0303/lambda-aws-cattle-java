@@ -14,6 +14,11 @@ import lombok.*;
 public class PastureDTO {
     private String pk;
     private String sk;
+    private String gsi1pk;
+    private String gsi2pk;
+    private Integer gsi1sk;
+    private Integer gsi2sk;
+
     private String farmId;
     private String id;
     private String name;
@@ -21,16 +26,15 @@ public class PastureDTO {
     private String species;
     private String status;
     private String substatus;
-    private String lastUseAt;
     private Double areaHa;
-    private Integer daysRest;
     private Integer currentHeightCm;
-    private Integer etaOpenDays;
-    private String gsi1pk;
-    private String gsi2pk;
-    private Integer gsi1sk;
-    private Integer gsi2sk;
+    private String lastUseAt;
+    private String blockReason;
+    private String establishmentDate;
+    private String holdUntil;
+    private String lastPreEntryCheckJson;
     private String entityType;
 
-    // Lombok @ToString y @EqualsAndHashCode generarán los métodos automáticamente
+    private Integer daysRest;
+    private Integer etaOpenDays;
 }

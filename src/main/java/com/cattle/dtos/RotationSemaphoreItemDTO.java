@@ -21,6 +21,7 @@ public class RotationSemaphoreItemDTO {
     public String readyAt;
     public String holdUntil;
     public String lastUseAt;
+    public String establishmentDate;
     public Integer currentHeightCm;
     public Integer daysRest;
     public Integer entryHeightCm;
