@@ -1,4 +1,4 @@
-package com.cattle.entities.bovines;
+package com.cattle.events.entities;
 
 import com.cattle.enums.EventSource;
 import org.junit.jupiter.api.Tag;
@@ -25,7 +25,7 @@ class BovineEventItemTest {
         item.setSource(EventSource.MANUAL);
         item.setCreatedBy("user-1");
         item.setFarmId("farm-001");
-        item.setPayload("{\"amount\":1000}");
+        item.setPayloadJson("{\"amount\":1000}");
         item.setNotes("Compra inicial");
 
         assertEquals("BOVINE#101", item.getPk());
@@ -37,7 +37,7 @@ class BovineEventItemTest {
         assertEquals(EventSource.MANUAL, item.getSource());
         assertEquals("user-1", item.getCreatedBy());
         assertEquals("farm-001", item.getFarmId());
-        assertEquals("{\"amount\":1000}", item.getPayload());
+        assertEquals("{\"amount\":1000}", item.getPayloadJson());
         assertEquals("Compra inicial", item.getNotes());
     }
 }
