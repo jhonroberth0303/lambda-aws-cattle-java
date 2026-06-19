@@ -1,4 +1,4 @@
-package com.cattle.entities.bovines;
+package com.cattle.events.entities;
 
 import com.cattle.entities.BaseDdbItem;
 import com.cattle.enums.EventSource;
@@ -8,11 +8,9 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import java.time.Instant;
 
 /**
- * TABLE_BOVINES item: EVENT
+ * TABLE_EVENTS item: BOVINE_EVENT
  * PK = BOVINE#<bovineId>
  * SK = EVT#<ISO_TS>#<EVENT_TYPE>#<eventId>
- *
- * payloadJson: aquí guardas el "payload" del evento como JSON string (compra, desparasitación, baño, etc).
  */
 @DynamoDbBean
 public class BovineEventItem extends BaseDdbItem {
@@ -20,14 +18,14 @@ public class BovineEventItem extends BaseDdbItem {
     private String bovineId;
 
     private String eventId;
-    private String eventType;      // PURCHASED, DEWORMED, TICK_BATH, BRED, FOLLOWUP...
+    private String eventType;
     private Instant eventAt;
 
-    private EventSource source;    // MANUAL | AUTO
-    private String createdBy;      // userId o "SYSTEM"
+    private EventSource source;
+    private String createdBy;
     private String farmId;
 
-    private String payload;    // JSON string con campos variables por tipo de evento
+    private String payloadJson;
     private String notes;
 
     @DynamoDbAttribute("bovineId")
@@ -58,12 +56,11 @@ public class BovineEventItem extends BaseDdbItem {
     public String getFarmId() { return farmId; }
     public void setFarmId(String farmId) { this.farmId = farmId; }
 
-    @DynamoDbAttribute("payload")
-    public String getPayload() { return payload; }
-    public void setPayload(String payload) { this.payload = payload; }
+    @DynamoDbAttribute("payloadJson")
+    public String getPayloadJson() { return payloadJson; }
+    public void setPayloadJson(String payloadJson) { this.payloadJson = payloadJson; }
 
     @DynamoDbAttribute("notes")
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 }
-

@@ -2,8 +2,9 @@ package com.cattle.controller;
 
 import com.cattle.config.LambdaContext;
 import com.cattle.dtos.BovineDTO;
+import com.cattle.processor.BovineEventProcessor;
 import com.cattle.processor.BovineProcessor;
-import com.cattle.services.BovineSummaryService;
+import com.cattle.services.BovineEventService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -17,23 +18,23 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-/**
- * Tests unitarios para BovinesController
- * HU-ASEGURAMIENTO-CALIDAD-001 - Fase Controller
- */
 @Tag("unit")
 @Tag("controller")
 class BovineIdentityItemControllerTest {
+
+    private static final String FARM_ID = "FARM#TEST";
 
     @Mock
     private BovineProcessor bovineProcessor;
 
     @Mock
-    private BovineSummaryService summaryService;
+    private BovineEventProcessor bovineEventProcessor;
+
+    @Mock
+    private BovineEventService bovineEventService;
 
     @Mock
     private LambdaContext lambdaContext;
@@ -43,7 +44,7 @@ class BovineIdentityItemControllerTest {
     @BeforeEach
     void setUp() {
         openMocks(this);
-        bovineController = new BovineController(bovineProcessor, lambdaContext);
+        bovineController = new BovineController(bovineProcessor, bovineEventProcessor, bovineEventService, lambdaContext);
     }
 
     // ==================== getAll Tests ====================
@@ -55,7 +56,7 @@ class BovineIdentityItemControllerTest {
         when(bovineProcessor.findAll()).thenReturn(bovines);
 
         // Act
-        ResponseEntity<List<BovineDTO>> response = bovineController.getAll();
+        ResponseEntity<List<BovineDTO>> response = bovineController.getAll(FARM_ID);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -69,7 +70,7 @@ class BovineIdentityItemControllerTest {
         when(bovineProcessor.findAll()).thenReturn(new ArrayList<>());
 
         // Act
-        ResponseEntity<List<BovineDTO>> response = bovineController.getAll();
+        ResponseEntity<List<BovineDTO>> response = bovineController.getAll(FARM_ID);
 
         // Assert
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
@@ -81,7 +82,7 @@ class BovineIdentityItemControllerTest {
         when(bovineProcessor.findAll()).thenReturn(null);
 
         // Act
-        ResponseEntity<List<BovineDTO>> response = bovineController.getAll();
+        ResponseEntity<List<BovineDTO>> response = bovineController.getAll(FARM_ID);
 
         // Assert
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
@@ -97,7 +98,7 @@ class BovineIdentityItemControllerTest {
         when(bovineProcessor.findById(id)).thenReturn(Optional.of(bovineDTO));
 
         // Act
-        ResponseEntity<BovineDTO> response = bovineController.findById(id);
+        ResponseEntity<BovineDTO> response = bovineController.findById(FARM_ID, id);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -112,7 +113,7 @@ class BovineIdentityItemControllerTest {
         when(bovineProcessor.findById(id)).thenReturn(Optional.empty());
 
         // Act
-        ResponseEntity<BovineDTO> response = bovineController.findById(id);
+        ResponseEntity<BovineDTO> response = bovineController.findById(FARM_ID, id);
 
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -121,7 +122,7 @@ class BovineIdentityItemControllerTest {
     @Test
     void findById_nullId_returnsBadRequest() {
         // Act
-        ResponseEntity<BovineDTO> response = bovineController.findById(null);
+        ResponseEntity<BovineDTO> response = bovineController.findById(FARM_ID, null);
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -130,7 +131,7 @@ class BovineIdentityItemControllerTest {
     @Test
     void findById_negativeId_returnsBadRequest() {
         // Act
-        ResponseEntity<BovineDTO> response = bovineController.findById(-1);
+        ResponseEntity<BovineDTO> response = bovineController.findById(FARM_ID, -1);
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -139,7 +140,7 @@ class BovineIdentityItemControllerTest {
     @Test
     void findById_zeroId_returnsBadRequest() {
         // Act
-        ResponseEntity<BovineDTO> response = bovineController.findById(0);
+        ResponseEntity<BovineDTO> response = bovineController.findById(FARM_ID, 0);
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -155,7 +156,7 @@ class BovineIdentityItemControllerTest {
         when(bovineProcessor.save(any(BovineDTO.class))).thenReturn(Optional.of(savedDTO));
 
         // Act
-        ResponseEntity<BovineDTO> response = bovineController.save(inputDTO);
+        ResponseEntity<BovineDTO> response = bovineController.save(FARM_ID, inputDTO);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -172,7 +173,7 @@ class BovineIdentityItemControllerTest {
         when(bovineProcessor.save(any(BovineDTO.class))).thenReturn(Optional.of(savedDTO));
 
         // Act
-        bovineController.save(inputDTO);
+        bovineController.save(FARM_ID, inputDTO);
 
         // Assert
         verify(bovineProcessor, times(1)).save(any(BovineDTO.class));
@@ -185,7 +186,7 @@ class BovineIdentityItemControllerTest {
         when(bovineProcessor.save(any(BovineDTO.class))).thenReturn(Optional.empty());
 
         // Act
-        ResponseEntity<BovineDTO> response = bovineController.save(inputDTO);
+        ResponseEntity<BovineDTO> response = bovineController.save(FARM_ID, inputDTO);
 
         // Assert
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -199,7 +200,7 @@ class BovineIdentityItemControllerTest {
         BovineDTO invalidDto = new BovineDTO();
         invalidDto.setBovineId(2);
 
-        ResponseEntity<BovineDTO> response = bovineController.update(1L, invalidDto);
+        ResponseEntity<BovineDTO> response = bovineController.update(FARM_ID, 1L, invalidDto);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
@@ -211,7 +212,7 @@ class BovineIdentityItemControllerTest {
 
         when(bovineProcessor.update(any(BovineDTO.class))).thenReturn(Optional.of(validDto));
 
-        ResponseEntity<BovineDTO> response = bovineController.update(1L, validDto);
+        ResponseEntity<BovineDTO> response = bovineController.update(FARM_ID, 1L, validDto);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(validDto, response.getBody());
     }
@@ -224,7 +225,7 @@ class BovineIdentityItemControllerTest {
 
         when(bovineProcessor.update(any(BovineDTO.class))).thenReturn(Optional.empty());
 
-        ResponseEntity<BovineDTO> response = bovineController.update(1L, validDto);
+        ResponseEntity<BovineDTO> response = bovineController.update(FARM_ID, 1L, validDto);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
 
@@ -236,7 +237,7 @@ class BovineIdentityItemControllerTest {
         when(bovineProcessor.update(any(BovineDTO.class))).thenReturn(Optional.of(validDto));
 
         // Act
-        bovineController.update(123L, validDto);
+        bovineController.update(FARM_ID, 123L, validDto);
 
         // Assert
         verify(bovineProcessor, times(1)).update(any(BovineDTO.class));
@@ -248,7 +249,7 @@ class BovineIdentityItemControllerTest {
         BovineDTO inputDTO = createBovineDTO(0);
 
         // Act
-        ResponseEntity<BovineDTO> response = bovineController.update(0L, inputDTO);
+        ResponseEntity<BovineDTO> response = bovineController.update(FARM_ID, 0L, inputDTO);
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
