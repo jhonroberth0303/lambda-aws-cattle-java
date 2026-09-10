@@ -4,7 +4,7 @@
 **Tipo**: Análisis y diseño — épica transversal (frontend + contrato backend)
 **Prioridad**: Media-alta (deuda técnica con deriva activa)
 **Fecha**: 2026-09-09
-**Estado**: Fases 0, 1, 3, 4.0 y 4.1 implementadas (2026-09-09) · Fases 2, 4.2 pendientes
+**Estado**: Fases 0, 1, 3, 4.0, 4.1 y 2 (piloto) implementadas (2026-09-09) · Fase 2 (resto de eventos + potreros) y 4.2 pendientes
 
 ## Trazabilidad
 
@@ -138,14 +138,28 @@ lambda-aws-cattle-java/
 - Generación de tipos con `openapi-typescript`: sigue como decisión abierta.
 - `GESTATION_DAYS` y demás config de negocio: Fase 3 (`SiteSettingItem`).
 
-### Fase 2 — Formularios schema-driven
+### Fase 2 — Formularios schema-driven — ✅ PILOTO IMPLEMENTADO (2026-09-09)
 
-- Definir el JSON Schema de cada tipo de evento (campos, tipo, requerido, opciones, label) **una sola vez**.
+- Definir el schema de formulario de cada tipo de evento (campos, tipo, requerido, opciones, label) **una sola vez**.
 - **Backend**: `BovineEventProcessor.validatePayloadByType` se reemplaza por validación contra el schema.
 - **Front**: un renderer genérico de formulario a partir del schema reemplaza los ~570 líneas de `mode === "X"` en `BovineEventPanel` y todo `buildPayload`. Mismo tratamiento para `detailPanel` de potreros.
 - Servido en `GET /catalogs/bovine-events/schema` y `.../pasture-events/schema`.
 
 **Entregables**: schemas versionados, renderer de formularios, `BovineEventPanel`/`detailPanel` reducidos, validación backend unificada.
+
+**Implementado (piloto — 4 tipos: PESAJE, TRATAMIENTO, INSEMINACION, MUERTE)**:
+
+- **Formato de schema** (decisión resuelta): validador ligero dirigido por YAML, mismo patrón que `catalog.yml` / `site-settings.yml` — **sin** dependencias nuevas ni librería de JSON Schema (evita peso en el cold-start del Lambda). `src/main/resources/event-forms.yml` define, por tipo, `title` / `submitLabel` / `appendNotes` / `requireOneOf` y una lista `fields` (`name`, `label`, `type` ∈ text|number|textarea|date, `required`, `min`/`max`/`step`, `maxLength`, `options`, `placeholder`, `hint`, `calvingEstimate`, `minField`).
+- Backend: `forms/EventFormSchema` (modelo inmutable), `forms/EventPayloadValidator` (required, tipo numérico, `min`/`max`, pertenencia a `options` con comparación numérica tolerante, `requireOneOf` — mensajes alineados con los que emitía el processor), `services/EventFormCatalog` (carga + guardia anti-deriva: toda clave de un dominio con `enum:` debe ser constante de `BovineEventType`; **no** exige que estén los 22, para permitir la migración por fases + `hash`/`ETag`), `dtos/forms/EventFormSchemasDTO`, `controller/EventFormController` (`GET /catalogs/{domain}/schema`, `ETag` + `If-None-Match` → 304, `Cache-Control` 12 h, dominio sin esquemas → 404). `BovineEventProcessor.validatePayloadByType`: si el tipo tiene schema → valida contra él; si no → conserva el `switch` hardcodeado. `/catalogs/**` ya público en `SecurityConfig` — sin cambios. Ruteo por el proxy `/{proxy+}` — sin cambios de infra.
+- Front: `src/config/eventFormsCache.js` (caché de módulo), `src/services/eventFormsService.js`, `src/config/useEventForms.js` (React Query, `staleTime` 12 h, `initialData` desde `localStorage`), `CatalogsProvider` monta `useEventForms()` en `ConfigHydrator`. `src/domain/bovineEvents.js`: `+ BUNDLED_EVENT_FORMS` (bundle fallback de los 4 tipos) y `+ bovineEventFormSchema(code)` (hidratado > bundle > `null`). `src/components/Bovines/eventPanel/SchemaEventForm.jsx`: renderer genérico (campos por tipo, `select` si hay `options`, notas opcional si `appendNotes`, prefill de fecha estimada de parto en campos `calvingEstimate` sincronizada con `eventAt`, validación `requireOneOf`, coerción numérica del payload). `BovineEventPanel.jsx`: si `bovineEventFormSchema(mode)` existe renderiza `SchemaEventForm`, si no conserva su formulario hardcodeado; se eliminaron los 4 bloques `mode === "X"` y sus 4 `case` de `buildPayload` migrados (~140 líneas menos).
+- Pruebas nuevas back: `EventPayloadValidatorTest` (9), `EventFormCatalogTest` (7), `EventFormControllerTest` (4), `StreamLambdaHandlerTest` +1. Front: `eventFormsCache.test.js` (4), `useEventForms.test.jsx` (4), `SchemaEventForm.test.jsx` (6), `domain.test.js` +2; `CatalogsProvider.test.jsx` actualizado.
+
+**Fuera de alcance del piloto** (siguientes iteraciones de Fase 2):
+
+- Los otros 18 tipos de evento bovino: siguen con formulario y validación hardcodeados hasta que se migren a `event-forms.yml` (el hueco es aditivo: añadir la clave al YAML + quitar el bloque `mode === "X"`).
+- Potreros (`detailPanel` / `PastureEventProcessor`): no se tocan. El procesador de potreros está acoplado a `PastureStatusEngine` y a un `Payload` tipado; `GET /catalogs/pasture-events/schema` responde 404 por ahora.
+- Corrección del typo `DISTOXICO` → `DISTOCICO` (evento PARTO): se hará cuando se migre PARTO, con migración de datos.
+- Generación de tipos con `openapi-typescript`: sigue como decisión abierta.
 
 ### Fase 3 — Módulo de configuración de negocio — ✅ IMPLEMENTADA (2026-09-09)
 
@@ -242,12 +256,44 @@ Suite inicial:
 
 - **Fase 0 — ✅**: `src/domain/` es la única fuente; 0 tablas de catálogo/labels duplicadas en componentes; `GESTATION_DAYS` (279) y especies unificados; `MOCK_STATS` eliminado; navegación consolidada sin links muertos; build + lint + test verdes.
 - **Fase 1 — ✅**: `/catalogs` + `/catalogs/{domain}` con `version`/`ETag`/304/`Cache-Control`; `catalog.yml` valida contra los enums al arrancar; front hidrata `src/domain/*` desde el endpoint con fallback al bundle y cache offline en `localStorage`; tests de contrato back (`CatalogServiceTest`, `CatalogControllerTest`, `StreamLambdaHandlerTest`) y front (`catalogsCache.test.js`, `useCatalogs.test.jsx`, `CatalogsProvider.test.jsx`).
-- **Fase 2**: un solo schema por tipo de evento; front renderiza y backend valida desde él; `BovineEventPanel` sin `switch` por tipo.
+- **Fase 2 — ✅ piloto**: un solo schema por tipo (`event-forms.yml`) para PESAJE / TRATAMIENTO / INSEMINACION / MUERTE; `EventFormCatalog` valida las claves contra `BovineEventType` al arrancar; `GET /catalogs/{domain}/schema` con `version`/`ETag`/304; `EventPayloadValidator` sustituye la validación hardcodeada de esos 4 tipos; `SchemaEventForm` los renderiza en el front con fallback al bundle; tests back (`EventPayloadValidatorTest`, `EventFormCatalogTest`, `EventFormControllerTest`, `StreamLambdaHandlerTest`) y front (`eventFormsCache`, `useEventForms`, `SchemaEventForm`). Pendiente: los otros 18 tipos + potreros.
 - **Fase 3 — ✅**: config de negocio en `SiteSettingItem` (`site-settings.yml`, 5 claves categoría C); `SiteSettingsCatalog` valida las definiciones al arrancar; endpoints genéricos `GET /site/{siteId}/settings` + `GET|PUT /site/{siteId}/settings/{key}` sobre `SiteSettingService` genérico por tipo (milk-price intacto); front hidrata `gestationDays()`/`rotationYellowDays()` desde `useSiteSettings()` con fallback a los defaults y cache offline; pantalla `/configuracion` lista y edita; tests back (`SiteSettingsCatalogTest`, `SiteSettingsProcessorTest`, `SiteSettingsControllerTest`, `SiteSettingService`/`SiteSettingRepository` ampliados) y front (`siteSettingsCache`, `useSiteSettings`, `siteSettingsService`, `SettingsPage`).
 - **Fase 4.0 — ✅**: Vitest operativo; suite de `src/domain` + `src/search` + utilidades + navegación + 2 componentes; cobertura enfocada con umbral 70 %; estándares de front actualizados.
 - **Fase 4.1 / 4.2**: hooks y servicios con MSW; componentes de dominio; ampliar `include` de cobertura y subir umbral; gate de CI `lint + test:coverage + build`.
 
 ## 9. Registro de implementación
+
+### 2026-09-09 — Fase 2 (piloto: formularios schema-driven)
+
+**Backend (`lambda-aws-cattle-java`)**
+
+- Nuevo `src/main/resources/event-forms.yml`: dominio `bovine-events` con esquema de 4 tipos (PESAJE, TRATAMIENTO, INSEMINACION, MUERTE).
+- Nuevos `forms/EventFormSchema` (modelo inmutable + `Field` con `@JsonValue` lowercase para `type`), `forms/EventPayloadValidator` (`@Component`), `services/EventFormCatalog` (`@Service`, patrón `CatalogService`: carga snakeyaml, guardia anti-deriva contra el enum, `hash`/`ETag`), `dtos/forms/EventFormSchemasDTO`, `controller/EventFormController` (`GET /catalogs/{domain}/schema`).
+- `processor/BovineEventProcessor`: `+ EventFormCatalog` + `+ EventPayloadValidator` en el constructor; `validatePayloadByType` delega en el schema si existe, si no conserva el `switch` (se quitaron los `case` de PESAJE/TRATAMIENTO/INSEMINACION/MUERTE + el helper `hasValue`).
+- `SecurityConfig` sin cambios (`/catalogs/**` ya público).
+- Pruebas: `EventPayloadValidatorTest` (9), `EventFormCatalogTest` (7), `EventFormControllerTest` (4), `StreamLambdaHandlerTest` +1, `BovineEventProcessorTest` (constructor actualizado).
+
+**Front (`cattle-front`)**
+
+- Nuevos: `src/config/eventFormsCache.js`, `src/services/eventFormsService.js`, `src/config/useEventForms.js`, `src/components/Bovines/eventPanel/SchemaEventForm.jsx`.
+- `src/config/CatalogsProvider.jsx`: `ConfigHydrator` monta también `useEventForms()`; hidratación síncrona desde `localStorage`.
+- `src/domain/bovineEvents.js`: `+ BUNDLED_EVENT_FORMS` + `bovineEventFormSchema(code)`.
+- `src/components/Bovines/eventPanel/BovineEventPanel.jsx`: rama `SchemaEventForm` vs formulario hardcodeado; eliminados 4 bloques `mode === "X"` y 4 `case` de `buildPayload` (~140 líneas).
+- Pruebas nuevas: `eventFormsCache.test.js` (4), `useEventForms.test.jsx` (4), `SchemaEventForm.test.jsx` (6), `domain.test.js` +2; `CatalogsProvider.test.jsx` actualizado.
+
+**Validación**: back `./gradlew test` 1149/1149 · front `npm run lint` limpio · `npm run build` OK · `npm test` 127/127 · `npm run test:coverage` 85.8 % sentencias / 75.0 % ramas (umbral 70/60).
+
+**Validación manual E2E** (usuario, 2026-09-09): TRATAMIENTO e INSEMINACION creados correctamente vía `SchemaEventForm`. MUERTE también crea el registro. Pendiente de prueba manual: PESAJE.
+
+Al probar MUERTE sobre una vaca ya inactiva/vendida se detectó un problema **ajeno a la Fase 2**: los eventos de salida no proyectan estado ni se reflejan en el summary. Registrado en `../bugs-deuda-tecnica/DT-20260909-eventos-salida-no-proyectan-estado-ni-summary.md`.
+
+**Hallazgos de revisión abiertos** (ver `/revisar-historia` 2026-09-09, no bloqueantes del piloto):
+
+1. (MEDIA) `SchemaEventForm` sin `key={mode}`: al saltar entre dos eventos schema-driven sin cerrar el formulario se arrastra `eventAt` / `notes` / `error`. La prueba manual por evento individual no lo detecta.
+2. (MEDIA) El renderer no siembra el valor inicial de un `<select>` requerido → bloquea la migración de `DIAGNOSTICO_PRENEZ` / `PARTO` / `CASTRACION` / `DESCORNE`.
+3. (MEDIA-BAJA) Colisión del campo `notes` si un esquema lo define y `appendNotes` sigue activo (a vigilar al migrar `SEGUIMIENTO` / `OBSERVACION` / `ABORTO`).
+4. (MEDIA-BAJA) Campos numéricos opcionales ahora rechazan cadena vacía / no numérica (endurecimiento de contrato para clientes que no sean el front).
+5. (MEDIA) Falta test de integración del cableado en `BovineEventPanel` y aserción del casing `"type":"number"` en el contrato.
 
 ### 2026-09-09 — Fase 3 (configuración de negocio por sitio)
 

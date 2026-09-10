@@ -71,6 +71,23 @@ public class StreamLambdaHandlerTest {
     }
 
     @Test
+    public void bovineEventSchema_streamRequest_respondsWithSchemasAndEtag() {
+        InputStream requestStream = new AwsProxyRequestBuilder("/catalogs/bovine-events/schema", HttpMethod.GET)
+                                            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                                            .buildStream();
+        ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
+
+        handle(requestStream, responseStream);
+
+        AwsProxyResponse response = readResponse(responseStream);
+        assertNotNull(response);
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatusCode());
+        assertTrue(response.getBody().contains("PESAJE"));
+        assertTrue(response.getBody().contains("\"weightKg\""));
+        assertTrue(response.getMultiValueHeaders().containsKey(HttpHeaders.ETAG));
+    }
+
+    @Test
     public void catalogDomain_unknown_responds404() {
         InputStream requestStream = new AwsProxyRequestBuilder("/catalogs/not-a-domain", HttpMethod.GET)
                                             .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
