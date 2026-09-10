@@ -286,11 +286,20 @@ class BovineEventProcessorTest {
     }
 
     @Test
-    void applyEvent_partoRequiresCalfGender() {
+    void applyEvent_partoRequiresCalfGenderAndBirthType() {
         assertThrows(IllegalArgumentException.class,
                 () -> processor.applyEvent("F1", "B1", request("PARTO", Map.of())));
+        // calfGender solo no basta: birthType también es requerido (schema-driven)
+        assertThrows(IllegalArgumentException.class,
+                () -> processor.applyEvent("F1", "B1", request("PARTO", Map.of("calfGender", "HEMBRA"))));
         assertDoesNotThrow(() -> processor.applyEvent("F1", "B1",
-                request("PARTO", Map.of("calfGender", "HEMBRA"))));
+                request("PARTO", Map.of("calfGender", "HEMBRA", "birthType", "NORMAL"))));
+    }
+
+    @Test
+    void applyEvent_partoRejectsUnknownBirthType() {
+        assertThrows(IllegalArgumentException.class, () -> processor.applyEvent("F1", "B1",
+                request("PARTO", Map.of("calfGender", "HEMBRA", "birthType", "RARO"))));
     }
 
     @Test

@@ -70,6 +70,26 @@ class EventPayloadValidatorTest {
     }
 
     @Test
+    void optionalNumberBlankString_isTreatedAsAbsent() {
+        EventFormSchema s = schema(null, field("amountCOP", EventFormSchema.Field.Type.NUMBER, false, null, null, null));
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("amountCOP", "   ");
+
+        assertDoesNotThrow(() -> validator.validate(s, payload));
+    }
+
+    @Test
+    void requiredNumberBlankString_throwsAsMissing() {
+        EventFormSchema s = schema(null, field("weightKg", EventFormSchema.Field.Type.NUMBER, true, null, null, null));
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("weightKg", "");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(s, payload));
+        assertEquals("El campo weightKg es requerido para este tipo de evento", ex.getMessage());
+    }
+
+    @Test
     void valueOutsideOptions_throws() {
         EventFormSchema s = schema(null, field("conditionScore", EventFormSchema.Field.Type.NUMBER, false, null, null,
                 List.of(new EventFormSchema.Option("1", "uno"), new EventFormSchema.Option("2", "dos"))));

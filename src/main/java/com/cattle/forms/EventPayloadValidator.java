@@ -28,7 +28,7 @@ public class EventPayloadValidator {
     }
 
     private void validateField(EventFormSchema.Field field, Object value) {
-        boolean present = isPresent(field, value);
+        boolean present = isPresent(value);
 
         if (field.isRequired() && !present) {
             throw new IllegalArgumentException(
@@ -94,12 +94,13 @@ public class EventPayloadValidator {
         }
     }
 
-    private boolean isPresent(EventFormSchema.Field field, Object value) {
+    private boolean isPresent(Object value) {
         if (value == null) {
             return false;
         }
-        if (field.getType() == EventFormSchema.Field.Type.NUMBER) {
-            // Un 0 explícito cuenta como informado (peso, litros, ...).
+        // Un 0 numérico real cuenta como informado (peso, litros, ...); una cadena
+        // en blanco NO — el front opcional envía "" o null indistintamente.
+        if (value instanceof Number) {
             return true;
         }
         return !value.toString().isBlank();

@@ -30,10 +30,10 @@ import java.util.stream.Collectors;
  * (EP-20260909, Fase 2). Mismo patrón que {@link CatalogService}: la respuesta se
  * construye una vez al crear el bean y es inmutable.
  *
- * <p>Guardia anti-deriva: si un dominio declara {@code enum:} y alguna de sus
- * claves no es una constante de ese enum Java, el arranque falla. No exige que
- * TODAS las constantes del enum tengan esquema — durante la migración por fases
- * conviven eventos schema-driven y eventos con validación hardcodeada.
+ * <p>Guardia anti-deriva: si un dominio declara {@code enum:} sus claves deben
+ * coincidir EXACTAMENTE con las constantes de ese enum Java (ni de más ni de
+ * menos); el arranque falla en caso contrario. Los 22 tipos de
+ * {@code BovineEventType} están migrados a schema-driven (EP-20260909, Fase 2).
  */
 @Service
 public class EventFormCatalog {
@@ -233,6 +233,13 @@ public class EventFormCatalog {
             throw new IllegalStateException(String.format(
                     "El dominio '%s' de %s tiene esquemas para códigos que no existen en el enum %s: %s",
                     domain, RESOURCE, enumClassName, unknown));
+        }
+        Set<String> missing = new TreeSet<>(enumNames);
+        missing.removeAll(codes);
+        if (!missing.isEmpty()) {
+            throw new IllegalStateException(String.format(
+                    "El dominio '%s' de %s no tiene esquema para todos los valores del enum %s — faltan: %s",
+                    domain, RESOURCE, enumClassName, missing));
         }
     }
 

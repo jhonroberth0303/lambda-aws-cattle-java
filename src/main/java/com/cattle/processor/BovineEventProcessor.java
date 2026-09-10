@@ -108,47 +108,16 @@ public class BovineEventProcessor {
         }
     }
 
+    /**
+     * Valida el payload contra el esquema del tipo de evento (EP-20260909, Fase 2).
+     * Los 22 tipos de {@link BovineEventType} tienen esquema en {@code event-forms.yml};
+     * {@link EventFormCatalog} garantiza esa cobertura al arrancar.
+     */
     private void validatePayloadByType(BovineEventType eventType, Map<String, Object> payload) {
-        // Fase 2 (EP-20260909): los eventos migrados a event-forms.yml se validan
-        // contra su esquema. El resto conserva la validación hardcodeada hasta que
-        // se migren en iteraciones siguientes.
-        EventFormSchema schema = eventFormCatalog.findBovineEvent(eventType.name()).orElse(null);
-        if (schema != null) {
-            payloadValidator.validate(schema, payload);
-            return;
-        }
-
-        switch (eventType) {
-            case SEGUIMIENTO, OBSERVACION -> requireField(payload, "notes");
-            case BANO_GARRAPATAS, DESPARASITACION -> requireField(payload, "product");
-            case VACUNACION -> requireField(payload, "vaccineName");
-            case MONTA -> requireField(payload, "bullBreed");
-            case PARTO -> requireField(payload, "calfGender");
-            case PRODUCCION_LECHE -> requireNonNull(payload, "liters");
-            case CASTRACION -> requireField(payload, "method");
-            case DESCORNE -> requireField(payload, "method");
-            case MARCACION -> requireField(payload, "newTag");
-            case TRASLADO -> requireField(payload, "destinationPaddockId");
-            case VENTA -> {
-                requireField(payload, "buyerName");
-                requireNonNull(payload, "amountCOP");
-            }
-            default -> { /* COMPRA, ABORTO, DESTETE, SECADO, DIAGNOSTICO_PRENEZ: sin campo obligatorio adicional */ }
-        }
-    }
-
-    private void requireField(Map<String, Object> payload, String field) {
-        Object v = payload != null ? payload.get(field) : null;
-        if (v == null || v.toString().isBlank()) {
-            throw new IllegalArgumentException("El campo " + field + " es requerido para este tipo de evento");
-        }
-    }
-
-    private void requireNonNull(Map<String, Object> payload, String field) {
-        Object v = payload != null ? payload.get(field) : null;
-        if (v == null) {
-            throw new IllegalArgumentException("El campo " + field + " es requerido para este tipo de evento");
-        }
+        EventFormSchema schema = eventFormCatalog.findBovineEvent(eventType.name())
+                .orElseThrow(() -> new IllegalStateException(
+                        "No hay esquema de formulario para el evento " + eventType.name()));
+        payloadValidator.validate(schema, payload);
     }
 
     private String extractNotes(Map<String, Object> payload) {
