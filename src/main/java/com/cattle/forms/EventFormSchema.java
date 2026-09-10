@@ -84,10 +84,12 @@ public final class EventFormSchema {
         private final String minField;
         private final boolean calvingEstimate;
         private final List<Option> options;
+        private final String defaultValue;
+        private final String optionsFrom;
 
         public Field(String name, String label, Type type, boolean required, Double min, Double max,
                      Double step, Integer maxLength, String placeholder, String hint, String minField,
-                     boolean calvingEstimate, List<Option> options) {
+                     boolean calvingEstimate, List<Option> options, String defaultValue, String optionsFrom) {
             this.name = name;
             this.label = label;
             this.type = type;
@@ -101,6 +103,8 @@ public final class EventFormSchema {
             this.minField = minField;
             this.calvingEstimate = calvingEstimate;
             this.options = options == null ? List.of() : List.copyOf(options);
+            this.defaultValue = defaultValue;
+            this.optionsFrom = optionsFrom;
         }
 
         public String getName() {
@@ -154,6 +158,17 @@ public final class EventFormSchema {
 
         public List<Option> getOptions() {
             return options;
+        }
+
+        /** Valor inicial del campo (front); null si no aplica. */
+        @com.fasterxml.jackson.annotation.JsonProperty("default")
+        public String getDefaultValue() {
+            return defaultValue;
+        }
+
+        /** Catálogo de dominio del que el front deriva las opciones del select. */
+        public String getOptionsFrom() {
+            return optionsFrom;
         }
     }
 

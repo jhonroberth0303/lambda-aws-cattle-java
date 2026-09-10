@@ -255,3 +255,74 @@ domains:
       fields:
         - { name: cause, label: "Causa", type: text, required: true, placeholder: "Ej. Timpanismo" }
         - { name: findings, label: "Hallazgos (opcional)", type: textarea, maxLength: 500, placeholder: "Descripción de hallazgos" }
+
+  # ==========================================================================
+  # Eventos de potreros (EP-20260909, Fase 2 — parte 1: backend).
+  # PRE_ENTRY_CHECK no tiene formulario manual (se registra desde el checklist)
+  # -> enumOptional lo exime de la cobertura exacta contra EventType.
+  # `substatus` no lleva `options` aquí: la lista de subestados válidos es un
+  # catálogo de dominio (catalog.yml / pasture-substatuses); el backend sigue
+  # validando con PastureSubstatus.valueOf y el front deriva el <select> del
+  # catálogo (parte 2).
+  # ==========================================================================
+  pasture-events:
+    enum: com.cattle.enums.EventType
+    enumOptional: [PRE_ENTRY_CHECK]
+
+    OPEN:
+      title: "Registrar apertura"
+      submitLabel: "Confirmar apertura"
+      fields:
+        - { name: lotId, label: "Lote", type: text, required: true, placeholder: "Ej. L-001" }
+        - { name: animals, label: "Animales", type: number, required: true, min: 1, placeholder: "Cantidad" }
+
+    CLOSE:
+      title: "Registrar cierre"
+      submitLabel: "Confirmar cierre"
+      fields:
+        - { name: residualCm, label: "Residual (cm)", type: number, required: true, min: 1, placeholder: "Ej. 8" }
+        - { name: lotId, label: "Lote (opcional)", type: text, placeholder: "Ej. L-001" }
+        - { name: animals, label: "Animales (opcional)", type: number, min: 1, placeholder: "Cantidad" }
+
+    MAINTENANCE_SET:
+      title: "Registrar mantenimiento"
+      submitLabel: "Bloquear potrero"
+      fields:
+        # `optionsFrom` -> el front deriva el <select> del catálogo pasture-substatuses
+        # (menos NINGUNO). El backend valida con PastureSubstatus.valueOf.
+        - { name: substatus, label: "Subestado", type: text, required: true, optionsFrom: "pasture-substatuses", default: FERTILIZACION }
+        - { name: holdUntil, label: "Fecha de liberación", type: date, minField: today }
+
+    MAINTENANCE_CLEAR:
+      title: "Levantar mantenimiento"
+      submitLabel: "Desbloquear potrero"
+      appendNotes: false
+      fields:
+        - { name: notes, label: "Observaciones (opcional)", type: textarea, maxLength: 1000, placeholder: "Opcional" }
+
+    FERTILIZED:
+      title: "Registrar fertilización"
+      submitLabel: "Guardar fertilización"
+      fields:
+        - { name: productName, label: "Producto", type: text, placeholder: "Ej. Urea 46%, Cal agrícola" }
+        - { name: quantityKg, label: "Cantidad (kg)", type: number, min: 0, step: 0.1, placeholder: "Ej. 50" }
+
+    LIMED:
+      title: "Registrar encalado"
+      submitLabel: "Guardar encalado"
+      fields:
+        - { name: productName, label: "Producto", type: text, placeholder: "Ej. Urea 46%, Cal agrícola" }
+        - { name: quantityKg, label: "Cantidad (kg)", type: number, min: 0, step: 0.1, placeholder: "Ej. 50" }
+
+    HEIGHT_MEASURED:
+      title: "Registrar medición de altura"
+      submitLabel: "Guardar medición"
+      fields:
+        - { name: heightCm, label: "Altura (cm)", type: number, required: true, min: 1, placeholder: "Ej. 25" }
+
+    OBSERVATION_ADDED:
+      title: "Agregar observación"
+      submitLabel: "Guardar observación"
+      appendNotes: false
+      fields:
+        - { name: notes, label: "Observaciones", type: textarea, required: true, maxLength: 1000, placeholder: "Describe la observación de campo" }

@@ -19,11 +19,14 @@ import com.cattle.events.OpenEvent;
 import com.cattle.events.PreEntryCheckEvent;
 import com.cattle.events.PastureEvent;
 import com.cattle.events.entities.PastureEventItem;
+import com.cattle.forms.EventPayloadValidator;
+import com.cattle.services.EventFormCatalog;
 import com.cattle.services.PastureEventService;
 import com.cattle.services.PastureService;
 import com.cattle.services.PlanService;
 import com.cattle.utils.PastureStatusEngine;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
@@ -41,6 +44,8 @@ import static com.cattle.events.PatchApplier.applyLocal;
 public class PastureEventProcessor {
     private static final String DEFAULT_CREATED_BY = "manual-web";
 
+    private static final String PASTURE_EVENTS_DOMAIN = "pasture-events";
+
     private final PastureService pastureService;
     private final PlanService planService;
     private final PastureStatusEngine pastureStatusEngine;
@@ -48,6 +53,8 @@ public class PastureEventProcessor {
     private final RotationPlanProcessor rotationPlanProcessor;
     private final ObjectMapper objectMapper;
     private final LambdaContext lambdaContext;
+    private final EventFormCatalog eventFormCatalog;
+    private final EventPayloadValidator payloadValidator;
 
     public PastureEventProcessor(
             PastureService pastureService,
@@ -55,7 +62,8 @@ public class PastureEventProcessor {
             PastureStatusEngine pastureStatusEngine,
             PastureEventService pastureEventService,
             RotationPlanProcessor rotationPlanProcessor,
-            ObjectMapper objectMapper, LambdaContext lambdaContext
+            ObjectMapper objectMapper, LambdaContext lambdaContext,
+            EventFormCatalog eventFormCatalog, EventPayloadValidator payloadValidator
     ) {
         this.pastureService = pastureService;
         this.planService = planService;
@@ -64,6 +72,8 @@ public class PastureEventProcessor {
         this.rotationPlanProcessor = rotationPlanProcessor;
         this.objectMapper = objectMapper;
         this.lambdaContext = lambdaContext;
+        this.eventFormCatalog = eventFormCatalog;
+        this.payloadValidator = payloadValidator;
     }
 
     public PastureEventResponseDTO applyEvent(String farmId, String pastureId, PastureEventRequestDTO request) {
@@ -159,18 +169,14 @@ public class PastureEventProcessor {
         PastureEventRequestDTO.Payload payload = request.getPayload() != null ? request.getPayload() : new PastureEventRequestDTO.Payload();
         String createdBy = normalizeCreatedBy(request.getCreatedBy());
 
+        // Fase 2 (EP-20260909): validación schema-driven del payload para los
+        // eventos con formulario (todos salvo PRE_ENTRY_CHECK).
+        validatePayloadAgainstSchema(eventType, payload);
+
         return switch (eventType) {
-            case OPEN -> {
-                requireNonBlank(payload.getLotId(), "lotId");
-                requirePositive(payload.getAnimals(), "animals");
-                yield new OpenEvent(createdBy, payload.getLotId().trim(), payload.getAnimals());
-            }
-            case CLOSE -> {
-                requirePositive(payload.getResidualCm(), "residualCm");
-                yield new CloseEvent(createdBy, blankToNull(payload.getLotId()), payload.getAnimals(), payload.getResidualCm());
-            }
+            case OPEN -> new OpenEvent(createdBy, payload.getLotId().trim(), payload.getAnimals());
+            case CLOSE -> new CloseEvent(createdBy, blankToNull(payload.getLotId()), payload.getAnimals(), payload.getResidualCm());
             case MAINTENANCE_SET -> {
-                requireNonBlank(payload.getSubstatus(), "substatus");
                 PastureSubstatus substatus;
                 try {
                     substatus = PastureSubstatus.valueOf(payload.getSubstatus().trim().toUpperCase());
@@ -185,16 +191,15 @@ public class PastureEventProcessor {
                     Boolean.TRUE.equals(payload.getAllCriticalOk()),
                     payload.getCompletedAt()
             );
-            case FERTILIZED, LIMED -> new LaborEvent(eventType, createdBy);
-            case HEIGHT_MEASURED -> {
-                requirePositive(payload.getHeightCm(), "heightCm");
-                yield new LaborEvent(eventType, createdBy);
-            }
-            case OBSERVATION_ADDED -> {
-                requireNonBlank(payload.getNotes(), "notes");
-                yield new LaborEvent(eventType, createdBy);
-            }
+            case FERTILIZED, LIMED, HEIGHT_MEASURED, OBSERVATION_ADDED -> new LaborEvent(eventType, createdBy);
         };
+    }
+
+    private void validatePayloadAgainstSchema(EventType eventType, PastureEventRequestDTO.Payload payload) {
+        eventFormCatalog.findEvent(PASTURE_EVENTS_DOMAIN, eventType.name()).ifPresent(schema -> {
+            Map<String, Object> asMap = objectMapper.convertValue(payload, new TypeReference<>() {});
+            payloadValidator.validate(schema, asMap);
+        });
     }
 
     private void enrichPatchForOperationalFields(PastureEventRequestDTO request, PastureEvent event, EntityPatch patch) {
@@ -301,18 +306,6 @@ public class PastureEventProcessor {
             return objectMapper.writeValueAsString(payloadMap);
         } catch (JsonProcessingException ex) {
             throw new IllegalArgumentException("No fue posible serializar el payload del evento", ex);
-        }
-    }
-
-    private void requireNonBlank(String value, String field) {
-        if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException("El campo " + field + " es requerido");
-        }
-    }
-
-    private void requirePositive(Integer value, String field) {
-        if (value == null || value <= 0) {
-            throw new IllegalArgumentException("El campo " + field + " debe ser mayor que cero");
         }
     }
 

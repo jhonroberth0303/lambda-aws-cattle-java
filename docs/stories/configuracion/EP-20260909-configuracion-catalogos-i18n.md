@@ -4,7 +4,7 @@
 **Tipo**: Análisis y diseño — épica transversal (frontend + contrato backend)
 **Prioridad**: Media-alta (deuda técnica con deriva activa)
 **Fecha**: 2026-09-09
-**Estado**: Fases 0, 1, 3, 4.0, 4.1 y 2 (piloto) implementadas (2026-09-09) · Fase 2 (resto de eventos + potreros) y 4.2 pendientes
+**Estado**: ✅ Épica completa — Fases 0, 1, 2, 3, 4.0, 4.1, 4.2 implementadas (última: Fase 4.2, 2026-09-10)
 
 ## Trazabilidad
 
@@ -112,7 +112,7 @@ lambda-aws-cattle-java/
 
 - i18n de textos sueltos de UI en un `src/i18n` dedicado: las etiquetas de **dominio** (que eran la duplicación real) ya viven en `src/domain`; una capa i18n para copy suelto se difiere hasta que haga falta un segundo idioma.
 - `HARDCODED_DEFAULT_FARM_ID`: se renombró a `DEFAULT_FARM_ID` (env-overridable) pero **no se elimina** — sin selector de finca en la UI, quitarlo deja la app sin `farmId`. Se retira con la historia del selector de finca.
-- `CATEGORY_META` / `REPRODUCTIVE_STATE_META` de `BovineCard`: llevan emoji + `tone` + reglas de negocio de presentación; su base (`categoryLabel`, `statusLabel`, `GESTATION_DAYS`) sí se consolidó, el resto se aborda en Fase 2.
+- `CATEGORY_META` / `REPRODUCTIVE_STATE_META` / `LACTATION_STATE_META` / `ALERT_META` de `BovineCard`: emoji + `tone` + copy de presentación (categoría B). Su base con deriva real (`GESTATION_DAYS`, `categoryLabel`, `statusLabel`) ya se consolidó; el copy con emoji **se difiere junto con la capa i18n** (§7) — sin deriva, sin duplicación cross-componente, un solo lugar. No se aborda en Fase 2 (que fue esquemas de formulario).
 
 **Entregables**: `src/domain/*`, `src/config/navigation.js`, consumidores migrados, `npm run build` + `npm run lint` + `npm test` en verde.
 **Impacto**: eliminada la duplicación de catálogos/labels y toda la deriva actual (dos `GESTATION_DAYS`, especies incompatibles), sin tocar backend ni cambiar comportamiento visible (salvo quitar el badge "datos demo" y los links muertos).
@@ -138,7 +138,7 @@ lambda-aws-cattle-java/
 - Generación de tipos con `openapi-typescript`: sigue como decisión abierta.
 - `GESTATION_DAYS` y demás config de negocio: Fase 3 (`SiteSettingItem`).
 
-### Fase 2 — Formularios schema-driven — ✅ EVENTOS BOVINOS COMPLETOS (2026-09-10) · potreros pendientes
+### Fase 2 — Formularios schema-driven — ✅ IMPLEMENTADA (2026-09-10) — bovinos y potreros
 
 - Definir el schema de formulario de cada tipo de evento (campos, tipo, requerido, opciones, label) **una sola vez**.
 - **Backend**: `BovineEventProcessor.validatePayloadByType` se reemplaza por validación contra el schema.
@@ -158,9 +158,9 @@ lambda-aws-cattle-java/
 
 **Guard de bovino registrable + rename `DISTOXICO`** (2026-09-10): ver registro `2026-09-10 — Fase 2 (guard de bovino + rename DISTOXICO)` más abajo. Cierra el hallazgo D de `DT-20260909` y el typo histórico.
 
-**Fuera de alcance (siguiente iteración de Fase 2)**:
+**Potreros ✅ 2026-09-10** (parte 1 backend + parte 2 front): `pasture-events` en `event-forms.yml` (8 esquemas + `enumOptional: [PRE_ENTRY_CHECK]`), `GET /catalogs/pasture-events/schema`, `PastureEventProcessor` valida contra el esquema, `detailPanel` renderiza con `SchemaEventForm` (compartido) conservando `availableActions` y el gate OPEN → `PreEntryChecklist`.
 
-- Potreros (`detailPanel` / `PastureEventProcessor`): no se tocan. El procesador de potreros está acoplado a `PastureStatusEngine` y a un `Payload` tipado; `GET /catalogs/pasture-events/schema` responde 404 por ahora.
+**Fuera de alcance de Fase 2**:
 - Proyección MUERTE/VENTA → `LifecycleStatus` (`DT-20260909` hallazgo A): el guard ya impide *añadir* eventos a un animal de baja, pero registrar una muerte sigue sin cambiar el estado del bovino.
 - Generación de tipos con `openapi-typescript`: sigue como decisión abierta.
 - Limpieza de `hasOwnNotes` / `hasCalvingEstimate` / `bovineEventTitle` / `bovineEventSubmitLabel` en `bovineEvents.js` (ya no se consumen; se dejan como metadata documental).
@@ -229,7 +229,7 @@ lambda-aws-cattle-java/
 
 - **Fase 4.0 — ✅ IMPLEMENTADA (2026-09-09)**: infra + pruebas de `src/domain/`, `src/search`, `src/config/navigation`, `utils/date` y helpers puros de potreros. 52 pruebas.
 - **Fase 4.1 — ✅ IMPLEMENTADA (2026-09-09)**: hooks y servicios. `include` de cobertura ampliado a `src/services/**` y `src/components/Bovines/hooks/**`; helper `src/test/fetchMock.js` (stub de `fetch`); axios mockeado por módulo. Umbrales: sentencias/líneas/funciones 70, ramas 60 (real: 80 / 68). 81 pruebas.
-- Fase 4.2: componentes críticos (eventos, tarjetas, buscador) → ampliar `include` a componentes de dominio; subir umbral de ramas.
+- **Fase 4.2 — ✅ IMPLEMENTADA (2026-09-10)**: tests de `BovineCard`, `GlobalSearch`, `BovineTimeline` (+ helpers extraídos a `timelineHelpers.js`); `include` de cobertura ampliado a `Bovines/{cards,eventPanel,timeline}`, `Paddock/detailPanel`, `Topbar/{GlobalSearch,SearchBar}`, `Shared/SchemaEventForm`; umbrales 75/65/75/75; `poolOptions.forks.maxForks: 2` (evita OOM del provider v8); workflow `ci.yml` (`lint + test:coverage + build` en PR). 184 pruebas front.
 - Excluir de cobertura: `main.jsx`, CSS, componentes de puro layout.
 
 **CI**: `npm run lint && npm run test:coverage && npm run build` como gate de PR.
@@ -259,20 +259,86 @@ Suite inicial:
 - **`/catalogs` público vs por finca**: los catálogos son metadata de producto (no dependen de finca); las settings sí. Mantenerlos en endpoints separados.
 - **Generación de tipos**: evaluar `openapi-typescript` sobre el OpenAPI ya expuesto por el backend para no mantener DTOs del front a mano.
 - **Especies de potrero**: Fase 0 tomó `KIKUYO / RYEGRASS / CUBA22` (los valores reales en datos y en `PastureBuilder`) y descartó la lista `ESTRELLA/BRACHIARIA/GUINEA` que no correspondía a nada. `species` sigue siendo texto libre en el backend con tolerancia a valores nuevos; confirmar con negocio si debe volverse enum.
-- **`DISTOXICO`**: el `<option>` y el dato persistido usan ese typo (debería ser `DISTOCICO`). Se mantiene el valor tal cual en el catálogo para no romper datos existentes; se corrige con migración en Fase 2.
+- **`DISTOXICO`** — ✅ resuelto (2026-09-10): `<option>` renombrado a `DISTOCICO`, alias de lectura para datos previos y script `docs/scripts/migrate-birthtype-distocico.py`. Ejecutar el script en la ventana del deploy.
 - **i18n de copy suelto**: diferido. Las etiquetas de dominio ya están centralizadas en `src/domain`; un `src/i18n` con `react-i18next` se justifica solo con un segundo idioma.
 - **Alcance de Fase 2**: los formularios de eventos son el caso más grande; validar el renderer con 3–4 tipos antes de migrar los 22.
+
+## 7bis. Cierre de épica — qué queda fuera (diferido, con dueño)
+
+La épica cumple su objetivo: **cero deriva activa** (dos `GESTATION_DAYS`, especies incompatibles, `DISTOXICO`), catálogos con fuente única backend + fallback, formularios schema-driven (front y back no pueden discrepar), config de negocio versionada, y una red de pruebas front (184 tests, cobertura 89 %/75 %, gate de CI). Lo que **no** entra y por qué (detalle y prioridad en `../bugs-deuda-tecnica/DT-20260910-epica-configuracion-cierre-diferidos.md`):
+
+| Ítem | Estado | Dónde va |
+|---|---|---|
+| i18n con `react-i18next` + `es.json` (copy suelto, `CATEGORY_META`/emoji de `BovineCard`) | diferido | historia propia cuando haga falta un segundo idioma (§7) |
+| `openapi-typescript` para tipos del front | decisión abierta | evaluar contra el OpenAPI ya expuesto |
+| `species` de potrero como enum backend | pendiente de negocio | hoy texto libre tolerante |
+| Selector de finca/sitio en la UI (`DEFAULT_FARM_ID`, `resolveSiteId() → 001`) | diferido | historia del selector de finca |
+| Proyección MUERTE/VENTA → `LifecycleStatus` + saneamiento del summary para inactivos | abierto | `DT-20260909` (hallazgos A/B/C; D ya resuelto) |
+| Anti-deriva **bundle front ↔ `event-forms.yml`** (test que cruce ambos) | residual | el bundle es espejo a mano; runtime auto-corrige (endpoint gana); solo afecta cold-start/offline |
+| `PRE_ENTRY_ITEMS` (checklist) como catálogo backend | no migrado | front-only, sin deriva; migrar si se toca el flujo |
+| `SearchBar` derrama `role="combobox"`/`aria-*` sobre el `<div>` en vez del `<input>` | bug a11y pre-existente | fix aparte (patrón ARIA combobox completo) |
 
 ## 8. Definition of Done (por fase)
 
 - **Fase 0 — ✅**: `src/domain/` es la única fuente; 0 tablas de catálogo/labels duplicadas en componentes; `GESTATION_DAYS` (279) y especies unificados; `MOCK_STATS` eliminado; navegación consolidada sin links muertos; build + lint + test verdes.
 - **Fase 1 — ✅**: `/catalogs` + `/catalogs/{domain}` con `version`/`ETag`/304/`Cache-Control`; `catalog.yml` valida contra los enums al arrancar; front hidrata `src/domain/*` desde el endpoint con fallback al bundle y cache offline en `localStorage`; tests de contrato back (`CatalogServiceTest`, `CatalogControllerTest`, `StreamLambdaHandlerTest`) y front (`catalogsCache.test.js`, `useCatalogs.test.jsx`, `CatalogsProvider.test.jsx`).
-- **Fase 2 — ✅ eventos bovinos**: `event-forms.yml` con los **22** tipos de `BovineEventType`; `EventFormCatalog` exige cobertura exacta contra el enum al arrancar; `GET /catalogs/{domain}/schema` con `version`/`ETag`/304; `EventPayloadValidator` es la **única** validación de payload (`BovineEventProcessor` sin `switch`); `SchemaEventForm` renderiza todos los formularios y `BovineEventPanel` quedó sin lógica por tipo; tests back (`EventPayloadValidatorTest`, `EventFormCatalogTest`, `EventFormControllerTest`, `StreamLambdaHandlerTest`, `BovineEventProcessorTest`) y front (`eventFormsCache`, `useEventForms`, `SchemaEventForm`, `BovineEventPanel`, `domain`). **Pendiente**: potreros (`detailPanel` / `PastureEventProcessor`).
+- **Fase 2 — ✅**: `event-forms.yml` con los **22** tipos de `BovineEventType` + los **8** de `EventType` con formulario (`pasture-events`, `enumOptional: [PRE_ENTRY_CHECK]`); `EventFormCatalog` exige cobertura exacta contra el enum al arrancar; `GET /catalogs/{domain}/schema` con `version`/`ETag`/304; `EventPayloadValidator` es la **única** validación de payload (`BovineEventProcessor` sin `switch`); `SchemaEventForm` (compartido bovinos/potreros) renderiza todos los formularios; `BovineEventPanel` y `detailPanel` quedaron sin lógica por tipo; `BovineEventProcessor` y `PastureEventProcessor` validan el payload contra el esquema (`EventPayloadValidator`). Tests back y front. PRE_ENTRY_CHECK de potreros sigue con su checklist propio (`enumOptional`).
 - **Fase 3 — ✅**: config de negocio en `SiteSettingItem` (`site-settings.yml`, 5 claves categoría C); `SiteSettingsCatalog` valida las definiciones al arrancar; endpoints genéricos `GET /site/{siteId}/settings` + `GET|PUT /site/{siteId}/settings/{key}` sobre `SiteSettingService` genérico por tipo (milk-price intacto); front hidrata `gestationDays()`/`rotationYellowDays()` desde `useSiteSettings()` con fallback a los defaults y cache offline; pantalla `/configuracion` lista y edita; tests back (`SiteSettingsCatalogTest`, `SiteSettingsProcessorTest`, `SiteSettingsControllerTest`, `SiteSettingService`/`SiteSettingRepository` ampliados) y front (`siteSettingsCache`, `useSiteSettings`, `siteSettingsService`, `SettingsPage`).
 - **Fase 4.0 — ✅**: Vitest operativo; suite de `src/domain` + `src/search` + utilidades + navegación + 2 componentes; cobertura enfocada con umbral 70 %; estándares de front actualizados.
-- **Fase 4.1 / 4.2**: hooks y servicios con MSW; componentes de dominio; ampliar `include` de cobertura y subir umbral; gate de CI `lint + test:coverage + build`.
+- **Fase 4.1 — ✅**: hooks y servicios; `include` ampliado; umbrales 70/60.
+- **Fase 4.2 — ✅**: componentes de dominio (`BovineCard`, `GlobalSearch`, `BovineTimeline`, ya cubiertos `BovineEventPanel`/`detailPanel`/`SchemaEventForm`); `include` a `src/components/**` de dominio; umbrales 75/65/75/75 (real 89 / 75); `.github/workflows/ci.yml` = gate de PR `lint + test:coverage + build`.
 
 ## 9. Registro de implementación
+
+### 2026-09-10 — Cierre: limpieza de config muerta
+
+Tras la migración a schema-driven, varios accesores/columnas quedaron sin consumidores de producción. Eliminados de `cattle-front`:
+
+- `src/domain/bovineEvents.js`: funciones `bovineEventTitle`, `bovineEventSubmitLabel`, `hasOwnNotes`, `hasCalvingEstimate` y las columnas `title`/`submitLabel`/`ownNotes`/`calvingEstimate` de `BOVINE_EVENTS` (el esquema es su única fuente). Quedan `code`/`label`/`group`/`action`/`actionLabel`.
+- `src/domain/pastureEvents.js`: `PASTURE_EVENT_CONFIG` y las columnas `title`/`submitLabel`/`manualAction` de `PASTURE_EVENTS`.
+- `src/components/Paddock/paddockConstants/paddockSelectOptions.js`: export `SUBSTATUS_OPTIONS` (se usa `substatusOptions()` del dominio).
+- `domain.test.js` ajustado.
+
+**Validación**: front `npm run lint` limpio · `npm run build` OK · `npm test` 184/184 · `npm run test:coverage` 89.0 % / 75.4 % (umbral 75/65).
+
+### 2026-09-10 — Fase 4.2 (cobertura de componentes de dominio + gate de CI)
+
+Cierra la épica.
+
+**Front (`cattle-front`)**
+
+- Pruebas nuevas: `BovineCard.test.jsx` (16 — badges por categoría/reproductivo/lactancia, alertas, edad, pills, acciones), `GlobalSearch.test.jsx` (8 — panel, estados vacío/carga/error, grupos, teclado ↑/↓/Enter/Escape; `useGlobalSearch` y `useNavigate` mockeados), `BovineTimeline.test.jsx` (7 — `parseDetail`/`extractSummary` + render carga/error/vacío/detalle).
+- `BovineTimeline.jsx`: `formatEventDate`/`parseDetail`/`extractSummary` movidos a `timelineHelpers.js` (fast-refresh + testeables aislados).
+- `vitest.config.js`: `include` de cobertura ampliado a `src/components/Bovines/{cards,eventPanel,timeline}/**`, `src/components/Paddock/detailPanel/**`, `src/components/Topbar/{GlobalSearch,SearchBar}.jsx`, `src/components/Shared/SchemaEventForm.jsx`. Umbrales **75/65/75/75** (real ~89 / 75). `pool: 'forks'` + `poolOptions.forks.maxForks: 2` — el provider v8 + jsdom hacía OOM con muchos ficheros en paralelo.
+- `.github/workflows/ci.yml` (nuevo): job `verify` en push/PR a `master` — `npm ci && npm run lint && npm run test:coverage && npm run build`. El deploy sigue en `azure-static-web-apps-cattle-front.yml`.
+
+**Validación**: front `npm run lint` limpio · `npm run build` OK · `npm test` **184/184** · `npm run test:coverage` **89.1 % sentencias / 75.5 % ramas / 88.4 % funciones** (umbral 75/65). Backend sin cambios (1162/1162).
+
+### 2026-09-10 — Fase 2 (potreros, parte 2: front `detailPanel`)
+
+`detailPanel` pasa a schema-driven; `SchemaEventForm` se vuelve compartido.
+
+- **Backend**: `EventFormSchema.Field` `+ default` y `+ optionsFrom` (hints de front; el validador los ignora), `EventFormCatalog.toField` los parsea. `event-forms.yml` MAINTENANCE_SET `substatus`: `optionsFrom: pasture-substatuses` + `default: FERTILIZACION`. `EventPayloadValidatorTest` (firma del helper).
+- **Front**:
+  - `src/components/Shared/SchemaEventForm.jsx` (movido desde `Bovines/eventPanel/`): `+ classPrefix` (clases CSS del contenedor), `+ default` en `initialFieldValue`, `+ minField: "today"`. `BovineEventPanel` importa desde la nueva ruta.
+  - `src/domain/pastureEvents.js`: `+ BUNDLED_PASTURE_EVENT_FORMS` (8) y `pastureEventFormSchema(code)` — resuelve `optionsFrom: "pasture-substatuses"` contra `substatusOptions()` (sin NINGUNO).
+  - `src/config/useEventForms.js`: `useEventForms(domain)` parametrizado, `STORAGE_KEY` por dominio (`cattle:event-forms:<domain>:v1`), `hydrateEventFormsFromStorage` recorre `EVENT_FORM_DOMAINS`. `ConfigHydrator` monta `useEventForms("bovine-events")` + `useEventForms("pasture-events")`.
+  - `src/components/Paddock/detailPanel/detailPanel.jsx`: se elimina `buildInitialFormState`, `handleSubmit`, todos los bloques `mode === "X"` y el `<form>` (420 → ~230 líneas). Conserva `availableActions` (stateful) y el gate OPEN → `PreEntryChecklist`; el payload de OPEN sigue llevando `preEntryCheck`.
+  - Pruebas nuevas: `detailPanel.test.jsx` (9 — antes 0; checklist mockeado), `SchemaEventForm.test.jsx` +3 (classPrefix / default / minField:today), `domain.test.js` (esquemas de potrero + resolución de `optionsFrom`), `useEventForms.test.jsx` (dominio pasture), `CatalogsProvider.test.jsx` (ruta `/pasture-events/schema`).
+
+**Validación**: back `./gradlew test` 1162/1162 · front `npm run lint` limpio · `npm run build` OK · `npm test` 150/150 · `npm run test:coverage` 88.2 % sentencias / 75.8 % ramas (umbral 70/60). (El OOM del provider v8 en máquinas con poca RAM se resolvió en Fase 4.2 con `poolOptions.forks.maxForks: 2`.)
+
+### 2026-09-10 — Fase 2 (potreros, parte 1: backend)
+
+Contrato + validación schema-driven del payload de eventos de potrero. El front (`detailPanel`) es la parte 2.
+
+- `event-forms.yml`: nuevo dominio `pasture-events` (`enum: com.cattle.enums.EventType`, `enumOptional: [PRE_ENTRY_CHECK]`) con 8 esquemas: OPEN, CLOSE, MAINTENANCE_SET, MAINTENANCE_CLEAR, FERTILIZED, LIMED, HEIGHT_MEASURED, OBSERVATION_ADDED. `substatus` de MAINTENANCE_SET queda `required` sin `options` (la lista válida es catálogo de dominio; `PastureSubstatus.valueOf` sigue dando el mensaje específico).
+- `services/EventFormCatalog`: `+ findEvent(domain, code)` genérico (`findBovineEvent` delega). El guard de cobertura del enum acepta `enumOptional` — lista de constantes exentas de tener esquema (valida que existan en el enum).
+- `processor/PastureEventProcessor`: `+ EventFormCatalog` + `EventPayloadValidator`. Nuevo `validatePayloadAgainstSchema` (`objectMapper.convertValue(payload, Map)` → `payloadValidator.validate`) al inicio de `toDomainEvent`. Se eliminan los helpers `requireNonBlank`/`requirePositive` y sus 6 llamadas; el `switch` conserva solo la construcción de eventos tipados y el `PastureSubstatus.valueOf`. `PastureStatusEngine` y los eventos de dominio **sin cambios**.
+- Pruebas: `PastureEventProcessorTest` (constructor + las 22 siguen verdes; validación de campo ahora pasa por el schema), `EventFormCatalogTest` (`pastureEvents_coversEventTypeExceptPreEntryCheck`), `EventFormControllerTest` (`getDomainSchema_pastureEvents_returnsOkWith8Schemas`), `StreamLambdaHandlerTest` (`/catalogs/pasture-events/schema`).
+- Endurecimiento: mensajes de error de validación de potrero cambian al formato de `EventPayloadValidator` ("… es requerido para este tipo de evento", "… debe ser mayor o igual a 1"); los tests que lo comprobaban usaban `assertThrows` sin mensaje.
+
+**Validación**: back `./gradlew test` 1162/1162. Front sin cambios en esta parte.
 
 ### 2026-09-10 — Fase 2 (guard de bovino + rename DISTOXICO)
 

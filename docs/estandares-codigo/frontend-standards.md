@@ -215,10 +215,11 @@ Convenciones:
 
 Cobertura (`vitest.config.js` -> `coverage`):
 
-- alcance actual enfocado en `src/domain`, `src/search`, `src/config`, utilidades y helpers puros de potreros. Umbral 70 %.
-- ampliación planificada: hooks (Fase 4.1) y componentes de dominio (Fase 4.2) — ver `docs/stories/configuracion/EP-20260909-configuracion-catalogos-i18n.md`.
+- alcance: `src/domain`, `src/search`, `src/config`, `src/services`, utilidades y los componentes de dominio (`Bovines/{cards,eventPanel,timeline}`, `Paddock/detailPanel`, buscador, `Shared/SchemaEventForm`). Umbrales **75/65/75/75** (sentencias/ramas/funciones/líneas).
+- `pool: 'forks'` con `maxForks: 2`: el provider v8 + jsdom hace OOM con muchos ficheros en paralelo.
+- historia: Fase 4.0 dominio/utilidades · 4.1 hooks y servicios · 4.2 componentes de dominio — ver `docs/stories/configuracion/EP-20260909-configuracion-catalogos-i18n.md`.
 
-Gate de PR recomendado: `npm run lint && npm run test:coverage && npm run build`.
+Gate de PR: `.github/workflows/ci.yml` — `npm run lint && npm run test:coverage && npm run build` en push/PR a `master`.
 
 ## Reglas practicas de revision
 

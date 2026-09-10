@@ -57,9 +57,14 @@ public class EventFormCatalog {
                 + describe() + " (etag " + etag + ")");
     }
 
-    /** Esquema de un tipo de evento bovino ya migrado, o vacío. */
+    /** Esquema de un tipo de evento bovino, o vacío. */
     public Optional<EventFormSchema> findBovineEvent(String code) {
-        return Optional.ofNullable(domains.getOrDefault(BOVINE_EVENTS_DOMAIN, Map.of()).get(code));
+        return findEvent(BOVINE_EVENTS_DOMAIN, code);
+    }
+
+    /** Esquema de un tipo de evento de cualquier dominio, o vacío. */
+    public Optional<EventFormSchema> findEvent(String domain, String code) {
+        return Optional.ofNullable(domains.getOrDefault(domain, Map.of()).get(code));
     }
 
     /** ¿Hay un dominio con ese nombre en {@code event-forms.yml}? */
@@ -115,10 +120,11 @@ public class EventFormCatalog {
             String domainName = domainEntry.getKey();
             Map<String, Object> spec = (Map<String, Object>) domainEntry.getValue();
             String enumClass = (String) spec.get("enum");
+            List<String> enumOptional = (List<String>) spec.getOrDefault("enumOptional", List.of());
 
             Map<String, EventFormSchema> schemas = new LinkedHashMap<>();
             for (Map.Entry<String, Object> e : spec.entrySet()) {
-                if ("enum".equals(e.getKey())) {
+                if ("enum".equals(e.getKey()) || "enumOptional".equals(e.getKey())) {
                     continue;
                 }
                 String code = e.getKey();
@@ -129,7 +135,7 @@ public class EventFormCatalog {
             }
 
             if (enumClass != null) {
-                validateAgainstEnum(domainName, enumClass, schemas.keySet());
+                validateAgainstEnum(domainName, enumClass, schemas.keySet(), enumOptional);
             }
             parsed.put(domainName, Collections.unmodifiableMap(schemas));
         }
@@ -197,6 +203,7 @@ public class EventFormCatalog {
             }
         }
 
+        Object defaultRaw = raw.get("default");
         return new EventFormSchema.Field(
                 name,
                 label,
@@ -210,10 +217,12 @@ public class EventFormCatalog {
                 (String) raw.get("hint"),
                 (String) raw.get("minField"),
                 Boolean.TRUE.equals(raw.get("calvingEstimate")),
-                options);
+                options,
+                defaultRaw == null ? null : String.valueOf(defaultRaw),
+                (String) raw.get("optionsFrom"));
     }
 
-    private void validateAgainstEnum(String domain, String enumClassName, Set<String> codes) {
+    private void validateAgainstEnum(String domain, String enumClassName, Set<String> codes, List<String> enumOptional) {
         Class<?> enumClass;
         try {
             enumClass = Class.forName(enumClassName);
@@ -227,6 +236,7 @@ public class EventFormCatalog {
         Set<String> enumNames = Arrays.stream(enumClass.getEnumConstants())
                 .map(c -> ((Enum<?>) c).name())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+
         Set<String> unknown = new TreeSet<>(codes);
         unknown.removeAll(enumNames);
         if (!unknown.isEmpty()) {
@@ -234,8 +244,20 @@ public class EventFormCatalog {
                     "El dominio '%s' de %s tiene esquemas para códigos que no existen en el enum %s: %s",
                     domain, RESOURCE, enumClassName, unknown));
         }
+
+        Set<String> optionalUnknown = new TreeSet<>(enumOptional);
+        optionalUnknown.removeAll(enumNames);
+        if (!optionalUnknown.isEmpty()) {
+            throw new IllegalStateException(String.format(
+                    "El dominio '%s' de %s declara en enumOptional valores que no existen en %s: %s",
+                    domain, RESOURCE, enumClassName, optionalUnknown));
+        }
+
+        // Cobertura exacta salvo los valores listados en enumOptional (eventos
+        // sin formulario manual, p. ej. PRE_ENTRY_CHECK).
         Set<String> missing = new TreeSet<>(enumNames);
         missing.removeAll(codes);
+        missing.removeAll(enumOptional);
         if (!missing.isEmpty()) {
             throw new IllegalStateException(String.format(
                     "El dominio '%s' de %s no tiene esquema para todos los valores del enum %s — faltan: %s",

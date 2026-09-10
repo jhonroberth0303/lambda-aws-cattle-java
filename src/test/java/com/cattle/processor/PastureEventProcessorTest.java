@@ -9,6 +9,8 @@ import com.cattle.entities.Plan;
 import com.cattle.enums.PastureStatus;
 import com.cattle.enums.PastureSubstatus;
 import com.cattle.events.EntityPatch;
+import com.cattle.forms.EventPayloadValidator;
+import com.cattle.services.EventFormCatalog;
 import com.cattle.services.PastureEventService;
 import com.cattle.services.PastureService;
 import com.cattle.services.PlanService;
@@ -69,7 +71,9 @@ class PastureEventProcessorTest {
                 pastureEventService,
                 rotationPlanProcessor,
                 new ObjectMapper(),
-                lambdaContext
+                lambdaContext,
+                new EventFormCatalog(lambdaContext),
+                new EventPayloadValidator()
         );
     }
 
