@@ -5,8 +5,13 @@ import com.cattle.dtos.BovineEventRequestDTO;
 import com.cattle.dtos.BovineEventResponseDTO;
 import com.cattle.enums.EventSource;
 import com.cattle.enums.LogType;
+import com.cattle.entities.bovines.ProfileLifecycle;
+import com.cattle.enums.profiles.LifecycleStatus;
 import com.cattle.events.entities.BovineEventItem;
+import com.cattle.exceptions.NotFoundException;
 import com.cattle.forms.EventPayloadValidator;
+import com.cattle.repository.BovineRepository;
+import com.cattle.repository.ProfileLifecycleRepository;
 import com.cattle.services.BovineEventService;
 import com.cattle.services.EventFormCatalog;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -50,6 +55,12 @@ class BovineEventProcessorTest {
     @Mock
     private LambdaContext lambdaContext;
 
+    @Mock
+    private BovineRepository bovineRepository;
+
+    @Mock
+    private ProfileLifecycleRepository lifecycleRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private BovineEventProcessor processor;
@@ -61,7 +72,16 @@ class BovineEventProcessorTest {
         openMocks(this);
         eventFormCatalog = new EventFormCatalog(lambdaContext);
         processor = new BovineEventProcessor(bovineEventService, objectMapper, lambdaContext,
-                eventFormCatalog, payloadValidator);
+                eventFormCatalog, payloadValidator, bovineRepository, lifecycleRepository);
+    }
+
+    /** Stubbea el perfil de ciclo de vida de un bovino con un estado/enabled dados. */
+    private void stubLifecycle(String bovineId, LifecycleStatus status, Boolean enabled) {
+        ProfileLifecycle lifecycle = ProfileLifecycle.builder().build();
+        lifecycle.setStatus(status);
+        lifecycle.setEnabled(enabled);
+        when(lifecycleRepository.findById("BOVINE#" + bovineId, "PROFILE#LIFECYCLE"))
+                .thenReturn(java.util.Optional.of(lifecycle));
     }
 
     private BovineEventRequestDTO request(String type, Map<String, Object> payload) {
@@ -218,6 +238,64 @@ class BovineEventProcessorTest {
         assertTrue(ex.getMessage().contains("yyyy-MM-dd"));
     }
 
+    // ==================== Guard: bovino registrable ====================
+
+    @Test
+    void applyEvent_numericBovineIdNotFound_throwsNotFound() {
+        when(bovineRepository.findById(999)).thenReturn(java.util.Optional.empty());
+
+        NotFoundException ex = assertThrows(NotFoundException.class,
+                () -> processor.applyEvent("F1", "999", request("SEGUIMIENTO", Map.of("notes", "n"))));
+
+        assertTrue(ex.getMessage().contains("999"));
+        verify(bovineEventService, never()).save(any());
+    }
+
+    @Test
+    void applyEvent_nonNumericBovineId_skipsExistenceCheck() {
+        // "B-9" no es numérico: no se consulta identidad y, sin lifecycle, procede
+        assertDoesNotThrow(() -> processor.applyEvent("F1", "B-9", request("SEGUIMIENTO", Map.of("notes", "n"))));
+        verify(bovineRepository, never()).findById(any());
+    }
+
+    @Test
+    void applyEvent_soldBovine_rejectsNonExitEvent() {
+        stubLifecycle("B1", LifecycleStatus.SOLD, true);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> processor.applyEvent("F1", "B1", request("SEGUIMIENTO", Map.of("notes", "n"))));
+
+        assertTrue(ex.getMessage().contains("dado de baja"));
+        assertTrue(ex.getMessage().contains("SOLD"));
+        verify(bovineEventService, never()).save(any());
+    }
+
+    @Test
+    void applyEvent_disabledBovine_rejectsNonExitEvent() {
+        stubLifecycle("B1", LifecycleStatus.OPEN, false);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> processor.applyEvent("F1", "B1", request("PESAJE", Map.of("weightKg", 300))));
+        verify(bovineEventService, never()).save(any());
+    }
+
+    @Test
+    void applyEvent_soldBovine_allowsMuerteAndVenta() {
+        stubLifecycle("B1", LifecycleStatus.SOLD, false);
+
+        assertDoesNotThrow(() -> processor.applyEvent("F1", "B1", request("MUERTE", Map.of("cause", "senil"))));
+        assertDoesNotThrow(() -> processor.applyEvent("F1", "B1",
+                request("VENTA", Map.of("buyerName", "Coop", "amountCOP", 1000000))));
+    }
+
+    @Test
+    void applyEvent_activeBovine_proceeds() {
+        stubLifecycle("B1", LifecycleStatus.OPEN, true);
+
+        assertDoesNotThrow(() -> processor.applyEvent("F1", "B1", request("SEGUIMIENTO", Map.of("notes", "n"))));
+        verify(bovineEventService).save(any());
+    }
+
     // ==================== Payload validation by type ====================
 
     @Test
@@ -314,7 +392,7 @@ class BovineEventProcessorTest {
         ObjectMapper failing = org.mockito.Mockito.mock(ObjectMapper.class);
         when(failing.writeValueAsString(any())).thenThrow(new JsonProcessingException("boom") {});
         BovineEventProcessor failingProcessor = new BovineEventProcessor(bovineEventService, failing,
-                lambdaContext, eventFormCatalog, payloadValidator);
+                lambdaContext, eventFormCatalog, payloadValidator, bovineRepository, lifecycleRepository);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> failingProcessor.applyEvent("F1", "B1", request("SEGUIMIENTO", Map.of("notes", "n"))));
