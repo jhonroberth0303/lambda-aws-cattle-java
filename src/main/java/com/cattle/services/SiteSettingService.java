@@ -10,6 +10,7 @@ import com.cattle.repository.SiteSettingRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -32,14 +33,34 @@ public class SiteSettingService {
         }
     }
 
+    /** Todas las settings vigentes de un sitio. EP-20260909, Fase 3. */
+    public List<SiteSettingItem> findAllCurrent(String siteId) {
+        try {
+            return siteSettingRepository.findAllCurrent(siteId);
+        } catch (RepositoryException e) {
+            lambdaContext.logException(LogType.SERVICE, "Failed to list SiteSettings: " + e.getMessage());
+            throw new ServiceException("Failed to list SiteSettings", e);
+        }
+    }
+
+    /** Compatibilidad: upsert de una setting numérica (endpoint milk-price). */
     public SiteSettingItem upsertNumberSetting(String siteId, String settingKey, Double valueNumber,
                                                String updatedBy, String changeReason) {
+        return upsertSetting(siteId, settingKey, SiteSettingValueType.NUMBER, valueNumber, updatedBy, changeReason);
+    }
+
+    /**
+     * Upsert genérico por tipo. Persiste el ítem CURRENT (versión incrementada) y
+     * un snapshot de historial. EP-20260909, Fase 3.
+     */
+    public SiteSettingItem upsertSetting(String siteId, String settingKey, SiteSettingValueType valueType,
+                                         Object value, String updatedBy, String changeReason) {
         try {
             String now = Instant.now().toString();
             Optional<SiteSettingItem> currentOpt = siteSettingRepository.findCurrent(siteId, settingKey);
 
-            SiteSettingItem current = buildCurrentItem(currentOpt.orElse(null), siteId, settingKey, valueNumber,
-                    updatedBy, changeReason, now);
+            SiteSettingItem current = buildCurrentItem(currentOpt.orElse(null), siteId, settingKey, valueType,
+                    value, updatedBy, changeReason, now);
 
             siteSettingRepository.saveCurrent(current)
                     .orElseThrow(() -> new ServiceException("Failed to persist current SiteSetting"));
@@ -56,17 +77,17 @@ public class SiteSettingService {
     }
 
     private SiteSettingItem buildCurrentItem(SiteSettingItem existing, String siteId, String settingKey,
-                                             Double valueNumber, String updatedBy, String changeReason,
-                                             String now) {
-        return SiteSettingItem.builder()
+                                             SiteSettingValueType valueType, Object value, String updatedBy,
+                                             String changeReason, String now) {
+        SiteSettingItem.SiteSettingItemBuilder builder = SiteSettingItem.builder()
                 .pk(SiteSettingItem.buildPk(siteId))
                 .sk(SiteSettingItem.buildCurrentSk(settingKey))
                 .gsi1pk(SiteSettingItem.buildGsi1Pk(settingKey))
                 .gsi1sk(SiteSettingItem.buildCurrentGsi1Sk(siteId))
                 .siteId(siteId)
                 .settingKey(settingKey)
-                .valueType(SiteSettingValueType.NUMBER.name())
-                .valueNumber(valueNumber)
+                .valueType(valueType.name())
+                .valueNumber(null)
                 .valueString(null)
                 .valueBoolean(null)
                 .valueJson(null)
@@ -77,8 +98,29 @@ public class SiteSettingService {
                 .createdAt(existing == null ? now : existing.getCreatedAt())
                 .updatedAt(now)
                 .updatedBy(updatedBy)
-                .changeReason(changeReason)
-                .build();
+                .changeReason(changeReason);
+
+        applyValue(builder, valueType, value);
+        return builder.build();
+    }
+
+    private void applyValue(SiteSettingItem.SiteSettingItemBuilder builder, SiteSettingValueType valueType,
+                            Object value) {
+        switch (valueType) {
+            case NUMBER:
+                builder.valueNumber(value == null ? null : ((Number) value).doubleValue());
+                break;
+            case BOOLEAN:
+                builder.valueBoolean(value == null ? null : (Boolean) value);
+                break;
+            case JSON:
+                builder.valueJson(value == null ? null : String.valueOf(value));
+                break;
+            case STRING:
+            default:
+                builder.valueString(value == null ? null : String.valueOf(value));
+                break;
+        }
     }
 
     private SiteSettingItem buildHistorySnapshot(SiteSettingItem current, String now) {

@@ -9,10 +9,14 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Repository
 public class SiteSettingRepository {
@@ -40,6 +44,30 @@ public class SiteSettingRepository {
         } catch (DynamoDbException ex) {
             lambdaContext.logException(LogType.REPOSITORY, "Error finding current SiteSetting", ex);
             throw new RepositoryException("Unexpected error finding current SiteSetting", ex);
+        }
+    }
+
+    /**
+     * Todas las settings vigentes de un sitio (ítems {@code SETTING#*#CURRENT}).
+     * EP-20260909, Fase 3.
+     */
+    public List<SiteSettingItem> findAllCurrent(String siteId) {
+        try {
+            QueryConditional queryConditional = QueryConditional.sortBeginsWith(
+                    Key.builder()
+                            .partitionValue(SiteSettingItem.buildPk(siteId))
+                            .sortValue("SETTING#")
+                            .build());
+            return StreamSupport.stream(
+                            table.query(r -> r.queryConditional(queryConditional)).items().spliterator(), false)
+                    .filter(it -> it.getSk() != null && it.getSk().endsWith("#CURRENT"))
+                    .collect(Collectors.toList());
+        } catch (ResourceNotFoundException e) {
+            lambdaContext.logException(LogType.REPOSITORY, "SiteSetting table not found", e);
+            return List.of();
+        } catch (DynamoDbException ex) {
+            lambdaContext.logException(LogType.REPOSITORY, "Error listing current SiteSettings", ex);
+            throw new RepositoryException("Unexpected error listing current SiteSettings", ex);
         }
     }
 
