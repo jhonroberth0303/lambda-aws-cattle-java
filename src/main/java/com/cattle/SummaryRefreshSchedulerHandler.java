@@ -13,13 +13,11 @@ import java.util.Map;
 
 public class SummaryRefreshSchedulerHandler implements RequestHandler<Map<String, Object>, Map<String, Object>> {
 
-    private static final HandlerDependencies DEFAULT_DEPENDENCIES = loadDependencies();
-
     private final BovineSummaryService bovineSummaryService;
     private final LambdaContext lambdaContext;
 
     public SummaryRefreshSchedulerHandler() {
-        this(DEFAULT_DEPENDENCIES);
+        this(loadDependencies());
     }
 
     SummaryRefreshSchedulerHandler(BovineSummaryService bovineSummaryService, LambdaContext lambdaContext) {

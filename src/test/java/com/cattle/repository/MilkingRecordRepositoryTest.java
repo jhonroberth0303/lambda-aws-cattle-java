@@ -22,6 +22,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -245,6 +246,67 @@ class MilkingRecordRepositoryTest {
         assertThrows(RepositoryException.class,
                 () -> milkingRepository.getMilkingByBovineAndLactation(bovineId, lactationNumber));
         verify(lambdaContext).logException(eq(LogType.REPOSITORY), contains("Unexpected error getMilkingByBovineAndLactation"), any(DynamoDbException.class));
+    }
+
+    // ==================== findAllScan Tests ====================
+
+    @Test
+    void findAllScan_returnsAllRecords() {
+        List<MilkingRecord> records = createFarmMilkingList(1, 4);
+        SdkIterable<MilkingRecord> realItems = records::iterator;
+        when(table.scan()).thenReturn(pageIterable);
+        when(pageIterable.items()).thenReturn(realItems);
+
+        Optional<List<MilkingRecord>> result = milkingRepository.findAllScan();
+
+        assertTrue(result.isPresent());
+        assertEquals(4, result.get().size());
+        verify(lambdaContext, atLeastOnce()).logInfo(eq(LogType.REPOSITORY), contains("findAllScan"));
+    }
+
+    @Test
+    void findAllScan_resourceNotFound_returnsEmpty() {
+        when(table.scan()).thenThrow(ResourceNotFoundException.builder().message("no table").build());
+
+        Optional<List<MilkingRecord>> result = milkingRepository.findAllScan();
+
+        assertTrue(result.isEmpty());
+        verify(lambdaContext).logException(eq(LogType.REPOSITORY), eq("FarmMilking table not found"), any());
+    }
+
+    @Test
+    void findAllScan_dynamoDbException_throwsRepositoryException() {
+        when(table.scan()).thenThrow(DynamoDbException.builder().message("scan error").build());
+
+        assertThrows(RepositoryException.class, () -> milkingRepository.findAllScan());
+    }
+
+    // ==================== extra branch coverage ====================
+
+    @Test
+    void getMilkingByPk_resourceNotFound_returnsEmpty() {
+        when(table.query(any(java.util.function.Consumer.class)))
+                .thenThrow(ResourceNotFoundException.builder().message("no table").build());
+
+        assertTrue(milkingRepository.getMilkingByPk("BOVINE#1").isEmpty());
+    }
+
+    @Test
+    void getMilkingBetweenDates_resourceNotFound_returnsEmpty() {
+        when(table.query(any(java.util.function.Consumer.class)))
+                .thenThrow(ResourceNotFoundException.builder().message("no table").build());
+
+        assertTrue(milkingRepository.getMilkingBetweenDates("BOVINE#1", "a", "b").isEmpty());
+    }
+
+    @Test
+    void save_returnsPresentOptionalOnSuccess() {
+        MilkingRecord record = createFarmMilking(9, "2025-02-02", "PM");
+
+        Optional<MilkingRecord> saved = milkingRepository.save(record);
+
+        assertTrue(saved.isPresent());
+        assertEquals(9, saved.get().getBovineId());
     }
 
     // ==================== Helper Methods ====================

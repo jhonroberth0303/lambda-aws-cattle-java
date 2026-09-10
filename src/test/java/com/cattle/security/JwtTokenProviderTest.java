@@ -271,6 +271,79 @@ class JwtTokenProviderTest {
         assertEquals("FARM#001", claims.get("farmId", String.class));
     }
 
+    // ==================== issuer validation ====================
+
+    @Test
+    void validateToken_issuerValidationEnabled_matchingIssuer_returnsTrue() {
+        ReflectionTestUtils.setField(jwtTokenProvider, "validateIssuer", true);
+        String token = createValidToken("user123", "FARM#001", 3600000);
+
+        assertTrue(jwtTokenProvider.validateToken(token));
+    }
+
+    @Test
+    void validateToken_issuerValidationEnabled_wrongIssuer_returnsFalse() {
+        ReflectionTestUtils.setField(jwtTokenProvider, "validateIssuer", true);
+        SecretKey key = Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8));
+        String token = Jwts.builder()
+                .subject("user123")
+                .claim("farmId", "FARM#001")
+                .issuer("otro-emisor")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 3600000))
+                .signWith(key)
+                .compact();
+
+        assertFalse(jwtTokenProvider.validateToken(token));
+    }
+
+    // ==================== tokens without expiration ====================
+
+    @Test
+    void validateToken_tokenWithoutExpiration_returnsTrue() {
+        SecretKey key = Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8));
+        String token = Jwts.builder()
+                .subject("user123")
+                .claim("farmId", "FARM#001")
+                .issuer(TEST_ISSUER)
+                .issuedAt(new Date())
+                .signWith(key)
+                .compact();
+
+        assertTrue(jwtTokenProvider.validateToken(token));
+        assertFalse(jwtTokenProvider.isTokenExpired(token));
+    }
+
+    // ==================== extractFarmId edge cases ====================
+
+    @Test
+    void extractFarmId_tokenWithoutSubjectOrFarmId_returnsEmpty() {
+        SecretKey key = Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8));
+        String token = Jwts.builder()
+                .issuer(TEST_ISSUER)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 3600000))
+                .signWith(key)
+                .compact();
+
+        assertFalse(jwtTokenProvider.extractFarmId(token).isPresent());
+    }
+
+    @Test
+    void extractFarmId_blankFarmIdClaim_fallsBackToSubject() {
+        SecretKey key = Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8));
+        String token = Jwts.builder()
+                .subject("user999")
+                .claim("farmId", "  ")
+                .issuer(TEST_ISSUER)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 3600000))
+                .signWith(key)
+                .compact();
+
+        assertEquals("FARM#user999", jwtTokenProvider.extractFarmId(token).orElseThrow());
+    }
+
     // ==================== Helper Methods ====================
 
     private String createValidToken(String subject, String farmId, long expirationMs) {
