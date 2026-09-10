@@ -156,17 +156,21 @@ lambda-aws-cattle-java/
 
 **Migración completa de eventos bovinos (2026-09-10)** — ver registro `2026-09-10 — Fase 2 (resto de eventos bovinos)` más abajo. Los 22 tipos de `BovineEventType` tienen esquema en `event-forms.yml`; `EventFormCatalog` exige cobertura exacta al arrancar; `BovineEventProcessor` ya **no** tiene `switch` por tipo; `BovineEventPanel` quedó sin `buildInitialFormState`/`buildPayload`/JSX por tipo (876 → ~110 líneas).
 
+**Guard de bovino registrable + rename `DISTOXICO`** (2026-09-10): ver registro `2026-09-10 — Fase 2 (guard de bovino + rename DISTOXICO)` más abajo. Cierra el hallazgo D de `DT-20260909` y el typo histórico.
+
 **Fuera de alcance (siguiente iteración de Fase 2)**:
 
 - Potreros (`detailPanel` / `PastureEventProcessor`): no se tocan. El procesador de potreros está acoplado a `PastureStatusEngine` y a un `Payload` tipado; `GET /catalogs/pasture-events/schema` responde 404 por ahora.
-- Corrección del typo `DISTOXICO` → `DISTOCICO` (evento PARTO): el esquema conserva `DISTOXICO` para no divergir de los datos persistidos; el rename necesita historia con migración de datos.
+- Proyección MUERTE/VENTA → `LifecycleStatus` (`DT-20260909` hallazgo A): el guard ya impide *añadir* eventos a un animal de baja, pero registrar una muerte sigue sin cambiar el estado del bovino.
 - Generación de tipos con `openapi-typescript`: sigue como decisión abierta.
-- Limpieza de `hasOwnNotes` / `hasCalvingEstimate` en `bovineEvents.js` (ya no se consumen; se dejan como metadata documental).
+- Limpieza de `hasOwnNotes` / `hasCalvingEstimate` / `bovineEventTitle` / `bovineEventSubmitLabel` en `bovineEvents.js` (ya no se consumen; se dejan como metadata documental).
 
 **Endurecimientos de contrato** (no reachable desde el panel, sí para clientes directos de la API):
 
 - `DIAGNOSTICO_PRENEZ.result` y `PARTO.birthType` pasan a **requeridos** (antes el backend los aceptaba ausentes). El panel siempre los envía (select sembrado con su valor por defecto).
-- Campos numéricos opcionales rechazan valores no numéricos (cadena en blanco = ausente).
+- Los campos con `options` (selects) validan pertenencia al enum también cuando son **opcionales** (`session`, `method`, `conditionScore`, …) — antes ninguno de los 18 lo hacía.
+- Campos numéricos rechazan valores no numéricos (cadena en blanco = ausente) y respetan `min` también en los opcionales (`amountCOP`, …).
+- `POST /bovines/{farmId}/{bovineId}/events` valida existencia (id numérico) y que el bovino esté activo (`enabled` / `LifecycleStatus`), salvo MUERTE/VENTA.
 
 ### Fase 3 — Módulo de configuración de negocio — ✅ IMPLEMENTADA (2026-09-09)
 
@@ -269,6 +273,29 @@ Suite inicial:
 - **Fase 4.1 / 4.2**: hooks y servicios con MSW; componentes de dominio; ampliar `include` de cobertura y subir umbral; gate de CI `lint + test:coverage + build`.
 
 ## 9. Registro de implementación
+
+### 2026-09-10 — Fase 2 (guard de bovino + rename DISTOXICO)
+
+Cierra dos puntos de la revisión: la falta de barrera para eventos sobre animales de baja (`DT-20260909` hallazgo D) y el typo histórico `DISTOXICO`.
+
+**Guard de bovino registrable**
+
+- Back: `BovineEventProcessor` recibe `BovineRepository` + `ProfileLifecycleRepository`. Nuevo `enforceBovineIsRegistrable(bovineId, eventType)`:
+  - id numérico sin identidad → `NotFoundException` ("Bovino no encontrado: …").
+  - `ProfileLifecycle.enabled == false` o `status` ∈ {SOLD, DEAD, CULLED, TRANSFERRED, INACTIVE} → `IllegalArgumentException` ("El bovino … está dado de baja …").
+  - Excepción: `MUERTE` y `VENTA` (el evento que causa la baja).
+  - Sin perfil de ciclo de vida (dato legacy) → no bloquea.
+- Front: `src/domain/bovines.js` `+ isBovineInactive(bovine)` (`enabled === false` o estado de baja). `BovineEventPanel` usa `isBovineInactive` en vez del guard roto `status === "VENDIDO"/"MUERTO"` (el backend nunca emitía esos valores); mensaje de baja con `bovineHatoStatusLabel`.
+- Pruebas: `BovineEventProcessorTest` +6 (id numérico 404, id no numérico salta la comprobación, SOLD/disabled rechazados, MUERTE/VENTA permitidos, bovino activo procede). Front: `domain.test.js` `isBovineInactive`, `BovineEventPanel.test.jsx` (fixture `VENDIDO` → `SOLD`, + caso `enabled:false` con `status: OPEN`).
+
+**Rename `DISTOXICO` → `DISTOCICO` (evento PARTO)**
+
+- `event-forms.yml` y `BUNDLED_EVENT_FORMS.PARTO`: el `option` de `birthType` pasa a `DISTOCICO`.
+- `EVENT_VALUE_LABELS`: `DISTOCICO` es el valor vigente; `DISTOXICO` se mantiene como alias de lectura para los eventos aún no migrados.
+- Nuevo `docs/scripts/migrate-birthtype-distocico.py` (patrón `migrate-milking-records.py`): escanea `Events` filtrando `eventType = PARTO AND contains(payloadJson, "DISTOXICO")`, reescribe `payloadJson` (parseando el JSON, solo si `birthType == "DISTOXICO"`), `--dry-run` disponible.
+- Nota: escrituras nuevas con `birthType: "DISTOXICO"` ahora se **rechazan** (no está en `options`). Ejecutar el script antes/después del deploy.
+
+**Validación**: back `./gradlew test --rerun-tasks` 1159/1159 · front `npm run lint` limpio · `npm run build` OK · `npm test` 135/135 · `npm run test:coverage` 87.1 % / 75.2 % (umbral 70/60).
 
 ### 2026-09-10 — Fase 2 (resto de eventos bovinos: migración completa)
 

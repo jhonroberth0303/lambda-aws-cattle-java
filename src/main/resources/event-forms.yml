@@ -198,9 +198,10 @@ domains:
           required: true
           options:
             - { value: NORMAL, label: "Normal" }
-            # Typo histórico DISTOXICO (debería ser DISTOCICO): se conserva para no
-            # divergir de los datos ya persistidos; el rename necesita migración.
-            - { value: DISTOXICO, label: "Distócico" }
+            # Corregido el typo histórico DISTOXICO -> DISTOCICO (2026-09-10).
+            # Los datos previos se reescriben con docs/scripts/migrate-birthtype-distocico.py;
+            # la lectura tolera ambos valores (EVENT_VALUE_LABELS en cattle-front).
+            - { value: DISTOCICO, label: "Distócico" }
         - { name: calfWeightKg, label: "Peso de la cría (kg, opcional)", type: number, min: 0, step: 0.1, placeholder: "Ej. 35" }
 
     ABORTO:

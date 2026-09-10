@@ -4,8 +4,14 @@
 **Tipo**: Bug funcional + deuda técnica estructural
 **Prioridad**: Alta
 **Fecha**: 2026-09-09
-**Estado**: Registrado — pendiente de refinamiento
+**Estado**: Hallazgo D ✅ resuelto (2026-09-10) · A parcialmente mitigado · B y C abiertos
 **Componentes**: `BovineEventProcessor`, `BovineSummaryService`, `LifecycleRecalculationService`, `ProductiveStateCalculator`, `cattle-front/BovineEventPanel`
+
+## Actualización 2026-09-10 (desde EP-20260909 Fase 2)
+
+- **D — ✅ resuelto**: `BovineEventProcessor.enforceBovineIsRegistrable` rechaza eventos sobre bovinos inexistentes (id numérico sin identidad → `NotFoundException`) o dados de baja (`enabled == false` / `LifecycleStatus` ∈ {SOLD, DEAD, CULLED, TRANSFERRED, INACTIVE}), salvo MUERTE/VENTA. Front: `isBovineInactive()` en `domain/bovines.js` reemplaza el guard roto `status === "VENDIDO"/"MUERTO"` del panel.
+- **A — parcialmente mitigado**: ya no se pueden *añadir* eventos a un animal de baja, pero **sigue sin existir la proyección** MUERTE/VENTA → `LifecycleStatus`. Registrar una muerte no cambia el estado del bovino ni el summary. Pendiente.
+- **B y C** (estado productivo/alertas de animales inactivos, `farmId: null`): sin cambios.
 
 ## Trazabilidad
 
