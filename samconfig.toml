@@ -15,13 +15,16 @@ parameter_overrides = """
   CorsAllowedOrigins="http://localhost:3000,http://localhost:5173,https://ambitious-tree-021c81b10.4.azurestaticapps.net" \
   SecurityEnabled="false" \
   RateLimitPerHour="100" \
-  TableBovines="Bovines" \
-  TableFarmMilking="MilkingRecords" \
-  TablePasture="Pastures" \
-  TablePlan="Plans" \
+  TableBovines="bovines-prod" \
+  TableFarmMilking="milking-records-prod" \
+  TablePasture="pastures-prod" \
+  TablePlan="plans-prod" \
   TableCounters="counters" \
-  TableSiteSettings="SiteSettings" \
-  TableEvents="Events"
+  TableSiteSettings="site-settings-prod" \
+  TableEvents="events-prod" \
+  TableNotifications="notifications-prod" \
+  NotificationMilkingSiteId="001" \
+  NotificationMilkingFarmId="F001"
 """
 image_repositories = []
 
@@ -38,13 +41,16 @@ parameter_overrides = """
   CorsAllowedOrigins="http://localhost:3000,http://localhost:5173,https://ambitious-tree-021c81b10.4.azurestaticapps.net" \
   SecurityEnabled="false" \
   RateLimitPerHour="100" \
-  TableBovines="Bovines" \
-  TableFarmMilking="MilkingRecords" \
-  TablePasture="Pastures" \
-  TablePlan="Plans" \
+  TableBovines="bovines-prod" \
+  TableFarmMilking="milking-records-prod" \
+  TablePasture="pastures-prod" \
+  TablePlan="plans-prod" \
   TableCounters="counters" \
-  TableSiteSettings="SiteSettings" \
-  TableEvents="Events"
+  TableSiteSettings="site-settings-prod" \
+  TableEvents="events-prod" \
+  TableNotifications="notifications-prod" \
+  NotificationMilkingSiteId="001" \
+  NotificationMilkingFarmId="F001"
 """
 
 [prod.deploy.parameters]
@@ -58,11 +64,14 @@ parameter_overrides = """
   CorsAllowedOrigins="https://cattle-app.com,https://ambitious-tree-021c81b10.4.azurestaticapps.net" \
   SecurityEnabled="true" \
   RateLimitPerHour="100" \
-  TableBovines="Bovines" \
-  TableFarmMilking="MilkingRecords" \
-  TablePasture="Pastures" \
-  TablePlan="Plans" \
+  TableBovines="bovines-prod" \
+  TableFarmMilking="milking-records-prod" \
+  TablePasture="pastures-prod" \
+  TablePlan="plans-prod" \
   TableCounters="counters" \
-  TableSiteSettings="SiteSettings" \
-  TableEvents="Events"
+  TableSiteSettings="site-settings-prod" \
+  TableEvents="events-prod" \
+  TableNotifications="notifications-prod" \
+  NotificationMilkingSiteId="001" \
+  NotificationMilkingFarmId="F001"
 """
