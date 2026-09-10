@@ -54,6 +54,37 @@ public class StreamLambdaHandlerTest {
     }
 
     @Test
+    public void catalogs_streamRequest_respondsWithDomainsAndEtag() {
+        InputStream requestStream = new AwsProxyRequestBuilder("/catalogs", HttpMethod.GET)
+                                            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                                            .buildStream();
+        ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
+
+        handle(requestStream, responseStream);
+
+        AwsProxyResponse response = readResponse(responseStream);
+        assertNotNull(response);
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatusCode());
+        assertTrue(response.getBody().contains("bovine-events"));
+        assertTrue(response.getBody().contains("\"code\":\"PARTO\""));
+        assertTrue(response.getMultiValueHeaders().containsKey(HttpHeaders.ETAG));
+    }
+
+    @Test
+    public void catalogDomain_unknown_responds404() {
+        InputStream requestStream = new AwsProxyRequestBuilder("/catalogs/not-a-domain", HttpMethod.GET)
+                                            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                                            .buildStream();
+        ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
+
+        handle(requestStream, responseStream);
+
+        AwsProxyResponse response = readResponse(responseStream);
+        assertNotNull(response);
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatusCode());
+    }
+
+    @Test
     public void invalidResource_streamRequest_responds404() {
         InputStream requestStream = new AwsProxyRequestBuilder("/actuator/pong", HttpMethod.GET)
                                             .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)

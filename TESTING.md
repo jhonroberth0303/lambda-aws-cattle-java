@@ -117,9 +117,22 @@ open build/reports/jacoco/test/html/index.html
 
 ### Métricas de Cobertura
 
+Objetivo mínimo:
+
 - **Cobertura de líneas:** ≥ 85%
 - **Cobertura de ramas:** ≥ 80%
 - **Cobertura de métodos:** ≥ 90%
+
+Cobertura actual (JaCoCo, suite completa de ~1089 tests unitarios):
+
+- **Líneas:** ~95%
+- **Ramas:** ~80%
+- **Métodos:** ~94%
+- **Clases:** ~96%
+
+Lo no cubierto restante es esencialmente arranque de contexto Spring en handlers Lambda
+(`*SchedulerHandler` vía `SpringApplicationBuilder`), `SecurityConfig` y ramas defensivas
+de excepciones checked no alcanzables desde tests unitarios.
 
 ## 🧩 Estructura de Tests
 

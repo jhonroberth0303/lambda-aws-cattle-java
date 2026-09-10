@@ -23,6 +23,7 @@ Este documento describe como trabajar con React, Vite, JSX, hooks y servicios HT
 - JSX como formato dominante de componentes
 - mezcla de JavaScript y TypeScript en componentes, hooks y utilidades
 - Axios y `fetch` nativo para integracion HTTP
+- `@tanstack/react-query` para cache de datos de servidor de larga vida (introducido en Fase 1 de EP-20260909 para `/catalogs`); no reemplaza `useState`/`useEffect` para estado local de pantalla
 - ESLint plano (`eslint.config.js`)
 - `vite-plugin-pwa` presente en dependencias
 
@@ -152,6 +153,8 @@ La correccion reciente de bovinos deja el patron esperado:
 - no introducir estado global si el slice sigue siendo local y simple
 - derivar datos presentacionales en el componente o hook solo cuando no exista ya ese calculo en backend
 - si backend ya entrega estados calculados, no duplicar la misma regla de negocio en varios componentes
+- catalogos de dominio (`src/domain/*`): fuente unica hidratada desde `GET /catalogs` via `useCatalogs()` con bundle estatico de fallback; los accesores consultan `src/config/catalogsCache.js` antes del bundle. No reescribir estas tablas a mano ni acoplar componentes a la forma del endpoint.
+- datos de servidor cacheables y compartidos entre pantallas: React Query (`staleTime` alto + persistencia en `localStorage` para la PWA), nunca una llamada bloqueante en el arranque.
 
 ## Estilos y CSS
 
@@ -182,19 +185,40 @@ Ejemplos consistentes:
 - `npm run dev`
 - `npm run build`
 - `npm run lint`
+- `npm test` / `npm run test:watch` / `npm run test:coverage`
 
 ### Gaps de enforcement actuales
 
 No hay evidencia directa en la configuracion revisada de:
 
 - Prettier activo
-- testing frontend operativo como parte del flujo principal
 - lint dedicado para archivos `ts` o `tsx`
 
 Conclusiones practicas:
 
 - la consistencia visual depende hoy mas del estilo existente y de revision humana que de formateo automatico documentado
 - hay archivos TypeScript en el repo, pero el lint observado esta enfocado en `js` y `jsx`
+
+## Testing (Vitest)
+
+Stack: `vitest` + `@testing-library/react` + `@testing-library/user-event` + `jest-dom` + `jsdom`.
+Config en `vitest.config.js` (independiente de `vite.config.js`); setup en `src/test/setup.js`.
+
+Convenciones:
+
+- archivos `*.test.js` (lógica pura) o `*.test.jsx` (componentes), junto al archivo que prueban.
+- probar **comportamiento**, no implementación: nada de snapshots masivos.
+- lógica de dominio pura (`src/domain/**`, `src/search/**`, utilidades) es prioridad: barata y de alto valor.
+- componentes: consultas por rol/texto (`getByRole`, `findByText`), `user-event` para interacción.
+- hooks y servicios: mockear la red (`vi.stubGlobal("fetch", ...)` o MSW), nunca pegarle a un backend real.
+- **guardia anti-deriva**: los catálogos de `src/domain` llevan pruebas de consistencia (códigos únicos, todos con label, grupos válidos). Cualquier catálogo nuevo debe traer su prueba.
+
+Cobertura (`vitest.config.js` -> `coverage`):
+
+- alcance actual enfocado en `src/domain`, `src/search`, `src/config`, utilidades y helpers puros de potreros. Umbral 70 %.
+- ampliación planificada: hooks (Fase 4.1) y componentes de dominio (Fase 4.2) — ver `docs/stories/configuracion/EP-20260909-configuracion-catalogos-i18n.md`.
+
+Gate de PR recomendado: `npm run lint && npm run test:coverage && npm run build`.
 
 ## Reglas practicas de revision
 

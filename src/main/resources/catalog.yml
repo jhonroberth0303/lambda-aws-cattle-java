@@ -1,0 +1,98 @@
+# ============================================================================
+# Metadatos de catálogos de dominio — fuente de GET /catalogs
+# Épica EP-20260909 (Configuración, catálogos e i18n), Fase 1.
+# ----------------------------------------------------------------------------
+# Regla: los `code` de un dominio con `enum:` DEBEN coincidir exactamente con
+# los constantes del enum Java indicado. CatalogService valida esto al construir
+# el bean y aborta el arranque si divergen (guardia anti-deriva del backend).
+#
+# El front (cattle-front/src/domain/*) consume este contrato vía useCatalogs();
+# no reescribe estas tablas a mano.
+# ============================================================================
+
+version: "2026-09-09"
+
+domains:
+
+  bovine-events:
+    enum: com.cattle.enums.BovineEventType
+    entries:
+      - { code: COMPRA,             label: "Compra",                group: ADQUISICION }
+      - { code: SEGUIMIENTO,        label: "Seguimiento",           group: SEGUIMIENTO }
+      - { code: BANO_GARRAPATAS,    label: "Baño garrapatas",       group: SANIDAD }
+      - { code: DESPARASITACION,    label: "Desparasitación",       group: SANIDAD }
+      - { code: VACUNACION,         label: "Vacunación",            group: SANIDAD }
+      - { code: TRATAMIENTO,        label: "Tratamiento médico",    group: SANIDAD }
+      - { code: PESAJE,             label: "Pesaje",                group: PRODUCCION }
+      - { code: MONTA,              label: "Monta / Servicio",      group: REPRODUCCION }
+      - { code: INSEMINACION,       label: "Inseminación",          group: REPRODUCCION }
+      - { code: DIAGNOSTICO_PRENEZ, label: "Diagnóstico de preñez", group: REPRODUCCION }
+      - { code: PARTO,              label: "Parto",                 group: REPRODUCCION }
+      - { code: ABORTO,             label: "Aborto",                group: REPRODUCCION }
+      - { code: DESTETE,            label: "Destete",               group: REPRODUCCION }
+      - { code: SECADO,             label: "Secado",                group: REPRODUCCION }
+      - { code: PRODUCCION_LECHE,   label: "Producción de leche",   group: PRODUCCION }
+      - { code: CASTRACION,         label: "Castración",            group: SANIDAD }
+      - { code: DESCORNE,           label: "Descorne",              group: SANIDAD }
+      - { code: MARCACION,          label: "Marcación",             group: MANEJO }
+      - { code: TRASLADO,           label: "Traslado",              group: MANEJO }
+      - { code: VENTA,              label: "Venta",                 group: SALIDA }
+      - { code: MUERTE,             label: "Muerte",                group: SALIDA }
+      - { code: OBSERVACION,        label: "Observación",           group: OBSERVACION }
+
+  pasture-events:
+    enum: com.cattle.enums.EventType
+    entries:
+      - { code: OPEN,              label: "Apertura",               dotClass: "timeline-dot--open" }
+      - { code: CLOSE,             label: "Cierre",                 dotClass: "timeline-dot--close" }
+      - { code: MAINTENANCE_SET,   label: "Bloqueo",                dotClass: "timeline-dot--block" }
+      - { code: MAINTENANCE_CLEAR, label: "Desbloqueo",             dotClass: "timeline-dot--unblock" }
+      - { code: PRE_ENTRY_CHECK,   label: "Inspección pre-entrada", dotClass: "timeline-dot--check" }
+      - { code: FERTILIZED,        label: "Fertilización",          dotClass: "timeline-dot--labor" }
+      - { code: LIMED,             label: "Encalado",               dotClass: "timeline-dot--labor" }
+      - { code: HEIGHT_MEASURED,   label: "Medición de altura",     dotClass: "timeline-dot--labor" }
+      - { code: OBSERVATION_ADDED, label: "Observación",            dotClass: "timeline-dot--labor" }
+
+  pasture-statuses:
+    enum: com.cattle.enums.PastureStatus
+    entries:
+      - { code: DISPONIBLE,    label: "Disponible",     sortOrder: 0 }
+      - { code: EN_USO,        label: "En uso",         sortOrder: 1 }
+      - { code: EN_DESCANSO,   label: "En descanso",    sortOrder: 2 }
+      - { code: MANTENIMIENTO, label: "Mantenimiento",  sortOrder: 3 }
+      - { code: NINGUNO,       label: "Sin estado",     sortOrder: 4 }
+
+  pasture-substatuses:
+    enum: com.cattle.enums.PastureSubstatus
+    entries:
+      - { code: NINGUNO,           label: "Sin subestado" }
+      - { code: ESTABLECIMIENTO,   label: "Establecimiento" }
+      - { code: FERTILIZACION,     label: "Fertilización" }
+      - { code: FITOSANITARIO,     label: "Fitosanitario" }
+      - { code: HUMEDO,            label: "Húmedo" }
+      - { code: CIERRE_TEMPORAL,   label: "Cierre temporal" }
+      - { code: CORTE_PROGRAMADO,  label: "Corte programado" }
+      - { code: FUERA_DE_SERVICIO, label: "Fuera de servicio" }
+
+  bovine-categories:
+    enum: com.cattle.enums.profiles.BovineCategory
+    entries:
+      - { code: CALF,       label: "Ternero/a" }
+      - { code: HEIFER,     label: "Novilla" }
+      - { code: COW,        label: "Vaca" }
+      - { code: BULL,       label: "Toro" }
+      - { code: OX,         label: "Buey" }
+      - { code: YOUNG_BULL, label: "Novillo" }
+
+  # `species` es texto libre en el backend (Pasture.species: String). Estos son
+  # los valores reales observados en datos y en PastureBuilder. Sin `enum:`
+  # porque no hay un enum Java que validar; ver decisión abierta en la épica.
+  pasture-species:
+    entries:
+      - { code: KIKUYO,   label: "Kikuyo" }
+      - { code: RYEGRASS, label: "Ryegrass" }
+      - { code: CUBA22,   label: "Cuba 22" }
+
+  notification-types:
+    entries:
+      - { code: MILKING_AM_REMINDER, label: "Ordeño", icon: "🥛", tone: "warn" }

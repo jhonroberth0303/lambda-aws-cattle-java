@@ -56,7 +56,9 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
-                                "/api/chat/health"
+                                "/api/chat/health",
+                                // Catálogos de dominio: metadata pública del producto (EP-20260909, Fase 1)
+                                "/catalogs/**"
                         ).permitAll()
                         
                         // Endpoints de bovinos - requieren autenticación

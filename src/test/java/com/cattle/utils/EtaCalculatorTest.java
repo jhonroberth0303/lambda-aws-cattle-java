@@ -46,4 +46,54 @@ class EtaCalculatorTest {
 
         assertEquals(18, result);
     }
+
+    // ==================== ANNUAL_SILAGE ====================
+
+    private Plan silagePlan(Integer harvestDaysAfterSowing) {
+        return Plan.builder()
+                .planType("ANNUAL_SILAGE")
+                .species("MAIZE")
+                .growthRateCmPerDay(0.0)
+                .rules(Plan.Rules.builder().harvestDaysAfterSowing(harvestDaysAfterSowing).build())
+                .build();
+    }
+
+    private Pasture pastureWithEstablishment(String establishmentDate) {
+        Pasture pasture = new Pasture();
+        pasture.setEstablishmentDate(establishmentDate);
+        return pasture;
+    }
+
+    @Test
+    void etaSilage_remainingDaysUntilHarvest() {
+        Pasture pasture = pastureWithEstablishment(LocalDate.now(ZoneOffset.UTC).minusDays(30).toString());
+
+        int result = EtaCalculator.etaOpenDays(pasture, silagePlan(120));
+
+        assertEquals(90, result);
+    }
+
+    @Test
+    void etaSilage_pastHarvestDate_clampsToZero() {
+        Pasture pasture = pastureWithEstablishment(LocalDate.now(ZoneOffset.UTC).minusDays(200).toString());
+
+        assertEquals(0, EtaCalculator.etaOpenDays(pasture, silagePlan(120)));
+    }
+
+    @Test
+    void etaSilage_missingHarvestDays_returnsZero() {
+        Pasture pasture = pastureWithEstablishment(LocalDate.now(ZoneOffset.UTC).minusDays(10).toString());
+
+        assertEquals(0, EtaCalculator.etaOpenDays(pasture, silagePlan(null)));
+    }
+
+    @Test
+    void etaSilage_missingEstablishmentDate_returnsZero() {
+        assertEquals(0, EtaCalculator.etaOpenDays(pastureWithEstablishment(null), silagePlan(120)));
+    }
+
+    @Test
+    void etaSilage_unparseableEstablishmentDate_returnsZero() {
+        assertEquals(0, EtaCalculator.etaOpenDays(pastureWithEstablishment("2026/01"), silagePlan(120)));
+    }
 }

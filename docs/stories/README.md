@@ -8,10 +8,14 @@ Este índice organiza los artefactos de `docs/stories/` y deja explícito qué s
 stories/
 ├── README.md
 ├── bedrock/
+├── buscador/
 ├── cattle-pastures-milkingProd/
+├── configuracion/
 ├── estimaciones/
 ├── eventos-bovines/
 ├── milkingProd/
+├── notificaciones/
+├── settings/
 └── summary/
 ```
 
@@ -59,6 +63,14 @@ Historias disponibles:
 ### Eventos Bovinos
 
 La carpeta `eventos-bovines/` existe en la estructura del repositorio y debe tratarse como superficie documental separada cuando se revisen historias del dominio bovino orientadas a eventos.
+
+### Configuración
+
+La carpeta `configuracion/` concentra el análisis y diseño para eliminar los datos quemados del frontend (catálogos, i18n, configuración de negocio) y para el módulo de configuración por sitio. Separa por naturaleza del dato: catálogos de dominio (fuente única en backend), textos de UI (i18n del front), configuración de negocio (`SiteSettingItem` versionado) y mocks (a eliminar).
+
+Artefactos disponibles:
+
+- `EP-20260909-configuracion-catalogos-i18n.md` — épica transversal en 5 fases (consolidación en front, endpoint de catálogos, formularios schema-driven, configuración de negocio en `SiteSetting`, pruebas unitarias del front).
 
 ### Estimaciones
 
