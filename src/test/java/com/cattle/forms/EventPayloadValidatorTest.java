@@ -19,7 +19,7 @@ class EventPayloadValidatorTest {
 
     private EventFormSchema.Field field(String name, EventFormSchema.Field.Type type, boolean required,
                                         Double min, Double max, List<EventFormSchema.Option> options) {
-        return new EventFormSchema.Field(name, name, type, required, min, max, null, null, null, null, null, false, options);
+        return new EventFormSchema.Field(name, name, type, required, min, max, null, null, null, null, null, false, options, null, null);
     }
 
     private EventFormSchema schema(List<String> requireOneOf, EventFormSchema.Field... fields) {

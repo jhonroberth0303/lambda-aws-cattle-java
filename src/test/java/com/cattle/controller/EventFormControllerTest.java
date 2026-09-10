@@ -64,6 +64,17 @@ class EventFormControllerTest {
 
     @Test
     void getDomainSchema_domainWithoutSchemas_throwsNotFound() {
-        assertThrows(NotFoundException.class, () -> controller.getDomainSchema("pasture-events", null));
+        assertThrows(NotFoundException.class, () -> controller.getDomainSchema("no-existe", null));
+    }
+
+    @Test
+    void getDomainSchema_pastureEvents_returnsOkWith8Schemas() {
+        ResponseEntity<EventFormSchemasDTO> response = controller.getDomainSchema("pasture-events", null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getSchemas()).containsKeys(
+                "OPEN", "CLOSE", "MAINTENANCE_SET", "MAINTENANCE_CLEAR",
+                "FERTILIZED", "LIMED", "HEIGHT_MEASURED", "OBSERVATION_ADDED");
+        assertThat(response.getBody().getSchemas()).doesNotContainKey("PRE_ENTRY_CHECK");
     }
 }

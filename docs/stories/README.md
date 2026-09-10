@@ -67,7 +67,8 @@ La carpeta `bugs-deuda-tecnica/` registra hallazgos transversales detectados dur
 
 Artefactos disponibles:
 
-- `DT-20260909-eventos-salida-no-proyectan-estado-ni-summary.md` — los eventos MUERTE/VENTA no cambian el `LifecycleStatus` ni se reflejan en `GET /summary`; además el estado productivo/alertas y `farmId` quedan inconsistentes para bovinos inactivos, y el guard `isBaja` del front no filtra estados del backend. Detectado probando la Fase 2 de `configuracion/EP-20260909`.
+- `DT-20260909-eventos-salida-no-proyectan-estado-ni-summary.md` — los eventos MUERTE/VENTA no cambian el `LifecycleStatus` ni se reflejan en `GET /summary`; además el estado productivo/alertas y `farmId` quedan inconsistentes para bovinos inactivos, y el guard `isBaja` del front no filtra estados del backend (hallazgo D resuelto; A/B/C abiertos). Detectado probando la Fase 2 de `configuracion/EP-20260909`.
+- `DT-20260910-epica-configuracion-cierre-diferidos.md` — backlog de seguimiento al cierre de `configuracion/EP-20260909`: i18n con librería, `openapi-typescript`, `species` enum, selector de finca, test anti-deriva bundle↔YAML, `PRE_ENTRY_ITEMS` como catálogo, bug ARIA de `SearchBar`. Nada bloquea; la deriva activa ya está eliminada.
 
 ### Eventos Bovinos
 

@@ -90,6 +90,22 @@ public class StreamLambdaHandlerTest {
     }
 
     @Test
+    public void pastureEventSchema_streamRequest_respondsWithSchemas() {
+        InputStream requestStream = new AwsProxyRequestBuilder("/catalogs/pasture-events/schema", HttpMethod.GET)
+                                            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+                                            .buildStream();
+        ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
+
+        handle(requestStream, responseStream);
+
+        AwsProxyResponse response = readResponse(responseStream);
+        assertNotNull(response);
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatusCode());
+        assertTrue(response.getBody().contains("MAINTENANCE_SET"));
+        assertTrue(response.getBody().contains("\"residualCm\""));
+    }
+
+    @Test
     public void catalogDomain_unknown_responds404() {
         InputStream requestStream = new AwsProxyRequestBuilder("/catalogs/not-a-domain", HttpMethod.GET)
                                             .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)

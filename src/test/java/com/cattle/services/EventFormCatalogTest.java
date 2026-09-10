@@ -3,6 +3,7 @@ package com.cattle.services;
 import com.cattle.config.LambdaContext;
 import com.cattle.dtos.forms.EventFormSchemasDTO;
 import com.cattle.enums.BovineEventType;
+import com.cattle.enums.EventType;
 import com.cattle.forms.EventFormSchema;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -94,6 +95,15 @@ class EventFormCatalogTest {
 
     @Test
     void getDomainSchemas_unknownDomain_returnsNull() {
-        assertNull(catalog.getDomainSchemas("pasture-events"));
+        assertNull(catalog.getDomainSchemas("no-existe"));
+    }
+
+    @Test
+    void pastureEvents_coversEventTypeExceptPreEntryCheck() {
+        assertThat(catalog.getDomainSchemas("pasture-events").getSchemas())
+                .hasSize(EventType.values().length - 1)
+                .doesNotContainKey("PRE_ENTRY_CHECK");
+        assertThat(catalog.findEvent("pasture-events", "OPEN")).isPresent();
+        assertThat(catalog.findEvent("pasture-events", "PRE_ENTRY_CHECK")).isEmpty();
     }
 }
