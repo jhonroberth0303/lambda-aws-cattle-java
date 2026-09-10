@@ -6,22 +6,113 @@
 #   - Backend (BovineEventProcessor): valida el payload contra el mismo esquema
 #     (required, type, min/max, options, requireOneOf).
 #
-# Regla anti-deriva: toda clave bajo un dominio con `enum:` DEBE ser una
-# constante de ese enum Java. EventFormCatalog aborta el arranque si diverge.
+# Regla anti-deriva: las claves de un dominio con `enum:` DEBEN coincidir
+# EXACTAMENTE con las constantes de ese enum Java (EventFormCatalog aborta el
+# arranque si divergen). Los 22 tipos de BovineEventType están migrados.
 #
-# Fase 2 — piloto: se migran 4 tipos (PESAJE, TRATAMIENTO, INSEMINACION,
-# MUERTE) para validar el renderer y el validador. El resto sigue con la
-# lógica hardcodeada de BovineEventProcessor / BovineEventPanel hasta que se
-# migren en iteraciones siguientes.
+# Campos por `type`:
+#   text     -> <input> / <select> si trae `options`
+#   number   -> <input type=number> (min/max/step); un 0 real cuenta como valor
+#   textarea -> <textarea> (maxLength)
+#   date     -> <input type=date>; `minField: eventAt` acota; `calvingEstimate`
+#               pre-rellena con eventAt + gestación
+# `appendNotes: false` -> el renderer NO añade el textarea genérico de notas
+#   (el esquema define su propio campo `notes`, o el evento no lleva notas).
 # ============================================================================
 
-version: "2026-09-09"
+version: "2026-09-10"
 
 domains:
 
   bovine-events:
     enum: com.cattle.enums.BovineEventType
 
+    # --- Adquisición -------------------------------------------------------
+    COMPRA:
+      title: "Registrar compra"
+      submitLabel: "Guardar compra"
+      fields:
+        - { name: amountCOP, label: "Monto (COP)", type: number, min: 0, placeholder: "Ej. 2500000" }
+        - { name: sellerName, label: "Nombre del vendedor (opcional)", type: text, placeholder: "Nombre" }
+        - { name: sellerPhone, label: "Teléfono del vendedor (opcional)", type: text, placeholder: "Teléfono" }
+
+    # --- Seguimiento / observación --------------------------------------
+    SEGUIMIENTO:
+      title: "Registrar seguimiento"
+      submitLabel: "Guardar seguimiento"
+      appendNotes: false
+      fields:
+        - { name: notes, label: "Observaciones", type: textarea, required: true, maxLength: 1000, placeholder: "Describe la observación" }
+
+    OBSERVACION:
+      title: "Agregar observación"
+      submitLabel: "Guardar observación"
+      appendNotes: false
+      fields:
+        - { name: notes, label: "Observaciones", type: textarea, required: true, maxLength: 1000, placeholder: "Describe la observación" }
+
+    # --- Sanidad ---------------------------------------------------------
+    BANO_GARRAPATAS:
+      title: "Registrar baño garrapatas"
+      submitLabel: "Guardar baño"
+      fields:
+        - { name: product, label: "Producto", type: text, required: true, placeholder: "Nombre del producto" }
+        - { name: activeIngredient, label: "Principio activo (opcional)", type: text, placeholder: "Ej. Ivermectina" }
+        - { name: amountCOP, label: "Costo (COP, opcional)", type: number, min: 0, placeholder: "Ej. 50000" }
+
+    DESPARASITACION:
+      title: "Registrar desparasitación"
+      submitLabel: "Guardar desparasitación"
+      fields:
+        - { name: product, label: "Producto", type: text, required: true, placeholder: "Nombre del producto" }
+        - { name: activeIngredient, label: "Principio activo (opcional)", type: text, placeholder: "Ej. Ivermectina" }
+        - { name: amountCOP, label: "Costo (COP, opcional)", type: number, min: 0, placeholder: "Ej. 50000" }
+
+    VACUNACION:
+      title: "Registrar vacunación"
+      submitLabel: "Guardar vacuna"
+      fields:
+        - { name: vaccineName, label: "Nombre de la vacuna", type: text, required: true, placeholder: "Ej. Brucelosis" }
+        - { name: laboratory, label: "Laboratorio (opcional)", type: text, placeholder: "Ej. MSD" }
+        - { name: amountCOP, label: "Costo (COP, opcional)", type: number, min: 0, placeholder: "Ej. 30000" }
+
+    TRATAMIENTO:
+      title: "Registrar tratamiento médico"
+      submitLabel: "Guardar tratamiento"
+      fields:
+        - { name: diagnosis, label: "Diagnóstico", type: text, required: true, placeholder: "Ej. Mastitis" }
+        - { name: product, label: "Producto / Medicamento", type: text, required: true, placeholder: "Ej. Oxitetraciclina" }
+        - { name: amountCOP, label: "Costo (COP, opcional)", type: number, min: 0, placeholder: "Ej. 80000" }
+
+    CASTRACION:
+      title: "Registrar castración"
+      submitLabel: "Guardar castración"
+      fields:
+        - name: method
+          label: "Método"
+          type: text
+          required: true
+          options:
+            - { value: "", label: "Seleccionar" }
+            - { value: QUIRURGICO, label: "Quirúrgico" }
+            - { value: BURDIZZO, label: "Burdizzo" }
+            - { value: ELASTRADOR, label: "Elastrador" }
+
+    DESCORNE:
+      title: "Registrar descorne"
+      submitLabel: "Guardar descorne"
+      fields:
+        - name: method
+          label: "Método"
+          type: text
+          required: true
+          options:
+            - { value: "", label: "Seleccionar" }
+            - { value: QUIMICO, label: "Químico" }
+            - { value: TERMICO, label: "Térmico" }
+            - { value: QUIRURGICO, label: "Quirúrgico" }
+
+    # --- Producción -----------------------------------------------------
     PESAJE:
       title: "Registrar pesaje"
       submitLabel: "Guardar pesaje"
@@ -37,13 +128,27 @@ domains:
             - { value: "4", label: "4 - Gordo" }
             - { value: "5", label: "5 - Muy gordo" }
 
-    TRATAMIENTO:
-      title: "Registrar tratamiento médico"
-      submitLabel: "Guardar tratamiento"
+    PRODUCCION_LECHE:
+      title: "Registrar producción de leche"
+      submitLabel: "Guardar producción"
       fields:
-        - { name: diagnosis, label: "Diagnóstico", type: text, required: true, placeholder: "Ej. Mastitis" }
-        - { name: product, label: "Producto / Medicamento", type: text, required: true, placeholder: "Ej. Oxitetraciclina" }
-        - { name: amountCOP, label: "Costo (COP, opcional)", type: number, min: 0, placeholder: "Ej. 80000" }
+        - { name: liters, label: "Litros", type: number, required: true, min: 0, step: 0.1, placeholder: "Ej. 12.5" }
+        - name: session
+          label: "Sesión (opcional)"
+          type: text
+          options:
+            - { value: "", label: "Sin especificar" }
+            - { value: MANANA, label: "Mañana" }
+            - { value: TARDE, label: "Tarde" }
+            - { value: DIA_COMPLETO, label: "Día completo" }
+
+    # --- Reproducción --------------------------------------------------
+    MONTA:
+      title: "Registrar servicio/monta"
+      submitLabel: "Guardar monta"
+      fields:
+        - { name: bullBreed, label: "Raza del toro", type: text, required: true, placeholder: "Ej. Brahman" }
+        - { name: estimatedCalvingDate, label: "Fecha estimada de parto (opcional)", type: date, calvingEstimate: true, minField: eventAt, hint: "Sugerida desde la fecha del evento + gestación. Puedes ajustarla." }
 
     INSEMINACION:
       title: "Registrar inseminación"
@@ -54,6 +159,93 @@ domains:
         - { name: bullBreed, label: "Raza del toro (opcional)", type: text, placeholder: "Ej. Holstein" }
         - { name: semenBatch, label: "Lote semen (opcional)", type: text, placeholder: "Código de lote" }
         - { name: estimatedCalvingDate, label: "Fecha estimada de parto (opcional)", type: date, calvingEstimate: true, minField: eventAt, hint: "Sugerida desde la fecha del evento + gestación. Puedes ajustarla." }
+
+    DIAGNOSTICO_PRENEZ:
+      title: "Diagnóstico de preñez"
+      submitLabel: "Guardar diagnóstico"
+      fields:
+        - name: result
+          label: "Resultado"
+          type: text
+          required: true
+          options:
+            - { value: PRENIADA, label: "Preñada" }
+            - { value: VACIA, label: "Vacía" }
+            - { value: DUDOSA, label: "Dudosa" }
+        - name: method
+          label: "Método (opcional)"
+          type: text
+          options:
+            - { value: "", label: "Sin especificar" }
+            - { value: PALPA, label: "Palpación" }
+            - { value: ECOGRAFIA, label: "Ecografía" }
+
+    PARTO:
+      title: "Registrar parto"
+      submitLabel: "Guardar parto"
+      fields:
+        - name: calfGender
+          label: "Sexo de la cría"
+          type: text
+          required: true
+          options:
+            - { value: MACHO, label: "Macho" }
+            - { value: HEMBRA, label: "Hembra" }
+        - { name: calfId, label: "ID de la cría (opcional)", type: text, placeholder: "Arete o ID" }
+        - name: birthType
+          label: "Tipo de parto"
+          type: text
+          required: true
+          options:
+            - { value: NORMAL, label: "Normal" }
+            # Typo histórico DISTOXICO (debería ser DISTOCICO): se conserva para no
+            # divergir de los datos ya persistidos; el rename necesita migración.
+            - { value: DISTOXICO, label: "Distócico" }
+        - { name: calfWeightKg, label: "Peso de la cría (kg, opcional)", type: number, min: 0, step: 0.1, placeholder: "Ej. 35" }
+
+    ABORTO:
+      title: "Registrar aborto"
+      submitLabel: "Guardar aborto"
+      appendNotes: false
+      fields:
+        - { name: notes, label: "Observaciones (opcional)", type: textarea, maxLength: 1000, placeholder: "Descripción del evento" }
+
+    DESTETE:
+      title: "Registrar destete"
+      submitLabel: "Guardar destete"
+      fields:
+        - { name: calfWeightKg, label: "Peso de la cría al destete (kg, opcional)", type: number, min: 0, step: 0.1, placeholder: "Ej. 180" }
+
+    SECADO:
+      title: "Registrar secado"
+      submitLabel: "Guardar secado"
+      fields:
+        - { name: lastMilkLiters, label: "Litros último ordeño (opcional)", type: number, min: 0, step: 0.1, placeholder: "Ej. 4.5" }
+
+    # --- Manejo --------------------------------------------------------
+    MARCACION:
+      title: "Registrar marcación"
+      submitLabel: "Guardar marcación"
+      fields:
+        - { name: newTag, label: "Nuevo arete / ID", type: text, required: true, placeholder: "Nuevo identificador" }
+        - { name: oldTag, label: "Arete anterior (opcional)", type: text, placeholder: "ID anterior" }
+
+    TRASLADO:
+      title: "Registrar traslado"
+      submitLabel: "Guardar traslado"
+      fields:
+        - { name: destinationPaddockId, label: "ID potrero destino", type: text, required: true, placeholder: "ID del potrero de destino" }
+        - { name: lotId, label: "Lote (opcional)", type: text, placeholder: "Ej. L-002" }
+
+    # --- Salida ------------------------------------------------------
+    VENTA:
+      title: "Registrar venta"
+      submitLabel: "Confirmar venta"
+      fields:
+        - { name: buyerName, label: "Nombre del comprador", type: text, required: true, placeholder: "Nombre" }
+        - { name: amountCOP, label: "Monto (COP)", type: number, required: true, min: 0, placeholder: "Ej. 4000000" }
+        - { name: buyerPhone, label: "Teléfono del comprador (opcional)", type: text, placeholder: "Teléfono" }
+        - { name: weightKg, label: "Peso de venta (kg, opcional)", type: number, min: 0, step: 0.1, placeholder: "Ej. 450" }
 
     MUERTE:
       title: "Registrar muerte"

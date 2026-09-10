@@ -29,14 +29,15 @@ class EventFormCatalogTest {
     }
 
     @Test
-    void exposesPilotSchemasAndNothingElse() {
-        assertThat(catalog.findBovineEvent("PESAJE")).isPresent();
-        assertThat(catalog.findBovineEvent("TRATAMIENTO")).isPresent();
-        assertThat(catalog.findBovineEvent("INSEMINACION")).isPresent();
-        assertThat(catalog.findBovineEvent("MUERTE")).isPresent();
-        // Aún no migrados -> validación hardcodeada
-        assertThat(catalog.findBovineEvent("COMPRA")).isEmpty();
-        assertThat(catalog.findBovineEvent("PARTO")).isEmpty();
+    void exposesASchemaForEveryBovineEventType() {
+        EventFormSchemasDTO dto = catalog.getDomainSchemas("bovine-events");
+
+        assertThat(dto.getSchemas()).hasSize(BovineEventType.values().length);
+        for (BovineEventType type : BovineEventType.values()) {
+            assertThat(catalog.findBovineEvent(type.name()))
+                    .as("esquema de %s", type)
+                    .isPresent();
+        }
     }
 
     @Test
@@ -44,6 +45,15 @@ class EventFormCatalogTest {
         EventFormSchemasDTO dto = catalog.getDomainSchemas("bovine-events");
         assertThat(dto.getSchemas().keySet())
                 .allSatisfy(code -> BovineEventType.valueOf(code));
+    }
+
+    @Test
+    void everySchemaHasTitleSubmitLabelAndFields() {
+        catalog.getDomainSchemas("bovine-events").getSchemas().forEach((code, schema) -> {
+            assertThat(schema.getTitle()).as("title de %s", code).isNotBlank();
+            assertThat(schema.getSubmitLabel()).as("submitLabel de %s", code).isNotBlank();
+            assertThat(schema.getFields()).as("fields de %s", code).isNotEmpty();
+        });
     }
 
     @Test

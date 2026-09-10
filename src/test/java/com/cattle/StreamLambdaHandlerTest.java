@@ -84,6 +84,8 @@ public class StreamLambdaHandlerTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatusCode());
         assertTrue(response.getBody().contains("PESAJE"));
         assertTrue(response.getBody().contains("\"weightKg\""));
+        // Contrato front<->back: el tipo del campo se serializa en minúscula.
+        assertTrue(response.getBody().contains("\"type\":\"number\""));
         assertTrue(response.getMultiValueHeaders().containsKey(HttpHeaders.ETAG));
     }
 
