@@ -1,0 +1,64 @@
+# ============================================================================
+# Esquemas de formulario de eventos — fuente única (EP-20260909, Fase 2).
+# ----------------------------------------------------------------------------
+# Un solo esquema por tipo de evento, consumido por DOS lados:
+#   - Front (cattle-front): renderiza el formulario a partir de `fields`.
+#   - Backend (BovineEventProcessor): valida el payload contra el mismo esquema
+#     (required, type, min/max, options, requireOneOf).
+#
+# Regla anti-deriva: toda clave bajo un dominio con `enum:` DEBE ser una
+# constante de ese enum Java. EventFormCatalog aborta el arranque si diverge.
+#
+# Fase 2 — piloto: se migran 4 tipos (PESAJE, TRATAMIENTO, INSEMINACION,
+# MUERTE) para validar el renderer y el validador. El resto sigue con la
+# lógica hardcodeada de BovineEventProcessor / BovineEventPanel hasta que se
+# migren en iteraciones siguientes.
+# ============================================================================
+
+version: "2026-09-09"
+
+domains:
+
+  bovine-events:
+    enum: com.cattle.enums.BovineEventType
+
+    PESAJE:
+      title: "Registrar pesaje"
+      submitLabel: "Guardar pesaje"
+      fields:
+        - { name: weightKg, label: "Peso (kg)", type: number, required: true, min: 0, step: 0.1, placeholder: "Ej. 320" }
+        - name: conditionScore
+          label: "Condición corporal 1-5 (opcional)"
+          type: number
+          options:
+            - { value: "1", label: "1 - Muy flaco" }
+            - { value: "2", label: "2 - Flaco" }
+            - { value: "3", label: "3 - Normal" }
+            - { value: "4", label: "4 - Gordo" }
+            - { value: "5", label: "5 - Muy gordo" }
+
+    TRATAMIENTO:
+      title: "Registrar tratamiento médico"
+      submitLabel: "Guardar tratamiento"
+      fields:
+        - { name: diagnosis, label: "Diagnóstico", type: text, required: true, placeholder: "Ej. Mastitis" }
+        - { name: product, label: "Producto / Medicamento", type: text, required: true, placeholder: "Ej. Oxitetraciclina" }
+        - { name: amountCOP, label: "Costo (COP, opcional)", type: number, min: 0, placeholder: "Ej. 80000" }
+
+    INSEMINACION:
+      title: "Registrar inseminación"
+      submitLabel: "Guardar inseminación"
+      requireOneOf: [bullId, semenBatch]
+      fields:
+        - { name: bullId, label: "ID del toro (o ingresa lote de semen)", type: text, placeholder: "ID del toro" }
+        - { name: bullBreed, label: "Raza del toro (opcional)", type: text, placeholder: "Ej. Holstein" }
+        - { name: semenBatch, label: "Lote semen (opcional)", type: text, placeholder: "Código de lote" }
+        - { name: estimatedCalvingDate, label: "Fecha estimada de parto (opcional)", type: date, calvingEstimate: true, minField: eventAt, hint: "Sugerida desde la fecha del evento + gestación. Puedes ajustarla." }
+
+    MUERTE:
+      title: "Registrar muerte"
+      submitLabel: "Confirmar baja"
+      appendNotes: false
+      fields:
+        - { name: cause, label: "Causa", type: text, required: true, placeholder: "Ej. Timpanismo" }
+        - { name: findings, label: "Hallazgos (opcional)", type: textarea, maxLength: 500, placeholder: "Descripción de hallazgos" }

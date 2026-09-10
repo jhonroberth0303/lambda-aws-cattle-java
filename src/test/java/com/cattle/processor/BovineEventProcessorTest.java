@@ -6,7 +6,9 @@ import com.cattle.dtos.BovineEventResponseDTO;
 import com.cattle.enums.EventSource;
 import com.cattle.enums.LogType;
 import com.cattle.events.entities.BovineEventItem;
+import com.cattle.forms.EventPayloadValidator;
 import com.cattle.services.BovineEventService;
+import com.cattle.services.EventFormCatalog;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,11 +53,15 @@ class BovineEventProcessorTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private BovineEventProcessor processor;
+    private EventFormCatalog eventFormCatalog;
+    private final EventPayloadValidator payloadValidator = new EventPayloadValidator();
 
     @BeforeEach
     void setUp() {
         openMocks(this);
-        processor = new BovineEventProcessor(bovineEventService, objectMapper, lambdaContext);
+        eventFormCatalog = new EventFormCatalog(lambdaContext);
+        processor = new BovineEventProcessor(bovineEventService, objectMapper, lambdaContext,
+                eventFormCatalog, payloadValidator);
     }
 
     private BovineEventRequestDTO request(String type, Map<String, Object> payload) {
@@ -298,7 +304,8 @@ class BovineEventProcessorTest {
     void applyEvent_payloadSerializationFails_throwsIllegalArgument() throws JsonProcessingException {
         ObjectMapper failing = org.mockito.Mockito.mock(ObjectMapper.class);
         when(failing.writeValueAsString(any())).thenThrow(new JsonProcessingException("boom") {});
-        BovineEventProcessor failingProcessor = new BovineEventProcessor(bovineEventService, failing, lambdaContext);
+        BovineEventProcessor failingProcessor = new BovineEventProcessor(bovineEventService, failing,
+                lambdaContext, eventFormCatalog, payloadValidator);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> failingProcessor.applyEvent("F1", "B1", request("SEGUIMIENTO", Map.of("notes", "n"))));

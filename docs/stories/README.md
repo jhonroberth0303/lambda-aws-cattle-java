@@ -8,6 +8,7 @@ Este índice organiza los artefactos de `docs/stories/` y deja explícito qué s
 stories/
 ├── README.md
 ├── bedrock/
+├── bugs-deuda-tecnica/
 ├── buscador/
 ├── cattle-pastures-milkingProd/
 ├── configuracion/
@@ -59,6 +60,14 @@ Historias disponibles:
 
 - `HU-20260428-deuda-tecnica-summary.md`
 - `HU-20260428-schedulersummary-refresh.md`
+
+### Bugs y deuda técnica
+
+La carpeta `bugs-deuda-tecnica/` registra hallazgos transversales detectados durante pruebas o revisiones que no encajan en una sola superficie de dominio y aún no tienen historia de remediación.
+
+Artefactos disponibles:
+
+- `DT-20260909-eventos-salida-no-proyectan-estado-ni-summary.md` — los eventos MUERTE/VENTA no cambian el `LifecycleStatus` ni se reflejan en `GET /summary`; además el estado productivo/alertas y `farmId` quedan inconsistentes para bovinos inactivos, y el guard `isBaja` del front no filtra estados del backend. Detectado probando la Fase 2 de `configuracion/EP-20260909`.
 
 ### Eventos Bovinos
 

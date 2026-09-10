@@ -7,7 +7,10 @@ import com.cattle.events.entities.BovineEventItem;
 import com.cattle.enums.BovineEventType;
 import com.cattle.enums.EventSource;
 import com.cattle.enums.LogType;
+import com.cattle.forms.EventFormSchema;
+import com.cattle.forms.EventPayloadValidator;
 import com.cattle.services.BovineEventService;
+import com.cattle.services.EventFormCatalog;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
@@ -26,11 +29,17 @@ public class BovineEventProcessor {
     private final BovineEventService bovineEventService;
     private final ObjectMapper objectMapper;
     private final LambdaContext lambdaContext;
+    private final EventFormCatalog eventFormCatalog;
+    private final EventPayloadValidator payloadValidator;
 
-    public BovineEventProcessor(BovineEventService bovineEventService, ObjectMapper objectMapper, LambdaContext lambdaContext) {
+    public BovineEventProcessor(BovineEventService bovineEventService, ObjectMapper objectMapper,
+                                LambdaContext lambdaContext, EventFormCatalog eventFormCatalog,
+                                EventPayloadValidator payloadValidator) {
         this.bovineEventService = bovineEventService;
         this.objectMapper = objectMapper;
         this.lambdaContext = lambdaContext;
+        this.eventFormCatalog = eventFormCatalog;
+        this.payloadValidator = payloadValidator;
     }
 
     public BovineEventResponseDTO applyEvent(String farmId, String bovineId, BovineEventRequestDTO request) {
@@ -100,23 +109,20 @@ public class BovineEventProcessor {
     }
 
     private void validatePayloadByType(BovineEventType eventType, Map<String, Object> payload) {
+        // Fase 2 (EP-20260909): los eventos migrados a event-forms.yml se validan
+        // contra su esquema. El resto conserva la validación hardcodeada hasta que
+        // se migren en iteraciones siguientes.
+        EventFormSchema schema = eventFormCatalog.findBovineEvent(eventType.name()).orElse(null);
+        if (schema != null) {
+            payloadValidator.validate(schema, payload);
+            return;
+        }
+
         switch (eventType) {
             case SEGUIMIENTO, OBSERVACION -> requireField(payload, "notes");
             case BANO_GARRAPATAS, DESPARASITACION -> requireField(payload, "product");
             case VACUNACION -> requireField(payload, "vaccineName");
-            case TRATAMIENTO -> {
-                requireField(payload, "diagnosis");
-                requireField(payload, "product");
-            }
-            case PESAJE -> requireNonNull(payload, "weightKg");
             case MONTA -> requireField(payload, "bullBreed");
-            case INSEMINACION -> {
-                boolean hasBullId = hasValue(payload, "bullId");
-                boolean hasSemenBatch = hasValue(payload, "semenBatch");
-                if (!hasBullId && !hasSemenBatch) {
-                    throw new IllegalArgumentException("Se requiere bullId o semenBatch para el evento INSEMINACION");
-                }
-            }
             case PARTO -> requireField(payload, "calfGender");
             case PRODUCCION_LECHE -> requireNonNull(payload, "liters");
             case CASTRACION -> requireField(payload, "method");
@@ -127,7 +133,6 @@ public class BovineEventProcessor {
                 requireField(payload, "buyerName");
                 requireNonNull(payload, "amountCOP");
             }
-            case MUERTE -> requireField(payload, "cause");
             default -> { /* COMPRA, ABORTO, DESTETE, SECADO, DIAGNOSTICO_PRENEZ: sin campo obligatorio adicional */ }
         }
     }
@@ -144,12 +149,6 @@ public class BovineEventProcessor {
         if (v == null) {
             throw new IllegalArgumentException("El campo " + field + " es requerido para este tipo de evento");
         }
-    }
-
-    private boolean hasValue(Map<String, Object> payload, String field) {
-        if (payload == null) return false;
-        Object v = payload.get(field);
-        return v != null && !v.toString().isBlank();
     }
 
     private String extractNotes(Map<String, Object> payload) {
