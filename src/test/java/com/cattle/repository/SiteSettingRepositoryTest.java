@@ -8,14 +8,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import software.amazon.awssdk.core.pagination.sync.SdkIterable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -45,6 +49,9 @@ class SiteSettingRepositoryTest {
 
     @Mock
     private DynamoDbTable<SiteSettingItem> table;
+
+    @Mock
+    private PageIterable<SiteSettingItem> pageIterable;
 
     private SiteSettingRepository repository;
 
@@ -97,6 +104,48 @@ class SiteSettingRepositoryTest {
                 () -> repository.findCurrent("001", "MILK_PRICE_PER_LITER"));
         assertEquals("Unexpected error finding current SiteSetting", ex.getMessage());
         verify(lambdaContext).logException(eq(LogType.REPOSITORY), eq("Error finding current SiteSetting"), any(DynamoDbException.class));
+    }
+
+    // ==================== findAllCurrent ====================
+
+    @SuppressWarnings("unchecked")
+    private void stubQuery(List<SiteSettingItem> items) {
+        when(table.query(any(Consumer.class))).thenReturn(pageIterable);
+        SdkIterable<SiteSettingItem> iterable = items::iterator;
+        when(pageIterable.items()).thenReturn(iterable);
+    }
+
+    @Test
+    void findAllCurrent_returnsOnlyCurrentItems() {
+        SiteSettingItem current = SiteSettingItem.builder()
+                .sk("SETTING#GESTATION_DAYS#CURRENT").settingKey("GESTATION_DAYS").build();
+        SiteSettingItem history = SiteSettingItem.builder()
+                .sk("SETTING#GESTATION_DAYS#HISTORY#2026-01-01").settingKey("GESTATION_DAYS").build();
+        stubQuery(List.of(current, history));
+
+        List<SiteSettingItem> result = repository.findAllCurrent("001");
+
+        assertEquals(1, result.size());
+        assertSame(current, result.get(0));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findAllCurrent_resourceNotFound_returnsEmptyList() {
+        when(table.query(any(Consumer.class)))
+                .thenThrow(ResourceNotFoundException.builder().message("missing").build());
+
+        assertTrue(repository.findAllCurrent("001").isEmpty());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findAllCurrent_dynamoDbException_throwsRepositoryException() {
+        when(table.query(any(Consumer.class)))
+                .thenThrow(DynamoDbException.builder().message("boom").build());
+
+        RepositoryException ex = assertThrows(RepositoryException.class, () -> repository.findAllCurrent("001"));
+        assertEquals("Unexpected error listing current SiteSettings", ex.getMessage());
     }
 
     // ==================== saveCurrent ====================

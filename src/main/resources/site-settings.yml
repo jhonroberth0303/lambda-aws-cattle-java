@@ -1,0 +1,58 @@
+# ============================================================================
+# Configuración de negocio por sitio — catálogo de claves y valores por defecto
+# Épica EP-20260909 (Configuración, catálogos e i18n), Fase 3.
+# ----------------------------------------------------------------------------
+# Categoría C de la épica: reglas de negocio que cambian por finca/sitio, no
+# con releases (a diferencia de catalog.yml) y no son copy de UI.
+#
+# Cada clave define su tipo, valor por defecto, etiqueta y grupo. El valor
+# vigente se persiste en SiteSettingItem (versionado, con historial). Si un
+# sitio no tiene valor almacenado, el endpoint responde con el `default` de
+# aquí y `source: DEFAULT`.
+#
+# SiteSettingsCatalog valida al arrancar: claves únicas, `type` válido y
+# `default` coherente con el tipo (guardia anti-deriva).
+# ============================================================================
+
+version: "2026-09-09"
+
+settings:
+
+  - key: GESTATION_DAYS
+    type: NUMBER
+    default: 279
+    label: "Días de gestación (referencia para estimar el parto)"
+    group: reproduccion
+    min: 150
+    max: 400
+
+  - key: ROTATION_SEMAPHORE_YELLOW_DAYS
+    type: NUMBER
+    default: 3
+    label: "Semáforo de rotación: días restantes para marcar 'próximo' (amarillo)"
+    group: potreros
+    min: 0
+    max: 60
+
+  - key: PASTURE_TARGET_RESIDUAL_CM
+    type: NUMBER
+    default: 5
+    label: "Residual objetivo de pastoreo (cm)"
+    group: potreros
+    min: 0
+    max: 30
+
+  - key: BOVINE_EVENT_HISTORY_LIMIT
+    type: NUMBER
+    default: 200
+    label: "Límite de eventos mostrados en el historial bovino"
+    group: bovinos
+    min: 10
+    max: 1000
+
+  - key: MILK_PRICE_PER_LITER
+    type: NUMBER
+    default: 0
+    label: "Precio de leche por litro"
+    group: leche
+    min: 0

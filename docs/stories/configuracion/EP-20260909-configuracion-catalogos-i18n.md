@@ -4,7 +4,7 @@
 **Tipo**: Análisis y diseño — épica transversal (frontend + contrato backend)
 **Prioridad**: Media-alta (deuda técnica con deriva activa)
 **Fecha**: 2026-09-09
-**Estado**: Fases 0, 1, 4.0 y 4.1 implementadas (2026-09-09) · Fases 2, 3, 4.2 pendientes
+**Estado**: Fases 0, 1, 3, 4.0 y 4.1 implementadas (2026-09-09) · Fases 2, 4.2 pendientes
 
 ## Trazabilidad
 
@@ -92,7 +92,7 @@ lambda-aws-cattle-java/
 
 ## 5. Plan por fases
 
-**Cadencia**: Fases 0, 4.0 y 4.1 se ejecutaron juntas (bajo riesgo, solo frontend). Las Fases 1, 2 y 3 tocan el backend Java y se ejecutan **una por sesión**, con validación y revisión propias. Orden acordado: **1 → 3 → 2** (2 es la más riesgosa y se apoya en el contrato de 1). Fase 1 completada el 2026-09-09; sigue la Fase 3.
+**Cadencia**: Fases 0, 4.0 y 4.1 se ejecutaron juntas (bajo riesgo, solo frontend). Las Fases 1, 2 y 3 tocan el backend Java y se ejecutan **una por sesión**, con validación y revisión propias. Orden acordado: **1 → 3 → 2** (2 es la más riesgosa y se apoya en el contrato de 1). Fases 1 y 3 completadas el 2026-09-09; sigue la Fase 2.
 
 **Lo primero de la Fase 1** (decisión de diseño resuelta): cómo hidratar `src/domain/*` desde `/catalogs` sin cambiar su API pública. Se aplicó la opción recomendada: el bundle estático se mantiene como *fallback* y `useCatalogs()` deposita la respuesta del endpoint en una caché a nivel de módulo (`src/config/catalogsCache.js`) que los accesores (`bovineEventLabel`, etc.) consultan antes que el bundle. Ningún componente se tocó y la app arranca aunque el endpoint falle.
 
@@ -147,7 +147,7 @@ lambda-aws-cattle-java/
 
 **Entregables**: schemas versionados, renderer de formularios, `BovineEventPanel`/`detailPanel` reducidos, validación backend unificada.
 
-### Fase 3 — Módulo de configuración de negocio
+### Fase 3 — Módulo de configuración de negocio — ✅ IMPLEMENTADA (2026-09-09)
 
 - Migrar a `SiteSettingItem` las constantes de categoría C: `GESTATION_DAYS`, umbral del semáforo de rotación (`etaOpenDays <= 3`), residual objetivo, límite de historial de eventos, etc.
 - Generalizar el controller de settings: hoy solo `/site/{siteId}/settings/milk-price`. Añadir:
@@ -157,6 +157,18 @@ lambda-aws-cattle-java/
 - Reglas de negocio del front (`BovineCard`, semáforo) leen de `useSiteSettings()` en vez de constantes locales.
 
 **Entregables**: endpoints genéricos de settings, `src/config/useSiteSettings.js`, pantalla de configuración, constantes de negocio migradas.
+
+**Implementado**:
+
+- Backend: `site-settings.yml` (5 claves de categoría C: `GESTATION_DAYS` 279, `ROTATION_SEMAPHORE_YELLOW_DAYS` 3, `PASTURE_TARGET_RESIDUAL_CM` 5, `BOVINE_EVENT_HISTORY_LIMIT` 200, `MILK_PRICE_PER_LITER` 0). `SiteSettingsCatalog` (carga + guardia anti-deriva: claves únicas, `type` válido, `default` coherente con el tipo). `SiteSettingService` generalizado: `findAllCurrent(siteId)` + `upsertSetting(...)` genérico por tipo (NUMBER/STRING/BOOLEAN/JSON); `upsertNumberSetting` se mantiene como fachada (endpoint milk-price intacto). `SiteSettingRepository.findAllCurrent` (query `pk = SITE#…`, `sk begins_with SETTING#`, filtro `#CURRENT`). DTOs `dtos/settings/{SiteSettingDTO,SiteSettingUpdateRequestDTO,SiteSettingsResponseDTO}`. `SiteSettingsProcessor` (mezcla catálogo + valores almacenados, valida min/max y tipo). `SiteSettingsController`: `GET /site/{siteId}/settings`, `GET|PUT /site/{siteId}/settings/{key}` (el literal `milk-price` gana sobre `{key}` por especificidad de ruta). `/site/**` ya requería JWT — sin cambios en `SecurityConfig`. Ruteo por el proxy `/{proxy+}` — sin cambios de infra.
+- Front: `src/config/siteSettingsCache.js` (caché de módulo + `siteSettingNumber(key, fallback)`), `src/config/site.js` (`resolveSiteId()`, env `VITE_DEFAULT_SITE_ID`, default `001`), `src/services/siteSettingsService.js`, `src/config/useSiteSettings.js` (React Query `staleTime` 30 min, `initialData` desde `localStorage`, `useUpdateSiteSetting`). `CatalogsProvider` renombra su hidratador a `ConfigHydrator` y monta también `useSiteSettings()` (misma `QueryClient`, no bloquea el render). `src/domain/bovines.js` expone `gestationDays()` (lee de la caché, cae a `GESTATION_DAYS` 279); `pasturePresentation.js` expone `rotationYellowDays()` (fallback 3). Consumidores migrados: `BovineEventPanel.jsx`, `BovineCard.jsx`, `getSemaphoreSignal`/`buildPastureAlerts`. Pantalla `src/components/Settings/SettingsPage.jsx` (lista por grupo, edición inline con validación, badge `por defecto`/`vN`), ruta `/configuracion` en `App.jsx`, ítem en `src/config/navigation.js`.
+- Pruebas nuevas back: `SiteSettingsCatalogTest` (4), `SiteSettingServiceTest` +4, `SiteSettingRepositoryTest` +3, `SiteSettingsProcessorTest` (9), `SiteSettingsControllerTest` (5). Front: `siteSettingsCache.test.js` (5), `useSiteSettings.test.jsx` (7), `siteSettingsService.test.js` (4), `SettingsPage.test.jsx` (3); `CatalogsProvider.test.jsx` actualizado.
+
+**Fuera de alcance de Fase 3** (se mantiene lo acordado):
+
+- Contrato de integración por el handler Lambda (`StreamLambdaHandlerTest`): omitido para settings porque el endpoint toca DynamoDB (a diferencia de `/catalogs`); milk-price tampoco lo tiene. Cobertura vía tests de controller/processor/service/repository.
+- Consumo real de `PASTURE_TARGET_RESIDUAL_CM` y `BOVINE_EVENT_HISTORY_LIMIT` en el front: las claves y su edición existen; su lectura en componentes se conecta cuando esos flujos se toquen (hoy no hay constante local equivalente que migrar).
+- Selector de sitio/finca en la UI: `resolveSiteId()` sigue devolviendo `001` por env (misma deuda que `DEFAULT_FARM_ID`).
 
 ### Fase 4 — Pruebas unitarias en el frontend
 
@@ -231,11 +243,36 @@ Suite inicial:
 - **Fase 0 — ✅**: `src/domain/` es la única fuente; 0 tablas de catálogo/labels duplicadas en componentes; `GESTATION_DAYS` (279) y especies unificados; `MOCK_STATS` eliminado; navegación consolidada sin links muertos; build + lint + test verdes.
 - **Fase 1 — ✅**: `/catalogs` + `/catalogs/{domain}` con `version`/`ETag`/304/`Cache-Control`; `catalog.yml` valida contra los enums al arrancar; front hidrata `src/domain/*` desde el endpoint con fallback al bundle y cache offline en `localStorage`; tests de contrato back (`CatalogServiceTest`, `CatalogControllerTest`, `StreamLambdaHandlerTest`) y front (`catalogsCache.test.js`, `useCatalogs.test.jsx`, `CatalogsProvider.test.jsx`).
 - **Fase 2**: un solo schema por tipo de evento; front renderiza y backend valida desde él; `BovineEventPanel` sin `switch` por tipo.
-- **Fase 3**: config de negocio en `SiteSettingItem`; endpoints genéricos de settings; pantalla de Configuración operativa.
+- **Fase 3 — ✅**: config de negocio en `SiteSettingItem` (`site-settings.yml`, 5 claves categoría C); `SiteSettingsCatalog` valida las definiciones al arrancar; endpoints genéricos `GET /site/{siteId}/settings` + `GET|PUT /site/{siteId}/settings/{key}` sobre `SiteSettingService` genérico por tipo (milk-price intacto); front hidrata `gestationDays()`/`rotationYellowDays()` desde `useSiteSettings()` con fallback a los defaults y cache offline; pantalla `/configuracion` lista y edita; tests back (`SiteSettingsCatalogTest`, `SiteSettingsProcessorTest`, `SiteSettingsControllerTest`, `SiteSettingService`/`SiteSettingRepository` ampliados) y front (`siteSettingsCache`, `useSiteSettings`, `siteSettingsService`, `SettingsPage`).
 - **Fase 4.0 — ✅**: Vitest operativo; suite de `src/domain` + `src/search` + utilidades + navegación + 2 componentes; cobertura enfocada con umbral 70 %; estándares de front actualizados.
 - **Fase 4.1 / 4.2**: hooks y servicios con MSW; componentes de dominio; ampliar `include` de cobertura y subir umbral; gate de CI `lint + test:coverage + build`.
 
 ## 9. Registro de implementación
+
+### 2026-09-09 — Fase 3 (configuración de negocio por sitio)
+
+**Backend (`lambda-aws-cattle-java`)**
+
+- Nuevo `src/main/resources/site-settings.yml`: 5 claves de categoría C con tipo, `default`, `label`, `group` y `min`/`max`.
+- Nuevo `services/SiteSettingsCatalog`: carga con snakeyaml (patrón `CatalogService`), valida claves únicas + `type` válido + `default` coherente con el tipo; aborta el arranque si algo diverge.
+- `services/SiteSettingService`: `+ findAllCurrent(siteId)` y `+ upsertSetting(siteId, key, type, value, updatedBy, changeReason)` genérico (NUMBER/STRING/BOOLEAN/JSON). `upsertNumberSetting` ahora delega en `upsertSetting` — milk-price sin cambios.
+- `repository/SiteSettingRepository`: `+ findAllCurrent(siteId)` (query `sortBeginsWith("SETTING#")` + filtro `#CURRENT`; `ResourceNotFoundException` → lista vacía).
+- Nuevos `dtos/settings/{SiteSettingDTO,SiteSettingUpdateRequestDTO,SiteSettingsResponseDTO}`.
+- Nuevo `processor/SiteSettingsProcessor`: `getAll` mezcla defaults del catálogo con valores almacenados (`source` STORED/DEFAULT); `getByKey`; `updateByKey` valida clave conocida (`NotFoundException`), tipo y `min`/`max` (`IllegalArgumentException`).
+- Nuevo `controller/SiteSettingsController`: `GET /site/{siteId}/settings`, `GET|PUT /site/{siteId}/settings/{key}`.
+- `SecurityConfig` sin cambios (`/site/**` ya bajo `.anyRequest().authenticated()`; `security.enabled` off en tests).
+- Pruebas: `SiteSettingsCatalogTest` (4), `SiteSettingsProcessorTest` (9), `SiteSettingsControllerTest` (5), `SiteSettingServiceTest` +4, `SiteSettingRepositoryTest` +3.
+
+**Front (`cattle-front`)**
+
+- Nuevos: `src/config/siteSettingsCache.js`, `src/config/site.js`, `src/services/siteSettingsService.js`, `src/config/useSiteSettings.js` (React Query + `localStorage` + `useUpdateSiteSetting`), `src/components/Settings/SettingsPage.{jsx,css}`.
+- `src/config/CatalogsProvider.jsx`: `ConfigHydrator` monta `useCatalogs()` + `useSiteSettings()`; hidratación síncrona de ambas cachés desde `localStorage`.
+- `src/domain/bovines.js`: `+ gestationDays()` (cae a `GESTATION_DAYS` 279). `pasturePresentation.js`: `+ rotationYellowDays()` (cae a 3), usado en `getSemaphoreSignal` y `buildPastureAlerts`.
+- Consumidores migrados: `BovineEventPanel.jsx`, `BovineCard.jsx`.
+- `App.jsx`: ruta `/configuracion`. `src/config/navigation.js`: ítem "Configuración". `navigation.test.js` + `CatalogsProvider.test.jsx` actualizados.
+- Pruebas nuevas: `siteSettingsCache.test.js` (5), `useSiteSettings.test.jsx` (7), `siteSettingsService.test.js` (4), `SettingsPage.test.jsx` (3).
+
+**Validación**: back `./gradlew test` 1128/1128 · front `npm run lint` limpio · `npm run build` OK · `npm test` 111/111 · `npm run test:coverage` 84.2 % sentencias / 73.8 % ramas (umbral 70/60).
 
 ### 2026-09-09 — Fases 0 y 4.0
 

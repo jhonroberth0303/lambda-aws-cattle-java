@@ -2,6 +2,7 @@ package com.cattle.services;
 
 import com.cattle.config.LambdaContext;
 import com.cattle.entities.SiteSettingItem;
+import com.cattle.enums.SiteSettingValueType;
 import com.cattle.exceptions.RepositoryException;
 import com.cattle.exceptions.ServiceException;
 import com.cattle.repository.SiteSettingRepository;
@@ -95,6 +96,53 @@ class SiteSettingServiceTest {
         assertEquals("SETTING#MILK_PRICE_PER_LITER#CURRENT", currentCaptor.getValue().getSk());
         assertTrue(historyCaptor.getValue().getSk().startsWith("SETTING#MILK_PRICE_PER_LITER#HISTORY#"));
         assertEquals(1, historyCaptor.getValue().getVersion());
+    }
+
+    @Test
+    void findAllCurrent_delegatesToRepository() {
+        SiteSettingItem item = SiteSettingItem.builder().settingKey("GESTATION_DAYS").build();
+        when(siteSettingRepository.findAllCurrent("001")).thenReturn(java.util.List.of(item));
+
+        assertEquals(1, siteSettingService.findAllCurrent("001").size());
+        verify(siteSettingRepository).findAllCurrent("001");
+    }
+
+    @Test
+    void findAllCurrent_repositoryFailure_throwsServiceException() {
+        when(siteSettingRepository.findAllCurrent("001")).thenThrow(new RepositoryException("ddb"));
+
+        assertThrows(ServiceException.class, () -> siteSettingService.findAllCurrent("001"));
+    }
+
+    @Test
+    void upsertSetting_booleanType_persistsValueBoolean() {
+        when(siteSettingRepository.findCurrent("001", "SOME_FLAG")).thenReturn(Optional.empty());
+        when(siteSettingRepository.saveCurrent(any(SiteSettingItem.class)))
+                .thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
+        when(siteSettingRepository.saveHistorySnapshot(any(SiteSettingItem.class)))
+                .thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
+
+        SiteSettingItem result = siteSettingService.upsertSetting(
+                "001", "SOME_FLAG", SiteSettingValueType.BOOLEAN, Boolean.TRUE, "user", "reason");
+
+        assertEquals("BOOLEAN", result.getValueType());
+        assertEquals(Boolean.TRUE, result.getValueBoolean());
+        assertNull(result.getValueNumber());
+        assertEquals(1, result.getVersion());
+    }
+
+    @Test
+    void upsertSetting_stringType_persistsValueString() {
+        when(siteSettingRepository.findCurrent("001", "SOME_TEXT")).thenReturn(Optional.empty());
+        when(siteSettingRepository.saveCurrent(any(SiteSettingItem.class)))
+                .thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
+        when(siteSettingRepository.saveHistorySnapshot(any(SiteSettingItem.class)))
+                .thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
+
+        SiteSettingItem result = siteSettingService.upsertSetting(
+                "001", "SOME_TEXT", SiteSettingValueType.STRING, "hola", "user", "reason");
+
+        assertEquals("hola", result.getValueString());
     }
 
     @Test
