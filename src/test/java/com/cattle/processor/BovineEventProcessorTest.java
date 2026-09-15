@@ -14,6 +14,7 @@ import com.cattle.repository.BovineRepository;
 import com.cattle.repository.ProfileLifecycleRepository;
 import com.cattle.services.BovineEventService;
 import com.cattle.services.EventFormCatalog;
+import com.cattle.services.ExitEventProjector;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +62,9 @@ class BovineEventProcessorTest {
     @Mock
     private ProfileLifecycleRepository lifecycleRepository;
 
+    @Mock
+    private ExitEventProjector exitEventProjector;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private BovineEventProcessor processor;
@@ -72,7 +76,7 @@ class BovineEventProcessorTest {
         openMocks(this);
         eventFormCatalog = new EventFormCatalog(lambdaContext);
         processor = new BovineEventProcessor(bovineEventService, objectMapper, lambdaContext,
-                eventFormCatalog, payloadValidator, bovineRepository, lifecycleRepository);
+                eventFormCatalog, payloadValidator, bovineRepository, lifecycleRepository, exitEventProjector);
     }
 
     /** Stubbea el perfil de ciclo de vida de un bovino con un estado/enabled dados. */
@@ -288,6 +292,44 @@ class BovineEventProcessorTest {
                 request("VENTA", Map.of("buyerName", "Coop", "amountCOP", 1000000))));
     }
 
+    // ==================== Proyección de eventos de salida (DT-20260909) ====================
+
+    @Test
+    void applyEvent_muerte_invokesExitEventProjectorAfterSave() {
+        processor.applyEvent("F1", "B1", request("MUERTE", Map.of("cause", "senil")));
+
+        verify(exitEventProjector).project(eq("B1"), eq(com.cattle.enums.BovineEventType.MUERTE), any());
+    }
+
+    @Test
+    void applyEvent_venta_invokesExitEventProjector() {
+        processor.applyEvent("F1", "B1",
+                request("VENTA", Map.of("buyerName", "Coop", "amountCOP", 1000000)));
+
+        verify(exitEventProjector).project(eq("B1"), eq(com.cattle.enums.BovineEventType.VENTA), any());
+    }
+
+    @Test
+    void applyEvent_nonExitEvent_neverInvokesExitEventProjector() {
+        processor.applyEvent("F1", "B1", request("SEGUIMIENTO", Map.of("notes", "n")));
+
+        verify(exitEventProjector, never()).project(any(), any(), any());
+    }
+
+    /** Fallo del proyector no rompe la respuesta: el evento ya se guardó (hallazgo de revisión #1). */
+    @Test
+    void applyEvent_projectorFails_stillReturnsSuccessResponse() {
+        org.mockito.Mockito.doThrow(new RuntimeException("DynamoDB throttling"))
+                .when(exitEventProjector).project(any(), any(), any());
+
+        BovineEventResponseDTO response = assertDoesNotThrow(() -> processor.applyEvent("F1", "B1",
+                request("MUERTE", Map.of("cause", "senil"))));
+
+        assertEquals("MUERTE", response.getEventType());
+        verify(bovineEventService).save(any());
+        verify(lambdaContext).logException(eq(LogType.PROCESSOR), anyString(), any(RuntimeException.class));
+    }
+
     @Test
     void applyEvent_activeBovine_proceeds() {
         stubLifecycle("B1", LifecycleStatus.OPEN, true);
@@ -392,7 +434,8 @@ class BovineEventProcessorTest {
         ObjectMapper failing = org.mockito.Mockito.mock(ObjectMapper.class);
         when(failing.writeValueAsString(any())).thenThrow(new JsonProcessingException("boom") {});
         BovineEventProcessor failingProcessor = new BovineEventProcessor(bovineEventService, failing,
-                lambdaContext, eventFormCatalog, payloadValidator, bovineRepository, lifecycleRepository);
+                lambdaContext, eventFormCatalog, payloadValidator, bovineRepository, lifecycleRepository,
+                exitEventProjector);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> failingProcessor.applyEvent("F1", "B1", request("SEGUIMIENTO", Map.of("notes", "n"))));

@@ -4,6 +4,8 @@ import com.cattle.config.LambdaContext;
 import com.cattle.dtos.BovineSummaryDTO;
 import com.cattle.entities.bovines.*;
 import com.cattle.enums.LogType;
+import com.cattle.enums.profiles.ProductiveState;
+import com.cattle.enums.profiles.ReproductiveState;
 import com.cattle.exceptions.RepositoryException;
 import com.cattle.exceptions.ServiceException;
 import com.cattle.mapper.BovineSummaryMapper;
@@ -28,6 +30,15 @@ public class BovineSummaryService {
     private static final ZoneId ZONE_ID = ZoneId.of(System.getenv().getOrDefault("APP_TIMEZONE", "America/Bogota"));
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_INSTANT;
     public static final String OPEN = "OPEN";
+
+    /**
+     * Estado productivo neutro para bovinos inactivos ({@code enabled == false} o
+     * {@link com.cattle.enums.profiles.LifecycleStatus#isInactive()}). DT-20260909, hallazgo B:
+     * un bovino vendido/muerto no debe arrastrar estado productivo ni alertas de una
+     * lactancia/preñez que nunca se cerró.
+     */
+    private static final ProductiveStateResult NEUTRAL_PRODUCTIVE_STATE = new ProductiveStateResult(
+            ReproductiveState.OPEN, ProductiveState.OPEN, List.of(), null, null, null);
 
     private final BovineSummaryRepository summaryRepository;
     private final BovineRepository bovineRepository;
@@ -224,6 +235,7 @@ public class BovineSummaryService {
         String status = null;
         String lifeStage = null;
         Boolean enabled = null;
+        boolean inactiveBovine = false;
         if (lifecycleOpt.isPresent()) {
             ProfileLifecycle lifecycle = lifecycleOpt.get();
             // Recalcular y actualizar
@@ -237,19 +249,25 @@ public class BovineSummaryService {
             status = updatedLifecycle.getStatus() != null ? updatedLifecycle.getStatus().name() : null;
             lifeStage = updatedLifecycle.getLifeStage() != null ? updatedLifecycle.getLifeStage().name() : null;
             enabled = updatedLifecycle.getEnabled();
+            inactiveBovine = Boolean.FALSE.equals(enabled)
+                    || (updatedLifecycle.getStatus() != null && updatedLifecycle.getStatus().isInactive());
         }
 
         // Calcular estados productivos y alertas
+        // DT-20260909, hallazgo B: un bovino inactivo (vendido/muerto/...) no debe mostrar
+        // estado productivo ni alertas de una lactancia/preñez que nunca se cerró.
         LocalDate today = LocalDate.now(ZONE_ID);
-        ProductiveStateResult stateResult = productiveStateCalculator.calculate(
-            isPregnant,
-            pregnancyStatus,
-            expectedDueDate,
-            calvingDate,
-            lactationStatus,
-            lactationStartDate,
-            today
-        );
+        ProductiveStateResult stateResult = inactiveBovine
+                ? NEUTRAL_PRODUCTIVE_STATE
+                : productiveStateCalculator.calculate(
+                    isPregnant,
+                    pregnancyStatus,
+                    expectedDueDate,
+                    calvingDate,
+                    lactationStatus,
+                    lactationStartDate,
+                    today
+                );
 
         // Timestamp actual
         String updatedAt = ZonedDateTime.now(ZONE_ID).format(ISO_FORMATTER);
