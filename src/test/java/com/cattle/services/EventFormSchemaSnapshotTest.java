@@ -1,10 +1,13 @@
 package com.cattle.services;
 
 import com.cattle.config.LambdaContext;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,13 +53,26 @@ class EventFormSchemaSnapshotTest {
         return new EventFormCatalog(lambdaContext);
     }
 
+    /**
+     * Serializa con salto de línea LF forzado (no el de la plataforma): el pretty-printer
+     * de Jackson por defecto usa {@code System.lineSeparator()}, que en Windows es CRLF.
+     * Un snapshot commiteado con CRLF es frágil frente a cualquier herramienta del pipeline
+     * (editor, futuro `git config core.autocrlf`) que normalice el archivo a LF — forzar LF
+     * en la generación y normalizar en la comparación evita falsos positivos por esto.
+     */
     private String canonicalJson(Object value) throws IOException {
+        DefaultPrettyPrinter printer = new DefaultPrettyPrinter()
+                .withObjectIndenter(new DefaultIndenter("  ", "\n"))
+                .withArrayIndenter(new DefaultIndenter("  ", "\n"));
         ObjectMapper mapper = JsonMapper.builder()
                 .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
                 .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-                .enable(SerializationFeature.INDENT_OUTPUT)
                 .build();
-        return mapper.writeValueAsString(value) + "\n";
+        return mapper.writer(printer).writeValueAsString(value) + "\n";
+    }
+
+    private static String normalizeLineEndings(String text) {
+        return text.replace("\r\n", "\n");
     }
 
     @ParameterizedTest(name = "dominio: {0}")
@@ -74,7 +90,7 @@ class EventFormSchemaSnapshotTest {
         }
         String expectedJson = Files.readString(snapshotFile, StandardCharsets.UTF_8);
 
-        assertEquals(expectedJson, actualJson,
+        assertEquals(normalizeLineEndings(expectedJson), normalizeLineEndings(actualJson),
                 "El esquema de '" + domain + "' en event-forms.yml divergió del snapshot commiteado en "
                         + snapshotFile + ". Si el cambio es intencional, regenera el snapshot y revisa si "
                         + "cattle-front/src/domain/ necesita el mismo ajuste (ver EventFormSchemaSnapshotTest).");
@@ -85,7 +101,7 @@ class EventFormSchemaSnapshotTest {
      * event-forms.yml — no es un test de verificación. Deshabilitado por defecto para
      * que un `./gradlew test` normal nunca sobreescriba los snapshots en silencio.
      */
-    @org.junit.jupiter.api.Disabled("Habilitar manualmente solo para regenerar los snapshots")
+    @Disabled("Habilitar manualmente solo para regenerar los snapshots")
     @Test
     @Tag("unit")
     void regenerateSnapshots() throws IOException {
