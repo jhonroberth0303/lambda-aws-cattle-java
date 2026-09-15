@@ -2,16 +2,18 @@
   "ABORTO" : {
     "appendNotes" : false,
     "code" : "ABORTO",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Observaciones (opcional)",
-      "maxLength" : 1000,
-      "name" : "notes",
-      "options" : [ ],
-      "placeholder" : "Descripción del evento",
-      "required" : false,
-      "type" : "textarea"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Observaciones (opcional)",
+        "maxLength" : 1000,
+        "name" : "notes",
+        "options" : [ ],
+        "placeholder" : "Descripción del evento",
+        "required" : false,
+        "type" : "textarea"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar aborto",
     "title" : "Registrar aborto"
@@ -19,32 +21,36 @@
   "BANO_GARRAPATAS" : {
     "appendNotes" : true,
     "code" : "BANO_GARRAPATAS",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Producto",
-      "name" : "product",
-      "options" : [ ],
-      "placeholder" : "Nombre del producto",
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Principio activo (opcional)",
-      "name" : "activeIngredient",
-      "options" : [ ],
-      "placeholder" : "Ej. Ivermectina",
-      "required" : false,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Costo (COP, opcional)",
-      "min" : 0.0,
-      "name" : "amountCOP",
-      "options" : [ ],
-      "placeholder" : "Ej. 50000",
-      "required" : false,
-      "type" : "number"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Producto",
+        "name" : "product",
+        "options" : [ ],
+        "placeholder" : "Nombre del producto",
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Principio activo (opcional)",
+        "name" : "activeIngredient",
+        "options" : [ ],
+        "placeholder" : "Ej. Ivermectina",
+        "required" : false,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Costo (COP, opcional)",
+        "min" : 0.0,
+        "name" : "amountCOP",
+        "options" : [ ],
+        "placeholder" : "Ej. 50000",
+        "required" : false,
+        "type" : "number"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar baño",
     "title" : "Registrar baño garrapatas"
@@ -52,26 +58,33 @@
   "CASTRACION" : {
     "appendNotes" : true,
     "code" : "CASTRACION",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Método",
-      "name" : "method",
-      "options" : [ {
-        "label" : "Seleccionar",
-        "value" : ""
-      }, {
-        "label" : "Quirúrgico",
-        "value" : "QUIRURGICO"
-      }, {
-        "label" : "Burdizzo",
-        "value" : "BURDIZZO"
-      }, {
-        "label" : "Elastrador",
-        "value" : "ELASTRADOR"
-      } ],
-      "required" : true,
-      "type" : "text"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Método",
+        "name" : "method",
+        "options" : [
+          {
+            "label" : "Seleccionar",
+            "value" : ""
+          },
+          {
+            "label" : "Quirúrgico",
+            "value" : "QUIRURGICO"
+          },
+          {
+            "label" : "Burdizzo",
+            "value" : "BURDIZZO"
+          },
+          {
+            "label" : "Elastrador",
+            "value" : "ELASTRADOR"
+          }
+        ],
+        "required" : true,
+        "type" : "text"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar castración",
     "title" : "Registrar castración"
@@ -79,32 +92,36 @@
   "COMPRA" : {
     "appendNotes" : true,
     "code" : "COMPRA",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Monto (COP)",
-      "min" : 0.0,
-      "name" : "amountCOP",
-      "options" : [ ],
-      "placeholder" : "Ej. 2500000",
-      "required" : false,
-      "type" : "number"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Nombre del vendedor (opcional)",
-      "name" : "sellerName",
-      "options" : [ ],
-      "placeholder" : "Nombre",
-      "required" : false,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Teléfono del vendedor (opcional)",
-      "name" : "sellerPhone",
-      "options" : [ ],
-      "placeholder" : "Teléfono",
-      "required" : false,
-      "type" : "text"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Monto (COP)",
+        "min" : 0.0,
+        "name" : "amountCOP",
+        "options" : [ ],
+        "placeholder" : "Ej. 2500000",
+        "required" : false,
+        "type" : "number"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Nombre del vendedor (opcional)",
+        "name" : "sellerName",
+        "options" : [ ],
+        "placeholder" : "Nombre",
+        "required" : false,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Teléfono del vendedor (opcional)",
+        "name" : "sellerPhone",
+        "options" : [ ],
+        "placeholder" : "Teléfono",
+        "required" : false,
+        "type" : "text"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar compra",
     "title" : "Registrar compra"
@@ -112,26 +129,33 @@
   "DESCORNE" : {
     "appendNotes" : true,
     "code" : "DESCORNE",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Método",
-      "name" : "method",
-      "options" : [ {
-        "label" : "Seleccionar",
-        "value" : ""
-      }, {
-        "label" : "Químico",
-        "value" : "QUIMICO"
-      }, {
-        "label" : "Térmico",
-        "value" : "TERMICO"
-      }, {
-        "label" : "Quirúrgico",
-        "value" : "QUIRURGICO"
-      } ],
-      "required" : true,
-      "type" : "text"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Método",
+        "name" : "method",
+        "options" : [
+          {
+            "label" : "Seleccionar",
+            "value" : ""
+          },
+          {
+            "label" : "Químico",
+            "value" : "QUIMICO"
+          },
+          {
+            "label" : "Térmico",
+            "value" : "TERMICO"
+          },
+          {
+            "label" : "Quirúrgico",
+            "value" : "QUIRURGICO"
+          }
+        ],
+        "required" : true,
+        "type" : "text"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar descorne",
     "title" : "Registrar descorne"
@@ -139,32 +163,36 @@
   "DESPARASITACION" : {
     "appendNotes" : true,
     "code" : "DESPARASITACION",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Producto",
-      "name" : "product",
-      "options" : [ ],
-      "placeholder" : "Nombre del producto",
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Principio activo (opcional)",
-      "name" : "activeIngredient",
-      "options" : [ ],
-      "placeholder" : "Ej. Ivermectina",
-      "required" : false,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Costo (COP, opcional)",
-      "min" : 0.0,
-      "name" : "amountCOP",
-      "options" : [ ],
-      "placeholder" : "Ej. 50000",
-      "required" : false,
-      "type" : "number"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Producto",
+        "name" : "product",
+        "options" : [ ],
+        "placeholder" : "Nombre del producto",
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Principio activo (opcional)",
+        "name" : "activeIngredient",
+        "options" : [ ],
+        "placeholder" : "Ej. Ivermectina",
+        "required" : false,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Costo (COP, opcional)",
+        "min" : 0.0,
+        "name" : "amountCOP",
+        "options" : [ ],
+        "placeholder" : "Ej. 50000",
+        "required" : false,
+        "type" : "number"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar desparasitación",
     "title" : "Registrar desparasitación"
@@ -172,17 +200,19 @@
   "DESTETE" : {
     "appendNotes" : true,
     "code" : "DESTETE",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Peso de la cría al destete (kg, opcional)",
-      "min" : 0.0,
-      "name" : "calfWeightKg",
-      "options" : [ ],
-      "placeholder" : "Ej. 180",
-      "required" : false,
-      "step" : 0.1,
-      "type" : "number"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Peso de la cría al destete (kg, opcional)",
+        "min" : 0.0,
+        "name" : "calfWeightKg",
+        "options" : [ ],
+        "placeholder" : "Ej. 180",
+        "required" : false,
+        "step" : 0.1,
+        "type" : "number"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar destete",
     "title" : "Registrar destete"
@@ -190,39 +220,50 @@
   "DIAGNOSTICO_PRENEZ" : {
     "appendNotes" : true,
     "code" : "DIAGNOSTICO_PRENEZ",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Resultado",
-      "name" : "result",
-      "options" : [ {
-        "label" : "Preñada",
-        "value" : "PRENIADA"
-      }, {
-        "label" : "Vacía",
-        "value" : "VACIA"
-      }, {
-        "label" : "Dudosa",
-        "value" : "DUDOSA"
-      } ],
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Método (opcional)",
-      "name" : "method",
-      "options" : [ {
-        "label" : "Sin especificar",
-        "value" : ""
-      }, {
-        "label" : "Palpación",
-        "value" : "PALPA"
-      }, {
-        "label" : "Ecografía",
-        "value" : "ECOGRAFIA"
-      } ],
-      "required" : false,
-      "type" : "text"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Resultado",
+        "name" : "result",
+        "options" : [
+          {
+            "label" : "Preñada",
+            "value" : "PRENIADA"
+          },
+          {
+            "label" : "Vacía",
+            "value" : "VACIA"
+          },
+          {
+            "label" : "Dudosa",
+            "value" : "DUDOSA"
+          }
+        ],
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Método (opcional)",
+        "name" : "method",
+        "options" : [
+          {
+            "label" : "Sin especificar",
+            "value" : ""
+          },
+          {
+            "label" : "Palpación",
+            "value" : "PALPA"
+          },
+          {
+            "label" : "Ecografía",
+            "value" : "ECOGRAFIA"
+          }
+        ],
+        "required" : false,
+        "type" : "text"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar diagnóstico",
     "title" : "Diagnóstico de preñez"
@@ -230,64 +271,75 @@
   "INSEMINACION" : {
     "appendNotes" : true,
     "code" : "INSEMINACION",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "ID del toro (o ingresa lote de semen)",
-      "name" : "bullId",
-      "options" : [ ],
-      "placeholder" : "ID del toro",
-      "required" : false,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Raza del toro (opcional)",
-      "name" : "bullBreed",
-      "options" : [ ],
-      "placeholder" : "Ej. Holstein",
-      "required" : false,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Lote semen (opcional)",
-      "name" : "semenBatch",
-      "options" : [ ],
-      "placeholder" : "Código de lote",
-      "required" : false,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : true,
-      "hint" : "Sugerida desde la fecha del evento + gestación. Puedes ajustarla.",
-      "label" : "Fecha estimada de parto (opcional)",
-      "minField" : "eventAt",
-      "name" : "estimatedCalvingDate",
-      "options" : [ ],
-      "required" : false,
-      "type" : "date"
-    } ],
-    "requireOneOf" : [ "bullId", "semenBatch" ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "ID del toro (o ingresa lote de semen)",
+        "name" : "bullId",
+        "options" : [ ],
+        "placeholder" : "ID del toro",
+        "required" : false,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Raza del toro (opcional)",
+        "name" : "bullBreed",
+        "options" : [ ],
+        "placeholder" : "Ej. Holstein",
+        "required" : false,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Lote semen (opcional)",
+        "name" : "semenBatch",
+        "options" : [ ],
+        "placeholder" : "Código de lote",
+        "required" : false,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : true,
+        "hint" : "Sugerida desde la fecha del evento + gestación. Puedes ajustarla.",
+        "label" : "Fecha estimada de parto (opcional)",
+        "minField" : "eventAt",
+        "name" : "estimatedCalvingDate",
+        "options" : [ ],
+        "required" : false,
+        "type" : "date"
+      }
+    ],
+    "requireOneOf" : [
+      "bullId",
+      "semenBatch"
+    ],
     "submitLabel" : "Guardar inseminación",
     "title" : "Registrar inseminación"
   },
   "MARCACION" : {
     "appendNotes" : true,
     "code" : "MARCACION",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Nuevo arete / ID",
-      "name" : "newTag",
-      "options" : [ ],
-      "placeholder" : "Nuevo identificador",
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Arete anterior (opcional)",
-      "name" : "oldTag",
-      "options" : [ ],
-      "placeholder" : "ID anterior",
-      "required" : false,
-      "type" : "text"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Nuevo arete / ID",
+        "name" : "newTag",
+        "options" : [ ],
+        "placeholder" : "Nuevo identificador",
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Arete anterior (opcional)",
+        "name" : "oldTag",
+        "options" : [ ],
+        "placeholder" : "ID anterior",
+        "required" : false,
+        "type" : "text"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar marcación",
     "title" : "Registrar marcación"
@@ -295,24 +347,27 @@
   "MONTA" : {
     "appendNotes" : true,
     "code" : "MONTA",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Raza del toro",
-      "name" : "bullBreed",
-      "options" : [ ],
-      "placeholder" : "Ej. Brahman",
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : true,
-      "hint" : "Sugerida desde la fecha del evento + gestación. Puedes ajustarla.",
-      "label" : "Fecha estimada de parto (opcional)",
-      "minField" : "eventAt",
-      "name" : "estimatedCalvingDate",
-      "options" : [ ],
-      "required" : false,
-      "type" : "date"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Raza del toro",
+        "name" : "bullBreed",
+        "options" : [ ],
+        "placeholder" : "Ej. Brahman",
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : true,
+        "hint" : "Sugerida desde la fecha del evento + gestación. Puedes ajustarla.",
+        "label" : "Fecha estimada de parto (opcional)",
+        "minField" : "eventAt",
+        "name" : "estimatedCalvingDate",
+        "options" : [ ],
+        "required" : false,
+        "type" : "date"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar monta",
     "title" : "Registrar servicio/monta"
@@ -320,24 +375,27 @@
   "MUERTE" : {
     "appendNotes" : false,
     "code" : "MUERTE",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Causa",
-      "name" : "cause",
-      "options" : [ ],
-      "placeholder" : "Ej. Timpanismo",
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Hallazgos (opcional)",
-      "maxLength" : 500,
-      "name" : "findings",
-      "options" : [ ],
-      "placeholder" : "Descripción de hallazgos",
-      "required" : false,
-      "type" : "textarea"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Causa",
+        "name" : "cause",
+        "options" : [ ],
+        "placeholder" : "Ej. Timpanismo",
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Hallazgos (opcional)",
+        "maxLength" : 500,
+        "name" : "findings",
+        "options" : [ ],
+        "placeholder" : "Descripción de hallazgos",
+        "required" : false,
+        "type" : "textarea"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Confirmar baja",
     "title" : "Registrar muerte"
@@ -345,16 +403,18 @@
   "OBSERVACION" : {
     "appendNotes" : false,
     "code" : "OBSERVACION",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Observaciones",
-      "maxLength" : 1000,
-      "name" : "notes",
-      "options" : [ ],
-      "placeholder" : "Describe la observación",
-      "required" : true,
-      "type" : "textarea"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Observaciones",
+        "maxLength" : 1000,
+        "name" : "notes",
+        "options" : [ ],
+        "placeholder" : "Describe la observación",
+        "required" : true,
+        "type" : "textarea"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar observación",
     "title" : "Agregar observación"
@@ -362,51 +422,62 @@
   "PARTO" : {
     "appendNotes" : true,
     "code" : "PARTO",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Sexo de la cría",
-      "name" : "calfGender",
-      "options" : [ {
-        "label" : "Macho",
-        "value" : "MACHO"
-      }, {
-        "label" : "Hembra",
-        "value" : "HEMBRA"
-      } ],
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "ID de la cría (opcional)",
-      "name" : "calfId",
-      "options" : [ ],
-      "placeholder" : "Arete o ID",
-      "required" : false,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Tipo de parto",
-      "name" : "birthType",
-      "options" : [ {
-        "label" : "Normal",
-        "value" : "NORMAL"
-      }, {
-        "label" : "Distócico",
-        "value" : "DISTOCICO"
-      } ],
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Peso de la cría (kg, opcional)",
-      "min" : 0.0,
-      "name" : "calfWeightKg",
-      "options" : [ ],
-      "placeholder" : "Ej. 35",
-      "required" : false,
-      "step" : 0.1,
-      "type" : "number"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Sexo de la cría",
+        "name" : "calfGender",
+        "options" : [
+          {
+            "label" : "Macho",
+            "value" : "MACHO"
+          },
+          {
+            "label" : "Hembra",
+            "value" : "HEMBRA"
+          }
+        ],
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "ID de la cría (opcional)",
+        "name" : "calfId",
+        "options" : [ ],
+        "placeholder" : "Arete o ID",
+        "required" : false,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Tipo de parto",
+        "name" : "birthType",
+        "options" : [
+          {
+            "label" : "Normal",
+            "value" : "NORMAL"
+          },
+          {
+            "label" : "Distócico",
+            "value" : "DISTOCICO"
+          }
+        ],
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Peso de la cría (kg, opcional)",
+        "min" : 0.0,
+        "name" : "calfWeightKg",
+        "options" : [ ],
+        "placeholder" : "Ej. 35",
+        "required" : false,
+        "step" : 0.1,
+        "type" : "number"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar parto",
     "title" : "Registrar parto"
@@ -414,39 +485,48 @@
   "PESAJE" : {
     "appendNotes" : true,
     "code" : "PESAJE",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Peso (kg)",
-      "min" : 0.0,
-      "name" : "weightKg",
-      "options" : [ ],
-      "placeholder" : "Ej. 320",
-      "required" : true,
-      "step" : 0.1,
-      "type" : "number"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Condición corporal 1-5 (opcional)",
-      "name" : "conditionScore",
-      "options" : [ {
-        "label" : "1 - Muy flaco",
-        "value" : "1"
-      }, {
-        "label" : "2 - Flaco",
-        "value" : "2"
-      }, {
-        "label" : "3 - Normal",
-        "value" : "3"
-      }, {
-        "label" : "4 - Gordo",
-        "value" : "4"
-      }, {
-        "label" : "5 - Muy gordo",
-        "value" : "5"
-      } ],
-      "required" : false,
-      "type" : "number"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Peso (kg)",
+        "min" : 0.0,
+        "name" : "weightKg",
+        "options" : [ ],
+        "placeholder" : "Ej. 320",
+        "required" : true,
+        "step" : 0.1,
+        "type" : "number"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Condición corporal 1-5 (opcional)",
+        "name" : "conditionScore",
+        "options" : [
+          {
+            "label" : "1 - Muy flaco",
+            "value" : "1"
+          },
+          {
+            "label" : "2 - Flaco",
+            "value" : "2"
+          },
+          {
+            "label" : "3 - Normal",
+            "value" : "3"
+          },
+          {
+            "label" : "4 - Gordo",
+            "value" : "4"
+          },
+          {
+            "label" : "5 - Muy gordo",
+            "value" : "5"
+          }
+        ],
+        "required" : false,
+        "type" : "number"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar pesaje",
     "title" : "Registrar pesaje"
@@ -454,36 +534,44 @@
   "PRODUCCION_LECHE" : {
     "appendNotes" : true,
     "code" : "PRODUCCION_LECHE",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Litros",
-      "min" : 0.0,
-      "name" : "liters",
-      "options" : [ ],
-      "placeholder" : "Ej. 12.5",
-      "required" : true,
-      "step" : 0.1,
-      "type" : "number"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Sesión (opcional)",
-      "name" : "session",
-      "options" : [ {
-        "label" : "Sin especificar",
-        "value" : ""
-      }, {
-        "label" : "Mañana",
-        "value" : "MANANA"
-      }, {
-        "label" : "Tarde",
-        "value" : "TARDE"
-      }, {
-        "label" : "Día completo",
-        "value" : "DIA_COMPLETO"
-      } ],
-      "required" : false,
-      "type" : "text"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Litros",
+        "min" : 0.0,
+        "name" : "liters",
+        "options" : [ ],
+        "placeholder" : "Ej. 12.5",
+        "required" : true,
+        "step" : 0.1,
+        "type" : "number"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Sesión (opcional)",
+        "name" : "session",
+        "options" : [
+          {
+            "label" : "Sin especificar",
+            "value" : ""
+          },
+          {
+            "label" : "Mañana",
+            "value" : "MANANA"
+          },
+          {
+            "label" : "Tarde",
+            "value" : "TARDE"
+          },
+          {
+            "label" : "Día completo",
+            "value" : "DIA_COMPLETO"
+          }
+        ],
+        "required" : false,
+        "type" : "text"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar producción",
     "title" : "Registrar producción de leche"
@@ -491,17 +579,19 @@
   "SECADO" : {
     "appendNotes" : true,
     "code" : "SECADO",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Litros último ordeño (opcional)",
-      "min" : 0.0,
-      "name" : "lastMilkLiters",
-      "options" : [ ],
-      "placeholder" : "Ej. 4.5",
-      "required" : false,
-      "step" : 0.1,
-      "type" : "number"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Litros último ordeño (opcional)",
+        "min" : 0.0,
+        "name" : "lastMilkLiters",
+        "options" : [ ],
+        "placeholder" : "Ej. 4.5",
+        "required" : false,
+        "step" : 0.1,
+        "type" : "number"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar secado",
     "title" : "Registrar secado"
@@ -509,16 +599,18 @@
   "SEGUIMIENTO" : {
     "appendNotes" : false,
     "code" : "SEGUIMIENTO",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Observaciones",
-      "maxLength" : 1000,
-      "name" : "notes",
-      "options" : [ ],
-      "placeholder" : "Describe la observación",
-      "required" : true,
-      "type" : "textarea"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Observaciones",
+        "maxLength" : 1000,
+        "name" : "notes",
+        "options" : [ ],
+        "placeholder" : "Describe la observación",
+        "required" : true,
+        "type" : "textarea"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar seguimiento",
     "title" : "Registrar seguimiento"
@@ -526,23 +618,26 @@
   "TRASLADO" : {
     "appendNotes" : true,
     "code" : "TRASLADO",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "ID potrero destino",
-      "name" : "destinationPaddockId",
-      "options" : [ ],
-      "placeholder" : "ID del potrero de destino",
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Lote (opcional)",
-      "name" : "lotId",
-      "options" : [ ],
-      "placeholder" : "Ej. L-002",
-      "required" : false,
-      "type" : "text"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "ID potrero destino",
+        "name" : "destinationPaddockId",
+        "options" : [ ],
+        "placeholder" : "ID del potrero de destino",
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Lote (opcional)",
+        "name" : "lotId",
+        "options" : [ ],
+        "placeholder" : "Ej. L-002",
+        "required" : false,
+        "type" : "text"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar traslado",
     "title" : "Registrar traslado"
@@ -550,32 +645,36 @@
   "TRATAMIENTO" : {
     "appendNotes" : true,
     "code" : "TRATAMIENTO",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Diagnóstico",
-      "name" : "diagnosis",
-      "options" : [ ],
-      "placeholder" : "Ej. Mastitis",
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Producto / Medicamento",
-      "name" : "product",
-      "options" : [ ],
-      "placeholder" : "Ej. Oxitetraciclina",
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Costo (COP, opcional)",
-      "min" : 0.0,
-      "name" : "amountCOP",
-      "options" : [ ],
-      "placeholder" : "Ej. 80000",
-      "required" : false,
-      "type" : "number"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Diagnóstico",
+        "name" : "diagnosis",
+        "options" : [ ],
+        "placeholder" : "Ej. Mastitis",
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Producto / Medicamento",
+        "name" : "product",
+        "options" : [ ],
+        "placeholder" : "Ej. Oxitetraciclina",
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Costo (COP, opcional)",
+        "min" : 0.0,
+        "name" : "amountCOP",
+        "options" : [ ],
+        "placeholder" : "Ej. 80000",
+        "required" : false,
+        "type" : "number"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar tratamiento",
     "title" : "Registrar tratamiento médico"
@@ -583,32 +682,36 @@
   "VACUNACION" : {
     "appendNotes" : true,
     "code" : "VACUNACION",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Nombre de la vacuna",
-      "name" : "vaccineName",
-      "options" : [ ],
-      "placeholder" : "Ej. Brucelosis",
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Laboratorio (opcional)",
-      "name" : "laboratory",
-      "options" : [ ],
-      "placeholder" : "Ej. MSD",
-      "required" : false,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Costo (COP, opcional)",
-      "min" : 0.0,
-      "name" : "amountCOP",
-      "options" : [ ],
-      "placeholder" : "Ej. 30000",
-      "required" : false,
-      "type" : "number"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Nombre de la vacuna",
+        "name" : "vaccineName",
+        "options" : [ ],
+        "placeholder" : "Ej. Brucelosis",
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Laboratorio (opcional)",
+        "name" : "laboratory",
+        "options" : [ ],
+        "placeholder" : "Ej. MSD",
+        "required" : false,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Costo (COP, opcional)",
+        "min" : 0.0,
+        "name" : "amountCOP",
+        "options" : [ ],
+        "placeholder" : "Ej. 30000",
+        "required" : false,
+        "type" : "number"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar vacuna",
     "title" : "Registrar vacunación"
@@ -616,42 +719,47 @@
   "VENTA" : {
     "appendNotes" : true,
     "code" : "VENTA",
-    "fields" : [ {
-      "calvingEstimate" : false,
-      "label" : "Nombre del comprador",
-      "name" : "buyerName",
-      "options" : [ ],
-      "placeholder" : "Nombre",
-      "required" : true,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Monto (COP)",
-      "min" : 0.0,
-      "name" : "amountCOP",
-      "options" : [ ],
-      "placeholder" : "Ej. 4000000",
-      "required" : true,
-      "type" : "number"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Teléfono del comprador (opcional)",
-      "name" : "buyerPhone",
-      "options" : [ ],
-      "placeholder" : "Teléfono",
-      "required" : false,
-      "type" : "text"
-    }, {
-      "calvingEstimate" : false,
-      "label" : "Peso de venta (kg, opcional)",
-      "min" : 0.0,
-      "name" : "weightKg",
-      "options" : [ ],
-      "placeholder" : "Ej. 450",
-      "required" : false,
-      "step" : 0.1,
-      "type" : "number"
-    } ],
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Nombre del comprador",
+        "name" : "buyerName",
+        "options" : [ ],
+        "placeholder" : "Nombre",
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Monto (COP)",
+        "min" : 0.0,
+        "name" : "amountCOP",
+        "options" : [ ],
+        "placeholder" : "Ej. 4000000",
+        "required" : true,
+        "type" : "number"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Teléfono del comprador (opcional)",
+        "name" : "buyerPhone",
+        "options" : [ ],
+        "placeholder" : "Teléfono",
+        "required" : false,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Peso de venta (kg, opcional)",
+        "min" : 0.0,
+        "name" : "weightKg",
+        "options" : [ ],
+        "placeholder" : "Ej. 450",
+        "required" : false,
+        "step" : 0.1,
+        "type" : "number"
+      }
+    ],
     "requireOneOf" : [ ],
     "submitLabel" : "Confirmar venta",
     "title" : "Registrar venta"
