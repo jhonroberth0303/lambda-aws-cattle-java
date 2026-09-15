@@ -487,6 +487,57 @@ class BovineIdentityItemSummaryServiceTest {
         }
 
         @Test
+        @DisplayName("Bovino DEAD con lactancia LACTATING colgada no muestra estado productivo ni alertas (DT-20260909)")
+        void refreshSummary_deadBovineWithDanglingLactation_returnsNeutralProductiveState() {
+            Integer bovineId = 172;
+            String pk = "BOVINE#" + bovineId;
+            BovineIdentityItem bovineIdentityItem = createTestBovine(bovineId);
+            ProfileLifecycle lifecycle = ProfileLifecycle.builder()
+                    .pk(pk)
+                    .sk("PROFILE#LIFECYCLE")
+                    .status(LifecycleStatus.DEAD)
+                    .category(BovineCategory.COW)
+                    .categorySource(Source.AUTO)
+                    .lifeStage(LifeStage.ADULT)
+                    .lifeStageSource(Source.AUTO)
+                    .enabled(false)
+                    .build();
+            ProfileReproductive reproductive = ProfileReproductive.builder()
+                    .pk(pk)
+                    .sk("PROFILE#REPRODUCTIVE")
+                    .currentLactationId("LACT#01")
+                    .build();
+            ProfileLactancy danglingLactancy = ProfileLactancy.builder()
+                    .pk(pk)
+                    .sk("LACT#01")
+                    .status("LACTATING")
+                    .startDate("2025-01-15")
+                    .build();
+            ArgumentCaptor<BovineSummary> summaryCaptor = ArgumentCaptor.forClass(BovineSummary.class);
+
+            when(bovineRepository.findById(bovineId)).thenReturn(Optional.of(bovineIdentityItem));
+            when(lifecycleRepository.findById(pk, "PROFILE#LIFECYCLE")).thenReturn(Optional.of(lifecycle));
+            when(reproductiveRepository.findById(pk, "PROFILE#REPRODUCTIVE")).thenReturn(Optional.of(reproductive));
+            when(lactancyRepository.findById(pk, "LACT#01")).thenReturn(Optional.of(danglingLactancy));
+            when(summaryRepository.save(any(BovineSummary.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(mapper.toDTO(any(BovineSummary.class))).thenReturn(createTestSummaryDTO(bovineId));
+            when(lifecycleRecalculationService.recalculate(any(), any())).thenReturn(
+                    new LifecycleRecalculationService.RecalculationResult(false, false, LifeStage.ADULT, BovineCategory.COW, null)
+            );
+            when(lifecycleRecalculationService.applyRecalculation(any(), any())).thenAnswer(inv -> inv.getArgument(0));
+
+            service.refreshSummary(bovineId);
+
+            verify(summaryRepository).save(summaryCaptor.capture());
+            BovineSummary saved = summaryCaptor.getValue();
+            assertEquals("DEAD", saved.getStatus());
+            assertEquals(Boolean.FALSE, saved.getEnabled());
+            assertEquals("OPEN", saved.getProductiveState());
+            assertTrue(saved.getAlerts().isEmpty());
+            assertNull(saved.getDaysInLactation());
+        }
+
+        @Test
         @DisplayName("Debe traducir error de repositorio durante refreshSummary")
         void refreshSummary_repositoryError_throwsServiceException() {
             Integer bovineId = 172;

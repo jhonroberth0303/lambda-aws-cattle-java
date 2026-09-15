@@ -7,7 +7,6 @@ import com.cattle.events.entities.BovineEventItem;
 import com.cattle.enums.BovineEventType;
 import com.cattle.enums.EventSource;
 import com.cattle.enums.LogType;
-import com.cattle.enums.profiles.LifecycleStatus;
 import com.cattle.exceptions.NotFoundException;
 import com.cattle.forms.EventFormSchema;
 import com.cattle.forms.EventPayloadValidator;
@@ -15,6 +14,7 @@ import com.cattle.repository.BovineRepository;
 import com.cattle.repository.ProfileLifecycleRepository;
 import com.cattle.services.BovineEventService;
 import com.cattle.services.EventFormCatalog;
+import com.cattle.services.ExitEventProjector;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
@@ -37,11 +37,6 @@ public class BovineEventProcessor {
     private static final Set<BovineEventType> EXIT_EVENTS =
             EnumSet.of(BovineEventType.MUERTE, BovineEventType.VENTA);
 
-    /** Estados del ciclo de vida que impiden registrar nuevos eventos. */
-    private static final Set<LifecycleStatus> INACTIVE_STATUSES = EnumSet.of(
-            LifecycleStatus.SOLD, LifecycleStatus.DEAD, LifecycleStatus.CULLED,
-            LifecycleStatus.TRANSFERRED, LifecycleStatus.INACTIVE);
-
     private final BovineEventService bovineEventService;
     private final ObjectMapper objectMapper;
     private final LambdaContext lambdaContext;
@@ -49,11 +44,12 @@ public class BovineEventProcessor {
     private final EventPayloadValidator payloadValidator;
     private final BovineRepository bovineRepository;
     private final ProfileLifecycleRepository lifecycleRepository;
+    private final ExitEventProjector exitEventProjector;
 
     public BovineEventProcessor(BovineEventService bovineEventService, ObjectMapper objectMapper,
                                 LambdaContext lambdaContext, EventFormCatalog eventFormCatalog,
                                 EventPayloadValidator payloadValidator, BovineRepository bovineRepository,
-                                ProfileLifecycleRepository lifecycleRepository) {
+                                ProfileLifecycleRepository lifecycleRepository, ExitEventProjector exitEventProjector) {
         this.bovineEventService = bovineEventService;
         this.objectMapper = objectMapper;
         this.lambdaContext = lambdaContext;
@@ -61,6 +57,7 @@ public class BovineEventProcessor {
         this.payloadValidator = payloadValidator;
         this.bovineRepository = bovineRepository;
         this.lifecycleRepository = lifecycleRepository;
+        this.exitEventProjector = exitEventProjector;
     }
 
     public BovineEventResponseDTO applyEvent(String farmId, String bovineId, BovineEventRequestDTO request) {
@@ -106,11 +103,30 @@ public class BovineEventProcessor {
 
         bovineEventService.save(item);
 
+        if (EXIT_EVENTS.contains(eventType)) {
+            projectExitEvent(bovineId, eventType, eventAt);
+        }
+
         return BovineEventResponseDTO.builder()
                 .eventId(eventId)
                 .eventType(eventType.name())
                 .eventAt(eventAt.toString())
                 .build();
+    }
+
+    /**
+     * Aplica la proyección de salida (VENTA/MUERTE -> perfiles) de forma aislada: el evento
+     * ya quedó persistido en el timeline, así que un fallo aquí no debe reportarse como error
+     * de la operación (evitaría reintentos del cliente que dupliquen el evento). Se registra
+     * para investigación; la reconciliación queda pendiente de diseño (riesgo conocido).
+     */
+    private void projectExitEvent(String bovineId, BovineEventType eventType, Instant eventAt) {
+        try {
+            exitEventProjector.project(bovineId, eventType, eventAt);
+        } catch (Exception ex) {
+            lambdaContext.logException(LogType.PROCESSOR, "Fallo al proyectar evento de salida. bovineId: "
+                    + bovineId + ", eventType: " + eventType, ex);
+        }
     }
 
     private void validateIdentifiers(String farmId, String bovineId) {
@@ -151,7 +167,7 @@ public class BovineEventProcessor {
 
         lifecycleRepository.findById("BOVINE#" + bovineId, LIFECYCLE_SK).ifPresent(lifecycle -> {
             boolean disabled = Boolean.FALSE.equals(lifecycle.getEnabled());
-            boolean inactive = lifecycle.getStatus() != null && INACTIVE_STATUSES.contains(lifecycle.getStatus());
+            boolean inactive = lifecycle.getStatus() != null && lifecycle.getStatus().isInactive();
             if (disabled || inactive) {
                 String detail = lifecycle.getStatus() != null ? " (" + lifecycle.getStatus().name() + ")" : "";
                 throw new IllegalArgumentException(

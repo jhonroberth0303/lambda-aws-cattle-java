@@ -1,0 +1,189 @@
+{
+  "CLOSE" : {
+    "appendNotes" : true,
+    "code" : "CLOSE",
+    "fields" : [ {
+      "calvingEstimate" : false,
+      "label" : "Residual (cm)",
+      "min" : 1.0,
+      "name" : "residualCm",
+      "options" : [ ],
+      "placeholder" : "Ej. 8",
+      "required" : true,
+      "type" : "number"
+    }, {
+      "calvingEstimate" : false,
+      "label" : "Lote (opcional)",
+      "name" : "lotId",
+      "options" : [ ],
+      "placeholder" : "Ej. L-001",
+      "required" : false,
+      "type" : "text"
+    }, {
+      "calvingEstimate" : false,
+      "label" : "Animales (opcional)",
+      "min" : 1.0,
+      "name" : "animals",
+      "options" : [ ],
+      "placeholder" : "Cantidad",
+      "required" : false,
+      "type" : "number"
+    } ],
+    "requireOneOf" : [ ],
+    "submitLabel" : "Confirmar cierre",
+    "title" : "Registrar cierre"
+  },
+  "FERTILIZED" : {
+    "appendNotes" : true,
+    "code" : "FERTILIZED",
+    "fields" : [ {
+      "calvingEstimate" : false,
+      "label" : "Producto",
+      "name" : "productName",
+      "options" : [ ],
+      "placeholder" : "Ej. Urea 46%, Cal agrícola",
+      "required" : false,
+      "type" : "text"
+    }, {
+      "calvingEstimate" : false,
+      "label" : "Cantidad (kg)",
+      "min" : 0.0,
+      "name" : "quantityKg",
+      "options" : [ ],
+      "placeholder" : "Ej. 50",
+      "required" : false,
+      "step" : 0.1,
+      "type" : "number"
+    } ],
+    "requireOneOf" : [ ],
+    "submitLabel" : "Guardar fertilización",
+    "title" : "Registrar fertilización"
+  },
+  "HEIGHT_MEASURED" : {
+    "appendNotes" : true,
+    "code" : "HEIGHT_MEASURED",
+    "fields" : [ {
+      "calvingEstimate" : false,
+      "label" : "Altura (cm)",
+      "min" : 1.0,
+      "name" : "heightCm",
+      "options" : [ ],
+      "placeholder" : "Ej. 25",
+      "required" : true,
+      "type" : "number"
+    } ],
+    "requireOneOf" : [ ],
+    "submitLabel" : "Guardar medición",
+    "title" : "Registrar medición de altura"
+  },
+  "LIMED" : {
+    "appendNotes" : true,
+    "code" : "LIMED",
+    "fields" : [ {
+      "calvingEstimate" : false,
+      "label" : "Producto",
+      "name" : "productName",
+      "options" : [ ],
+      "placeholder" : "Ej. Urea 46%, Cal agrícola",
+      "required" : false,
+      "type" : "text"
+    }, {
+      "calvingEstimate" : false,
+      "label" : "Cantidad (kg)",
+      "min" : 0.0,
+      "name" : "quantityKg",
+      "options" : [ ],
+      "placeholder" : "Ej. 50",
+      "required" : false,
+      "step" : 0.1,
+      "type" : "number"
+    } ],
+    "requireOneOf" : [ ],
+    "submitLabel" : "Guardar encalado",
+    "title" : "Registrar encalado"
+  },
+  "MAINTENANCE_CLEAR" : {
+    "appendNotes" : false,
+    "code" : "MAINTENANCE_CLEAR",
+    "fields" : [ {
+      "calvingEstimate" : false,
+      "label" : "Observaciones (opcional)",
+      "maxLength" : 1000,
+      "name" : "notes",
+      "options" : [ ],
+      "placeholder" : "Opcional",
+      "required" : false,
+      "type" : "textarea"
+    } ],
+    "requireOneOf" : [ ],
+    "submitLabel" : "Desbloquear potrero",
+    "title" : "Levantar mantenimiento"
+  },
+  "MAINTENANCE_SET" : {
+    "appendNotes" : true,
+    "code" : "MAINTENANCE_SET",
+    "fields" : [ {
+      "calvingEstimate" : false,
+      "default" : "FERTILIZACION",
+      "label" : "Subestado",
+      "name" : "substatus",
+      "options" : [ ],
+      "optionsFrom" : "pasture-substatuses",
+      "required" : true,
+      "type" : "text"
+    }, {
+      "calvingEstimate" : false,
+      "label" : "Fecha de liberación",
+      "minField" : "today",
+      "name" : "holdUntil",
+      "options" : [ ],
+      "required" : false,
+      "type" : "date"
+    } ],
+    "requireOneOf" : [ ],
+    "submitLabel" : "Bloquear potrero",
+    "title" : "Registrar mantenimiento"
+  },
+  "OBSERVATION_ADDED" : {
+    "appendNotes" : false,
+    "code" : "OBSERVATION_ADDED",
+    "fields" : [ {
+      "calvingEstimate" : false,
+      "label" : "Observaciones",
+      "maxLength" : 1000,
+      "name" : "notes",
+      "options" : [ ],
+      "placeholder" : "Describe la observación de campo",
+      "required" : true,
+      "type" : "textarea"
+    } ],
+    "requireOneOf" : [ ],
+    "submitLabel" : "Guardar observación",
+    "title" : "Agregar observación"
+  },
+  "OPEN" : {
+    "appendNotes" : true,
+    "code" : "OPEN",
+    "fields" : [ {
+      "calvingEstimate" : false,
+      "label" : "Lote",
+      "name" : "lotId",
+      "options" : [ ],
+      "placeholder" : "Ej. L-001",
+      "required" : true,
+      "type" : "text"
+    }, {
+      "calvingEstimate" : false,
+      "label" : "Animales",
+      "min" : 1.0,
+      "name" : "animals",
+      "options" : [ ],
+      "placeholder" : "Cantidad",
+      "required" : true,
+      "type" : "number"
+    } ],
+    "requireOneOf" : [ ],
+    "submitLabel" : "Confirmar apertura",
+    "title" : "Registrar apertura"
+  }
+}
