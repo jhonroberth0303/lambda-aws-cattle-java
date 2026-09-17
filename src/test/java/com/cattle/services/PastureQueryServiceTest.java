@@ -1,7 +1,9 @@
 package com.cattle.services;
 
+import com.cattle.dtos.chatbot.IntentContext;
 import com.cattle.dtos.chatbot.PastureContextDTO;
 import com.cattle.entities.Pasture;
+import com.cattle.enums.QueryIntent;
 import com.cattle.exceptions.RepositoryException;
 import com.cattle.repository.PastureRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -40,14 +43,7 @@ class PastureQueryServiceTest {
     @BeforeEach
     void setUp() {
         openMocks(this);
-        pastureQueryService = new PastureQueryService();
-        try {
-            java.lang.reflect.Field field = PastureQueryService.class.getDeclaredField("pastureRepository");
-            field.setAccessible(true);
-            field.set(pastureQueryService, pastureRepository);
-        } catch (Exception e) {
-            fail("Failed to inject mock: " + e.getMessage());
-        }
+        pastureQueryService = new PastureQueryService(pastureRepository);
     }
 
     // ==================== getAvailablePastures Tests ====================
@@ -350,6 +346,30 @@ class PastureQueryServiceTest {
         List<PastureContextDTO> result = pastureQueryService.getAllPastures("farm-empty");
 
         assertTrue(result.isEmpty());
+    }
+
+    // ==================== ChatbotContextProvider ====================
+
+    @Test
+    void supportedIntents_returnsPastureStatus() {
+        Set<QueryIntent> result = pastureQueryService.supportedIntents();
+
+        assertEquals(Set.of(QueryIntent.PASTURE_STATUS), result);
+    }
+
+    @Test
+    void buildContext_pastureStatus_includesDistributionSummary() throws RepositoryException {
+        String farmId = "farm-001";
+        IntentContext intent = IntentContext.builder().intent(QueryIntent.PASTURE_STATUS).build();
+        List<Pasture> pastures = new ArrayList<>();
+        pastures.add(createPastureWithStatus("DISPONIBLE", 10.0));
+        pastures.add(createPastureWithStatus("EN_USO", 12.5));
+        when(pastureRepository.findPastures2(farmId)).thenReturn(Optional.of(pastures));
+
+        String result = pastureQueryService.buildContext(intent, farmId);
+
+        assertTrue(result.contains("ESTADO DE POTREROS"));
+        assertTrue(result.contains("EN_USO"));
     }
 
     // ==================== Helper Methods ====================

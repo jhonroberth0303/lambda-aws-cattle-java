@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.enums.LogType;
 import com.cattle.events.entities.PastureEventItem;
 import com.cattle.exceptions.RepositoryException;
@@ -22,16 +23,17 @@ import java.util.stream.StreamSupport;
 @Repository
 public class PastureEventRepository {
     private static final String DEFAULT_TABLE_EVENTS = "Events";
-    private static final String TABLE_EVENTS = System.getenv("TABLE_EVENTS");
 
     private final DynamoDbTable<PastureEventItem> table;
     private final LambdaContext lambdaContext;
     private final ObjectMapper objectMapper;
     private final String tableName;
 
-    public PastureEventRepository(LambdaContext lambdaContext, DynamoDbEnhancedClient enhancedClient, ObjectMapper objectMapper) {
+    public PastureEventRepository(LambdaContext lambdaContext, DynamoDbEnhancedClient enhancedClient,
+                                   ObjectMapper objectMapper, TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
-        this.tableName = TABLE_EVENTS == null || TABLE_EVENTS.isBlank() ? DEFAULT_TABLE_EVENTS : TABLE_EVENTS;
+        String tableEvents = tablesConfig.getEvents();
+        this.tableName = tableEvents == null || tableEvents.isBlank() ? DEFAULT_TABLE_EVENTS : tableEvents;
         this.table = enhancedClient.table(tableName, TableSchema.fromBean(PastureEventItem.class));
         this.objectMapper = objectMapper;
     }

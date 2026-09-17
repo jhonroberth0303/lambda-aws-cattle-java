@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.SiteSettingItem;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -59,7 +60,9 @@ class SiteSettingRepositoryTest {
     void setUp() {
         openMocks(this);
         when(enhancedClient.table(any(), any(TableSchema.class))).thenReturn(table);
-        repository = new SiteSettingRepository(lambdaContext, enhancedClient);
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setSiteSettings("SiteSettings");
+        repository = new SiteSettingRepository(lambdaContext, enhancedClient, tablesConfig);
     }
 
     private SiteSettingItem item() {

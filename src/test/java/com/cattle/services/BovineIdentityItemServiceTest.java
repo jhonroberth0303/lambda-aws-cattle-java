@@ -1,6 +1,8 @@
 package com.cattle.services;
 
+import com.cattle.config.AppProperties;
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.bovines.BovineIdentityItem;
 import com.cattle.exceptions.RepositoryException;
 import com.cattle.exceptions.ServiceException;
@@ -46,7 +48,9 @@ class BovineIdentityItemServiceTest {
     @BeforeEach
     void setUp() {
         openMocks(this);
-        bovineService = new BovineService(bovineRepository, lambdaContext, counterRepository);
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setBovines("Bovines");
+        bovineService = new BovineService(bovineRepository, lambdaContext, counterRepository, tablesConfig, new AppProperties());
     }
 
     // ==================== findAll Tests ====================

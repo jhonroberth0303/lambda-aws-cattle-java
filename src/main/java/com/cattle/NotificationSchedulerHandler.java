@@ -2,6 +2,7 @@ package com.cattle;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.cattle.config.AppProperties;
 import com.cattle.config.LambdaContext;
 import com.cattle.enums.LogType;
 import com.cattle.notifications.NotificationDraft;
@@ -118,8 +119,7 @@ public class NotificationSchedulerHandler implements RequestHandler<Map<String, 
         return value != null ? value.toString() : null;
     }
 
-    private static ZoneId resolveZone() {
-        String configured = System.getenv("APP_TIMEZONE");
+    private static ZoneId resolveZone(String configured) {
         try {
             return ZoneId.of(configured == null || configured.isBlank() ? DEFAULT_TIMEZONE : configured);
         } catch (RuntimeException ex) {
@@ -138,7 +138,7 @@ public class NotificationSchedulerHandler implements RequestHandler<Map<String, 
                     new ArrayList<>(context.getBeansOfType(NotificationProducer.class).values()),
                     context.getBean(NotificationDispatcher.class),
                     context.getBean(LambdaContext.class),
-                    resolveZone());
+                    resolveZone(context.getBean(AppProperties.class).getTimezone()));
         }
     }
 

@@ -1,11 +1,14 @@
 package com.cattle.services;
 
+import com.cattle.dtos.chatbot.IntentContext;
 import com.cattle.dtos.chatbot.MilkingContextDTO;
 import com.cattle.entities.MilkingRecord;
+import com.cattle.enums.QueryIntent;
 import com.cattle.exceptions.RepositoryException;
 import com.cattle.repository.MilkingRepository;
+import com.cattle.services.chatbot.ChatbotContextProvider;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -16,15 +19,58 @@ import java.util.stream.Collectors;
 
 /**
  * Servicio de consultas de lactancia para el chatbot.
- * Proporciona métodos especializados para obtener estadísticas de producción de leche.
+ * Proporciona métodos especializados para obtener estadísticas de producción de leche,
+ * e implementa {@link ChatbotContextProvider} para AGGREGATE_MILKING.
  */
 @Service
 @Slf4j
-public class MilkingQueryService {
-    
-    @Autowired
-    private MilkingRepository milkingRepository;
-    
+@RequiredArgsConstructor
+public class MilkingQueryService implements ChatbotContextProvider {
+
+    private static final Set<QueryIntent> SUPPORTED_INTENTS = Set.of(QueryIntent.AGGREGATE_MILKING);
+
+    private final MilkingRepository milkingRepository;
+
+    // ============ ChatbotContextProvider ============
+
+    @Override
+    public Set<QueryIntent> supportedIntents() {
+        return SUPPORTED_INTENTS;
+    }
+
+    @Override
+    public String buildContext(IntentContext intent, String farmId) {
+        return buildMilkingContext(farmId);
+    }
+
+    /**
+     * Construye contexto para producción de leche.
+     */
+    private String buildMilkingContext(String farmId) {
+        StringBuilder context = new StringBuilder();
+
+        Double monthlyAvg = getMonthlyAverageProduction(farmId);
+        Double weeklyAvg = getWeeklyAverageProduction(farmId);
+        Map<String, Double> byShift = getProductionByShift(farmId);
+        MilkingContextDTO topProducer = getTopProducerBovine(farmId);
+
+        context.append("PRODUCCIÓN DE LECHE:\n\n");
+        context.append("Promedio mensual: ").append(String.format("%.2f", monthlyAvg)).append(" litros\n");
+        context.append("Promedio semanal: ").append(String.format("%.2f", weeklyAvg)).append(" litros\n\n");
+
+        context.append("Producción por turno:\n");
+        byShift.forEach((shift, liters) ->
+                context.append("- ").append(shift).append(": ").append(String.format("%.2f", liters)).append(" litros\n"));
+
+        if (topProducer != null) {
+            context.append("\nTop productor:\n");
+            context.append("- Bovino: ").append(topProducer.getBovineName()).append("\n");
+            context.append("- Producción: ").append(String.format("%.2f", topProducer.getLitersMilked())).append(" litros\n");
+        }
+
+        return context.toString();
+    }
+
     /**
      * Obtiene la producción promedio mensual de una finca
      */

@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.Pasture;
 import com.cattle.enums.LogType;
 import com.cattle.events.EntityPatch;
@@ -20,16 +21,18 @@ import java.util.stream.Collectors;
 
 @Repository
 public class PastureRepository {
-    private static final String TABLE_PASTURE = System.getenv("TABLE_PASTURE");
     //private static final String GSI2_SPECIES_ETA = "gsi2";
     private static final String PASTURE_NOT_EXIST_IN_DYNAMO_DB = "Pasture not exist in DynamoDB";
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<Pasture> table;
     private final DynamoDbClient dynamoDbClient;
+    private final String tablePasture;
 
-    public PastureRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient, final DynamoDbClient dynamoDbClient) {
+    public PastureRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient,
+                              final DynamoDbClient dynamoDbClient, TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
-        this.table = enhancedClient.table(TABLE_PASTURE, TableSchema.fromBean(Pasture.class));
+        this.tablePasture = tablesConfig.getPasture();
+        this.table = enhancedClient.table(tablePasture, TableSchema.fromBean(Pasture.class));
         this.dynamoDbClient = dynamoDbClient;
     }
 
@@ -154,7 +157,7 @@ public class PastureRepository {
 
             // 3) Construir request (puedes agregar ConditionExpression si quieres bloqueo optimista)
             UpdateItemRequest req = UpdateItemRequest.builder()
-                    .tableName(TABLE_PASTURE)
+                    .tableName(tablePasture)
                     .key(key)
                     .updateExpression(ue.toString())
                     .expressionAttributeNames(names.isEmpty() ? null : names)

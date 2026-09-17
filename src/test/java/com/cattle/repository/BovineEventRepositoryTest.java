@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.enums.LogType;
 import com.cattle.events.entities.BovineEventItem;
 import com.cattle.exceptions.RepositoryException;
@@ -23,6 +24,7 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -60,7 +62,9 @@ class BovineEventRepositoryTest {
     void setUp() {
         openMocks(this);
         when(enhancedClient.table(any(), any(TableSchema.class))).thenReturn(table);
-        repository = new BovineEventRepository(lambdaContext, enhancedClient, new ObjectMapper());
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setEvents("Events");
+        repository = new BovineEventRepository(lambdaContext, enhancedClient, new ObjectMapper(), tablesConfig);
     }
 
     private BovineEventItem event(String id) {
@@ -184,5 +188,70 @@ class BovineEventRepositoryTest {
         stubQuery(List.of(event("B1")));
         repository.findByBovine("B1", 1);
         verify(lambdaContext).logInfo(eq(LogType.REPOSITORY), anyString());
+    }
+
+    // ==================== hasEventOfType ====================
+
+    private BovineEventItem eventOfType(String id, String type) {
+        BovineEventItem item = event(id);
+        item.setEventType(type);
+        return item;
+    }
+
+    @Test
+    void hasEventOfType_matchingEventPresent_returnsTrue() {
+        stubQuery(List.of(eventOfType("B1", "SEGUIMIENTO"), eventOfType("B1", "CASTRACION")));
+
+        assertTrue(repository.hasEventOfType("B1", "CASTRACION"));
+    }
+
+    @Test
+    void hasEventOfType_noMatchingEvent_returnsFalse() {
+        stubQuery(List.of(eventOfType("B1", "SEGUIMIENTO"), eventOfType("B1", "VACUNACION")));
+
+        assertFalse(repository.hasEventOfType("B1", "CASTRACION"));
+    }
+
+    @Test
+    void hasEventOfType_emptyHistory_returnsFalse() {
+        stubQuery(List.of());
+
+        assertFalse(repository.hasEventOfType("B1", "CASTRACION"));
+    }
+
+    @Test
+    void hasEventOfType_matchIsCaseInsensitive() {
+        stubQuery(List.of(eventOfType("B1", "castracion")));
+
+        assertTrue(repository.hasEventOfType("B1", "CASTRACION"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void hasEventOfType_resourceNotFound_returnsFalse() {
+        when(table.query(any(Consumer.class)))
+                .thenThrow(ResourceNotFoundException.builder().message("missing").build());
+
+        assertFalse(repository.hasEventOfType("B1", "CASTRACION"));
+        verify(lambdaContext).logException(eq(LogType.REPOSITORY), contains("Events table not found while checking event type"), any(ResourceNotFoundException.class));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void hasEventOfType_dynamoDbException_throwsRepositoryException() {
+        when(table.query(any(Consumer.class)))
+                .thenThrow(DynamoDbException.builder().message("boom").build());
+
+        RepositoryException ex = assertThrows(RepositoryException.class, () -> repository.hasEventOfType("B1", "CASTRACION"));
+        assertTrue(ex.getMessage().contains("DynamoDB error checking event type"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void hasEventOfType_unexpectedException_throwsRepositoryException() {
+        when(table.query(any(Consumer.class))).thenThrow(new IllegalStateException("nope"));
+
+        RepositoryException ex = assertThrows(RepositoryException.class, () -> repository.hasEventOfType("B1", "CASTRACION"));
+        assertTrue(ex.getMessage().contains("Unexpected error checking event type"));
     }
 }

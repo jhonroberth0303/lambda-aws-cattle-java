@@ -1,6 +1,7 @@
 package com.cattle.notifications.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
 import com.cattle.notifications.entity.NotificationItem;
@@ -69,7 +70,7 @@ class NotificationRepositoryTest {
     void setUp() {
         openMocks(this);
         when(enhancedClient.table(any(), any(TableSchema.class))).thenReturn(table);
-        repository = new NotificationRepository(lambdaContext, enhancedClient, dynamoDbClient);
+        repository = new NotificationRepository(lambdaContext, enhancedClient, dynamoDbClient, new TablesConfig());
     }
 
     private NotificationItem notif(String id) {

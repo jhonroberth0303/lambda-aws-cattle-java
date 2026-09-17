@@ -1,11 +1,14 @@
 package com.cattle.services;
 
 import com.cattle.dtos.chatbot.BovineContextDTO;
+import com.cattle.dtos.chatbot.IntentContext;
 import com.cattle.entities.bovines.BovineIdentityItem;
+import com.cattle.enums.QueryIntent;
 import com.cattle.exceptions.RepositoryException;
 import com.cattle.repository.BovineRepository;
+import com.cattle.services.chatbot.ChatbotContextProvider;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -16,15 +19,134 @@ import java.util.stream.Collectors;
 
 /**
  * Servicio de consultas de bovinos para el chatbot.
- * Proporciona métodos especializados para obtener estadísticas y datos de bovinos.
+ * Proporciona métodos especializados para obtener estadísticas y datos de bovinos,
+ * e implementa {@link ChatbotContextProvider} para las intenciones sobre bovinos.
  */
 @Service
 @Slf4j
-public class BovineQueryService {
-    
-    @Autowired
-    private BovineRepository bovineRepository;
-    
+@RequiredArgsConstructor
+public class BovineQueryService implements ChatbotContextProvider {
+
+    private static final Set<QueryIntent> SUPPORTED_INTENTS = Set.of(
+            QueryIntent.COUNT_BOVINES,
+            QueryIntent.COUNT_BY_GENDER,
+            QueryIntent.GET_BOVINE_DETAILS,
+            QueryIntent.LIST_ALL_BOVINES
+    );
+
+    private final BovineRepository bovineRepository;
+
+    // ============ ChatbotContextProvider ============
+
+    @Override
+    public Set<QueryIntent> supportedIntents() {
+        return SUPPORTED_INTENTS;
+    }
+
+    @Override
+    public String buildContext(IntentContext intent, String farmId) {
+        return switch (intent.getIntent()) {
+            case COUNT_BOVINES -> buildBovineCountContext(farmId);
+            case COUNT_BY_GENDER -> buildGenderCountContext(farmId);
+            case GET_BOVINE_DETAILS -> buildBovineDetailsContext(farmId);
+            case LIST_ALL_BOVINES -> buildAllBovinesListContext(farmId);
+            default -> "";
+        };
+    }
+
+    /**
+     * Construye contexto para conteo general de bovinos.
+     */
+    private String buildBovineCountContext(String farmId) {
+        StringBuilder context = new StringBuilder();
+
+        Long totalBovines = countAllBovines(farmId);
+        Map<String, Long> byGender = countByGender(farmId);
+
+        context.append("TOTAL DE BOVINOS: ").append(totalBovines).append("\n\n");
+
+        context.append("\nPor Género:\n");
+        byGender.forEach((gender, count) ->
+                context.append("- ").append(translateGender(gender)).append(": ").append(count).append("\n"));
+
+        return context.toString();
+    }
+
+    /**
+     * Construye contexto para conteo por género.
+     */
+    private String buildGenderCountContext(String farmId) {
+        StringBuilder context = new StringBuilder();
+
+        Map<String, Long> byGender = countByGender(farmId);
+
+        context.append("BOVINOS POR GÉNERO:\n");
+        byGender.forEach((g, count) ->
+                context.append("- ").append(translateGender(g)).append(": ").append(count).append("\n"));
+
+        Long total = countAllBovines(farmId);
+        context.append("\nTotal general: ").append(total).append("\n");
+
+        return context.toString();
+    }
+
+    /**
+     * Construye contexto para detalles de bovino específico.
+     */
+    private String buildBovineDetailsContext(String farmId) {
+        // Por ahora retorna información general
+        // En implementación completa, se extraería el ID del bovino del mensaje
+        return "Para obtener detalles de un bovino específico, se requiere implementar extracción de ID.\n" +
+               buildBovineCountContext(farmId);
+    }
+
+    /**
+     * Construye contexto con lista detallada de todos los bovinos.
+     */
+    private String buildAllBovinesListContext(String farmId) {
+        StringBuilder context = new StringBuilder();
+
+        List<BovineContextDTO> allBovines = getAllBovinesDetails(farmId);
+
+        context.append("LISTA COMPLETA DE BOVINOS:\n");
+        context.append("Total de animales: ").append(allBovines.size()).append("\n\n");
+
+        if (allBovines.isEmpty()) {
+            context.append("No se encontraron bovinos registrados en la finca.\n");
+            return context.toString();
+        }
+
+        // Presentar bovinos en lista simple, sin agrupar ni mostrar categoría o estado
+        for (BovineContextDTO bovine : allBovines) {
+            context.append("• ID: ").append(bovine.getBovineId());
+            if (bovine.getName() != null) {
+                context.append(" - Nombre: ").append(bovine.getName());
+            }
+            context.append(" - Género: ").append(translateGender(bovine.getGender()));
+            if (bovine.getBreed() != null) {
+                context.append(" - Raza: ").append(bovine.getBreed());
+            }
+            if (bovine.getAgeInMonths() != null && bovine.getAgeInMonths() > 0) {
+                context.append(" - Edad: ").append(bovine.getAgeInMonths()).append(" meses");
+            }
+            context.append("\n");
+        }
+
+        return context.toString();
+    }
+
+    /**
+     * Traduce género a español legible.
+     */
+    private String translateGender(String gender) {
+        if (gender == null) return "Desconocido";
+        switch (gender.toLowerCase()) {
+            case "male": return "Machos";
+            case "female": return "Hembras";
+            default: return gender;
+        }
+    }
+
     /**
      * Cuenta todos los bovinos de una finca
      */

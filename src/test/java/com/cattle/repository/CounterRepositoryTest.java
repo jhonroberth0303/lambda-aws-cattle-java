@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,9 @@ class CounterRepositoryTest {
     @BeforeEach
     void setUp() {
         openMocks(this);
-        counterRepository = new CounterRepository(lambdaContext, enhancedClient, dynamoDbClient);
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setCounters("Counters");
+        counterRepository = new CounterRepository(lambdaContext, enhancedClient, dynamoDbClient, tablesConfig);
     }
 
     // ==================== getNextId Tests ====================

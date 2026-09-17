@@ -1,5 +1,6 @@
 package com.cattle.services;
 
+import com.cattle.config.AppProperties;
 import com.cattle.config.LambdaContext;
 import com.cattle.dtos.BovineSummaryDTO;
 import com.cattle.entities.bovines.*;
@@ -85,7 +86,8 @@ class BovineIdentityItemSummaryServiceTest {
             mapper,
             lambdaContext,
             lifecycleRecalculationService,
-            productiveStateCalculator
+            productiveStateCalculator,
+            new AppProperties()
         );
     }
 

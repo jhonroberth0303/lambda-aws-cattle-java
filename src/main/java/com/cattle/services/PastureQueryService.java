@@ -1,11 +1,14 @@
 package com.cattle.services;
 
+import com.cattle.dtos.chatbot.IntentContext;
 import com.cattle.dtos.chatbot.PastureContextDTO;
 import com.cattle.entities.Pasture;
+import com.cattle.enums.QueryIntent;
 import com.cattle.exceptions.RepositoryException;
 import com.cattle.repository.PastureRepository;
+import com.cattle.services.chatbot.ChatbotContextProvider;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -16,15 +19,56 @@ import java.util.stream.Collectors;
 
 /**
  * Servicio de consultas de potreros para el chatbot.
- * Proporciona métodos especializados para obtener información de potreros y rotación.
+ * Proporciona métodos especializados para obtener información de potreros y rotación,
+ * e implementa {@link ChatbotContextProvider} para PASTURE_STATUS.
  */
 @Service
 @Slf4j
-public class PastureQueryService {
-    
-    @Autowired
-    private PastureRepository pastureRepository;
-    
+@RequiredArgsConstructor
+public class PastureQueryService implements ChatbotContextProvider {
+
+    private static final Set<QueryIntent> SUPPORTED_INTENTS = Set.of(QueryIntent.PASTURE_STATUS);
+
+    private final PastureRepository pastureRepository;
+
+    // ============ ChatbotContextProvider ============
+
+    @Override
+    public Set<QueryIntent> supportedIntents() {
+        return SUPPORTED_INTENTS;
+    }
+
+    @Override
+    public String buildContext(IntentContext intent, String farmId) {
+        return buildPastureContext(farmId);
+    }
+
+    /**
+     * Construye contexto para información de potreros.
+     */
+    private String buildPastureContext(String farmId) {
+        StringBuilder context = new StringBuilder();
+
+        List<PastureContextDTO> available = getAvailablePastures(farmId);
+        List<PastureContextDTO> inUse = getPasturesInUse(farmId);
+        Double totalHaInUse = getTotalHectaresInUse(farmId);
+        Double totalHaAvailable = getTotalAvailableHectares(farmId);
+        Map<String, Integer> byStatus = getPastureCountByStatus(farmId);
+
+        context.append("ESTADO DE POTREROS:\n\n");
+        context.append("Potreros disponibles: ").append(available.size()).append("\n");
+        context.append("Hectáreas disponibles: ").append(String.format("%.2f", totalHaAvailable)).append(" ha\n\n");
+
+        context.append("Potreros en uso: ").append(inUse.size()).append("\n");
+        context.append("Hectáreas en uso: ").append(String.format("%.2f", totalHaInUse)).append(" ha\n\n");
+
+        context.append("Distribución por estado:\n");
+        byStatus.forEach((status, count) ->
+                context.append("- ").append(status).append(": ").append(count).append("\n"));
+
+        return context.toString();
+    }
+
     /**
      * Obtiene potreros disponibles de una finca
      */

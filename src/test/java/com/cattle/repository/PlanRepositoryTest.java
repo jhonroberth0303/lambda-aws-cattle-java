@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.Plan;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -53,7 +54,9 @@ class PlanRepositoryTest {
     void setUp() {
         openMocks(this);
         when(enhancedClient.table(any(), any(TableSchema.class))).thenReturn(table);
-        planRepository = new PlanRepository(lambdaContext, enhancedClient);
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setPlan("Plan");
+        planRepository = new PlanRepository(lambdaContext, enhancedClient, tablesConfig);
     }
 
     // ==================== findPlans Tests ====================

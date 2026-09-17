@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.bovines.ProfileReproductive;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -16,13 +17,12 @@ import java.util.*;
 
 @Repository
 public class ProfileReproductiveRepository {
-    private static final String TABLE_BOVINES = System.getenv("TABLE_BOVINES");
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<ProfileReproductive> table;
 
-    public ProfileReproductiveRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient) {
+    public ProfileReproductiveRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient, TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
-        table = enhancedClient.table(TABLE_BOVINES, TableSchema.fromBean(ProfileReproductive.class));
+        table = enhancedClient.table(tablesConfig.getBovines(), TableSchema.fromBean(ProfileReproductive.class));
     }
 
     public Optional<ProfileReproductive> findById(String pk, String sk) {

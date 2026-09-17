@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.bovines.BovineSummary;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -19,16 +20,15 @@ import java.util.*;
 @Repository
 public class BovineSummaryRepository {
 
-    private static final String TABLE_BOVINES = System.getenv("TABLE_BOVINES");
     private static final String GSI1_BOVINES = "gsi1";
     private static final String SUMMARY = "SUMMARY";
 
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<BovineSummary> table;
 
-    public BovineSummaryRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient) {
+    public BovineSummaryRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient, TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
-        this.table = enhancedClient.table(TABLE_BOVINES, TableSchema.fromBean(BovineSummary.class));
+        this.table = enhancedClient.table(tablesConfig.getBovines(), TableSchema.fromBean(BovineSummary.class));
     }
 
     /**

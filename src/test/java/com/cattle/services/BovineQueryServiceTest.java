@@ -1,7 +1,9 @@
 package com.cattle.services;
 
 import com.cattle.dtos.chatbot.BovineContextDTO;
+import com.cattle.dtos.chatbot.IntentContext;
 import com.cattle.entities.bovines.BovineIdentityItem;
+import com.cattle.enums.QueryIntent;
 import com.cattle.repository.BovineRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -11,6 +13,7 @@ import org.mockito.Mock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -31,12 +34,9 @@ class BovineQueryServiceTest {
     private BovineQueryService service;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         openMocks(this);
-        service = new BovineQueryService();
-        java.lang.reflect.Field field = BovineQueryService.class.getDeclaredField("bovineRepository");
-        field.setAccessible(true);
-        field.set(service, bovineRepository);
+        service = new BovineQueryService(bovineRepository);
     }
 
     @Test
@@ -149,6 +149,85 @@ class BovineQueryServiceTest {
         assertEquals("1", result.get(0).getBovineId());
         assertNull(result.get(1).getBornDate());
         assertNotNull(result.get(0).getBornDate());
+    }
+
+    // ==================== ChatbotContextProvider ====================
+
+    @Test
+    void supportedIntents_returnsTheFourBovineIntents() {
+        Set<QueryIntent> result = service.supportedIntents();
+
+        assertEquals(Set.of(QueryIntent.COUNT_BOVINES, QueryIntent.COUNT_BY_GENDER,
+                QueryIntent.GET_BOVINE_DETAILS, QueryIntent.LIST_ALL_BOVINES), result);
+    }
+
+    @Test
+    void buildContext_countBovines_translatesGenderLabels() {
+        IntentContext intent = IntentContext.builder().intent(QueryIntent.COUNT_BOVINES).build();
+        when(bovineRepository.countByFarmId("farm-001")).thenReturn(10L);
+        when(bovineRepository.findAllByFarmId("farm-001")).thenReturn(List.of(
+                createBovine(1, "female", LocalDate.now().minusMonths(8).toString()),
+                createBovine(2, "male", LocalDate.now().minusMonths(12).toString())
+        ));
+
+        String result = service.buildContext(intent, "farm-001");
+
+        assertTrue(result.contains("TOTAL DE BOVINOS: 10"));
+        assertTrue(result.contains("Hembras"));
+        assertTrue(result.contains("Machos"));
+    }
+
+    @Test
+    void buildContext_countByGender_includesTotalGeneral() {
+        IntentContext intent = IntentContext.builder().intent(QueryIntent.COUNT_BY_GENDER).build();
+        when(bovineRepository.countByFarmId("farm-001")).thenReturn(5L);
+        when(bovineRepository.findAllByFarmId("farm-001")).thenReturn(List.of(
+                createBovine(1, "female", LocalDate.now().minusMonths(8).toString())
+        ));
+
+        String result = service.buildContext(intent, "farm-001");
+
+        assertTrue(result.contains("BOVINOS POR GÉNERO"));
+        assertTrue(result.contains("Total general: 5"));
+    }
+
+    @Test
+    void buildContext_getBovineDetails_returnsStubMessage() {
+        IntentContext intent = IntentContext.builder().intent(QueryIntent.GET_BOVINE_DETAILS).build();
+        when(bovineRepository.countByFarmId("farm-001")).thenReturn(1L);
+        when(bovineRepository.findAllByFarmId("farm-001")).thenReturn(List.of());
+
+        String result = service.buildContext(intent, "farm-001");
+
+        assertTrue(result.contains("se requiere implementar extracción de ID"));
+        assertTrue(result.contains("TOTAL DE BOVINOS"));
+    }
+
+    @Test
+    void buildContext_listAllBovinesEmpty_returnsEmptyMessage() {
+        IntentContext intent = IntentContext.builder().intent(QueryIntent.LIST_ALL_BOVINES).build();
+        when(bovineRepository.findAllByFarmId("farm-001")).thenReturn(List.of());
+
+        String result = service.buildContext(intent, "farm-001");
+
+        assertTrue(result.contains("No se encontraron bovinos registrados"));
+    }
+
+    @Test
+    void buildContext_listAllBovines_omitsOptionalFragmentsWhenDataMissing() {
+        IntentContext intent = IntentContext.builder().intent(QueryIntent.LIST_ALL_BOVINES).build();
+        BovineIdentityItem item = new BovineIdentityItem();
+        item.setBovineId(1);
+        item.setGender(null);
+        item.setBornDate(null);
+        when(bovineRepository.findAllByFarmId("farm-001")).thenReturn(List.of(item));
+
+        String result = service.buildContext(intent, "farm-001");
+
+        assertTrue(result.contains("Desconocido"));
+        assertFalse(result.contains("Nombre:"));
+        assertFalse(result.contains("Raza:"));
+        assertFalse(result.contains("Edad:"));
     }
 
     private BovineIdentityItem createBovine(Integer id, String gender, String bornDate) {

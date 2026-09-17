@@ -2,11 +2,14 @@ package com.cattle.services;
 
 import com.cattle.entities.bovines.BovineIdentityItem;
 import com.cattle.entities.bovines.ProfileLifecycle;
+import com.cattle.enums.BovineEventType;
 import com.cattle.enums.profiles.BovineCategory;
 import com.cattle.enums.profiles.LifeStage;
 import com.cattle.enums.profiles.Sex;
 import com.cattle.enums.profiles.Source;
-import com.cattle.services.BovineCategoryRulesService.InferenceResult;
+import com.cattle.repository.BovineEventRepository;
+import com.cattle.rules.BovineCategoryRulesService;
+import com.cattle.rules.BovineCategoryRulesService.InferenceResult;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -27,10 +30,12 @@ import java.time.format.DateTimeFormatter;
 public class LifecycleRecalculationService {
 
     private final BovineCategoryRulesService rulesService;
+    private final BovineEventRepository bovineEventRepository;
     private static final DateTimeFormatter ISO_DATE = DateTimeFormatter.ISO_LOCAL_DATE;
 
-    public LifecycleRecalculationService(BovineCategoryRulesService rulesService) {
+    public LifecycleRecalculationService(BovineCategoryRulesService rulesService, BovineEventRepository bovineEventRepository) {
         this.rulesService = rulesService;
+        this.bovineEventRepository = bovineEventRepository;
     }
 
     /**
@@ -76,8 +81,7 @@ public class LifecycleRecalculationService {
 
         LocalDate bornDate = LocalDate.parse(bovineIdentityItem.getBornDate(), ISO_DATE);
         Sex sex = resolveSexFromIdentity(bovineIdentityItem);
-        // TODO: isCastrated should come from EVENT#CASTRATION when events are implemented
-        boolean isCastrated = false;
+        boolean isCastrated = isCastrated(bovineIdentityItem.getBovineId());
         Source categorySource = lifecycle.getCategorySource();
         String farmId = bovineIdentityItem.getFarmId() != null ? bovineIdentityItem.getFarmId() : "default";
 
@@ -140,6 +144,17 @@ public class LifecycleRecalculationService {
         lifecycle.setUpdatedAt(Instant.now().toString());
         
         return lifecycle;
+    }
+
+    /**
+     * Determina si el bovino tiene un evento de castración en su historial.
+     * Sin bovineId no hay historial que consultar (bovino aún no persistido).
+     */
+    private boolean isCastrated(Integer bovineId) {
+        if (bovineId == null) {
+            return false;
+        }
+        return bovineEventRepository.hasEventOfType(String.valueOf(bovineId), BovineEventType.CASTRACION.name());
     }
 
     /**
