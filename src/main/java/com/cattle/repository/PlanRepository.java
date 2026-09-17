@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.Plan;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -20,15 +21,14 @@ import java.util.Optional;
 
 @Repository
 public class PlanRepository {
-    private static final String TABLE_PLAN = System.getenv("TABLE_PLAN");
     private static final String PLAN_NOT_EXIST_IN_DYNAMO_DB = "Plan not exist in DynamoDB";
     private static final String GSI1_FARM_ID = "gsi1";
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<Plan> table;
 
-    public PlanRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient) {
+    public PlanRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient, TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
-        this.table = enhancedClient.table(TABLE_PLAN, TableSchema.fromBean(Plan.class));
+        this.table = enhancedClient.table(tablesConfig.getPlan(), TableSchema.fromBean(Plan.class));
     }
 
     public Optional<List<Plan>> findPlans(String farmId) {

@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.SiteSettingItem;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -21,14 +22,12 @@ import java.util.stream.StreamSupport;
 @Repository
 public class SiteSettingRepository {
 
-    private static final String TABLE_SITE_SETTINGS = System.getenv("TABLE_SITE_SETTINGS");
-
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<SiteSettingItem> table;
 
-    public SiteSettingRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient) {
+    public SiteSettingRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient, TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
-        this.table = enhancedClient.table(TABLE_SITE_SETTINGS, TableSchema.fromBean(SiteSettingItem.class));
+        this.table = enhancedClient.table(tablesConfig.getSiteSettings(), TableSchema.fromBean(SiteSettingItem.class));
     }
 
     public Optional<SiteSettingItem> findCurrent(String siteId, String settingKey) {

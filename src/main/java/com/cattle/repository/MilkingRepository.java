@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.MilkingRecord;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -20,17 +21,18 @@ import java.util.Optional;
 @Repository
 public class MilkingRepository {
 
-    private static final String TABLE_FARM_MILKING = System.getenv("TABLE_FARM_MILKING");
     private static final String GSI1 = "gsi1";
     public static final String MILKING_NOT_EXIST_IN_DYNAMO_DB = "Milking not exist in DynamoDB";
     public static final String STATUS_SUCCESS = "200";
     public static final String MILKING_WAS_DELETE_SUCCESSFULLY = "Milking was delete successfully: ";
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<MilkingRecord> table;
+    private final String tableFarmMilking;
 
-    public MilkingRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient) {
+    public MilkingRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient, TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
-        table = enhancedClient.table(TABLE_FARM_MILKING, TableSchema.fromBean(MilkingRecord.class));
+        this.tableFarmMilking = tablesConfig.getFarmMilking();
+        table = enhancedClient.table(tableFarmMilking, TableSchema.fromBean(MilkingRecord.class));
     }
 
     public Optional<MilkingRecord> save(MilkingRecord milkingRecord) throws RepositoryException {
@@ -55,7 +57,7 @@ public class MilkingRepository {
                 list.add(record);
             }
 
-            lambdaContext.logInfo(LogType.REPOSITORY, "getAllMilking: " + list.size() + " records found in table: " + TABLE_FARM_MILKING);
+            lambdaContext.logInfo(LogType.REPOSITORY, "getAllMilking: " + list.size() + " records found in table: " + tableFarmMilking);
             return Optional.of(list);
         } catch (ResourceNotFoundException e) {
             lambdaContext.logException(LogType.REPOSITORY, "FarmMilking table not found", e);
@@ -75,7 +77,7 @@ public class MilkingRepository {
 
             MilkingRecord milkingRecord = table.getItem(r -> r.key(key));
 
-            lambdaContext.logInfo(LogType.REPOSITORY, "getMilkingByPkAndSk: Record : " + pk + "-" + sk + " found in table" + TABLE_FARM_MILKING);
+            lambdaContext.logInfo(LogType.REPOSITORY, "getMilkingByPkAndSk: Record : " + pk + "-" + sk + " found in table" + tableFarmMilking);
             return Optional.of(milkingRecord);
         }  catch (DynamoDbException ex) {
             lambdaContext.logException(LogType.REPOSITORY, "Unexpected error getting farmMilking", ex);
@@ -93,7 +95,7 @@ public class MilkingRepository {
                     )
             )).items().forEach(milkingRecord::add);
 
-            lambdaContext.logInfo(LogType.REPOSITORY, "getMilkingBetweenDates: " + milkingRecord.size() + " records found in table: " + TABLE_FARM_MILKING);
+            lambdaContext.logInfo(LogType.REPOSITORY, "getMilkingBetweenDates: " + milkingRecord.size() + " records found in table: " + tableFarmMilking);
             return Optional.of(milkingRecord);
         } catch (ResourceNotFoundException e) {
             lambdaContext.logException(LogType.REPOSITORY, "FarmMilking table not found", e);
@@ -133,7 +135,7 @@ public class MilkingRepository {
         try {
             List<MilkingRecord> milkingRecords = new ArrayList<>();
             table.scan().items().forEach(milkingRecords::add);
-            lambdaContext.logInfo(LogType.REPOSITORY, "findAllScan: " + milkingRecords.size() + " records found in table: " + TABLE_FARM_MILKING);
+            lambdaContext.logInfo(LogType.REPOSITORY, "findAllScan: " + milkingRecords.size() + " records found in table: " + tableFarmMilking);
             return Optional.of(milkingRecords);
         } catch (ResourceNotFoundException e) {
             lambdaContext.logException(LogType.REPOSITORY, "FarmMilking table not found", e);

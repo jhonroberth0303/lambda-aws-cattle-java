@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.dtos.commons.MessageDTO;
 import com.cattle.entities.bovines.BovineIdentityItem;
 import com.cattle.entities.bovines.BovineSummary;
@@ -20,7 +21,6 @@ import java.util.*;
 @Repository
 public class BovineRepository {
 
-    private static final String TABLE_BOVINES = System.getenv("TABLE_BOVINES");
     private static final String BOVINE_NOT_EXIST_IN_DYNAMO_DB = "Bovine not exist in DynamoDB";
     private static final String STATUS_SUCCESS = "200";
     private static final String BOVINE_WAS_DELETE_SUCCESSFULLY = "Bovine was delete successfully: ";
@@ -31,11 +31,13 @@ public class BovineRepository {
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<BovineIdentityItem> table;
     private final DynamoDbTable<BovineSummary> summaryTable;
+    private final String tableBovines;
 
-    public BovineRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient) {
+    public BovineRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient, TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
-        table = enhancedClient.table(TABLE_BOVINES, TableSchema.fromBean(BovineIdentityItem.class));
-        summaryTable = enhancedClient.table(TABLE_BOVINES, TableSchema.fromBean(BovineSummary.class));
+        this.tableBovines = tablesConfig.getBovines();
+        table = enhancedClient.table(tableBovines, TableSchema.fromBean(BovineIdentityItem.class));
+        summaryTable = enhancedClient.table(tableBovines, TableSchema.fromBean(BovineSummary.class));
     }
 
     public Optional<List<BovineIdentityItem>> findAll() {
@@ -56,7 +58,7 @@ public class BovineRepository {
                 return Optional.empty();
             }
 
-            lambdaContext.logInfo(LogType.REPOSITORY, "findAll: " + bovineIdentityItems.size() + " records found in table: " + TABLE_BOVINES);
+            lambdaContext.logInfo(LogType.REPOSITORY, "findAll: " + bovineIdentityItems.size() + " records found in table: " + tableBovines);
             return Optional.of(bovineIdentityItems);
         } catch (DynamoDbException ex) {
             lambdaContext.logException(LogType.REPOSITORY, "Error finding bovines", ex);
@@ -80,7 +82,7 @@ public class BovineRepository {
                 return Optional.empty();
             }
 
-            lambdaContext.logInfo(LogType.REPOSITORY, "findById: " + list.getFirst().getBovineId() + " in table: " + TABLE_BOVINES);
+            lambdaContext.logInfo(LogType.REPOSITORY, "findById: " + list.getFirst().getBovineId() + " in table: " + tableBovines);
             return Optional.ofNullable(list.getFirst());
 
         } catch (ResourceNotFoundException e) {

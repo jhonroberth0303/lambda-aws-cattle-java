@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.enums.LogType;
 import com.cattle.events.entities.BovineEventItem;
 import com.cattle.exceptions.RepositoryException;
@@ -23,16 +24,17 @@ import java.util.stream.StreamSupport;
 public class BovineEventRepository {
 
     private static final String DEFAULT_TABLE_EVENTS = "Events";
-    private static final String TABLE_EVENTS = System.getenv("TABLE_EVENTS");
 
     private final DynamoDbTable<BovineEventItem> table;
     private final LambdaContext lambdaContext;
     private final ObjectMapper objectMapper;
     private final String tableName;
 
-    public BovineEventRepository(LambdaContext lambdaContext, DynamoDbEnhancedClient enhancedClient, ObjectMapper objectMapper) {
+    public BovineEventRepository(LambdaContext lambdaContext, DynamoDbEnhancedClient enhancedClient,
+                                  ObjectMapper objectMapper, TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
-        this.tableName = TABLE_EVENTS == null || TABLE_EVENTS.isBlank() ? DEFAULT_TABLE_EVENTS : TABLE_EVENTS;
+        String tableEvents = tablesConfig.getEvents();
+        this.tableName = tableEvents == null || tableEvents.isBlank() ? DEFAULT_TABLE_EVENTS : tableEvents;
         this.table = enhancedClient.table(tableName, TableSchema.fromBean(BovineEventItem.class));
         this.objectMapper = objectMapper;
     }
@@ -54,6 +56,36 @@ public class BovineEventRepository {
         } catch (Exception ex) {
             String message = "Unexpected error saving bovine event. table=" + tableName
                     + ", pk=" + item.getPk() + ", sk=" + item.getSk();
+            lambdaContext.logException(LogType.REPOSITORY, message, ex);
+            throw new RepositoryException(message, ex);
+        }
+    }
+
+    /**
+     * Indica si el bovino tiene al menos un evento del tipo dado en su historial completo.
+     * Recorre toda la partición (no limitada), ya que un evento como CASTRACION es
+     * permanente y puede haber ocurrido antes de muchos eventos más recientes.
+     */
+    public boolean hasEventOfType(String bovineId, String eventType) {
+        try {
+            QueryConditional queryConditional = QueryConditional.sortBeginsWith(
+                    Key.builder()
+                            .partitionValue("BOVINE#" + bovineId)
+                            .sortValue("EVT#")
+                            .build()
+            );
+            return StreamSupport.stream(
+                            table.query(r -> r.queryConditional(queryConditional)).items().spliterator(), false)
+                    .anyMatch(item -> eventType.equalsIgnoreCase(item.getEventType()));
+        } catch (ResourceNotFoundException ex) {
+            lambdaContext.logException(LogType.REPOSITORY, "Events table not found while checking event type. bovineId=" + bovineId, ex);
+            return false;
+        } catch (DynamoDbException ex) {
+            String message = "DynamoDB error checking event type. bovineId=" + bovineId + ", eventType=" + eventType;
+            lambdaContext.logException(LogType.REPOSITORY, message, ex);
+            throw new RepositoryException(message, ex);
+        } catch (Exception ex) {
+            String message = "Unexpected error checking event type. bovineId=" + bovineId + ", eventType=" + eventType;
             lambdaContext.logException(LogType.REPOSITORY, message, ex);
             throw new RepositoryException(message, ex);
         }

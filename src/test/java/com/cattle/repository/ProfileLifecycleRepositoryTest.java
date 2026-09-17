@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.bovines.ProfileLifecycle;
 import com.cattle.enums.LogType;
 import com.cattle.enums.profiles.BovineCategory;
@@ -63,7 +64,9 @@ class ProfileLifecycleRepositoryTest {
     void setUp() {
         openMocks(this);
         when(enhancedClient.table(any(), any(TableSchema.class))).thenReturn(table);
-        repository = new ProfileLifecycleRepository(lambdaContext, enhancedClient);
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setBovines("Bovines");
+        repository = new ProfileLifecycleRepository(lambdaContext, enhancedClient, tablesConfig);
     }
 
     @Test

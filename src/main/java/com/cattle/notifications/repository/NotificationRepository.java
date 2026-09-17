@@ -1,6 +1,7 @@
 package com.cattle.notifications.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
 import com.cattle.notifications.entity.NotificationItem;
@@ -49,10 +50,11 @@ public class NotificationRepository {
 
     public NotificationRepository(LambdaContext lambdaContext,
                                   DynamoDbEnhancedClient enhancedClient,
-                                  @Qualifier("dynamoDbClientBean") DynamoDbClient dynamoDbClient) {
+                                  @Qualifier("dynamoDbClientBean") DynamoDbClient dynamoDbClient,
+                                  TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
         this.dynamoDbClient = dynamoDbClient;
-        String configured = System.getenv("TABLE_NOTIFICATIONS");
+        String configured = tablesConfig.getNotifications();
         this.tableName = (configured == null || configured.isBlank()) ? DEFAULT_TABLE_NAME : configured;
         this.table = enhancedClient.table(tableName, TableSchema.fromBean(NotificationItem.class));
     }

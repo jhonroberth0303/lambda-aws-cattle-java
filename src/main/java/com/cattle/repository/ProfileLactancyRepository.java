@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.bovines.ProfileLactancy;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -18,16 +19,17 @@ import java.util.*;
 
 @Repository
 public class ProfileLactancyRepository {
-    private static final String TABLE_BOVINES = System.getenv("TABLE_BOVINES");
     private static final String GSI1 = "gsi1";
     private static final String LACT_PREFIX = "LACT#";
     private static final String LACT_FARM_PREFIX = "LACT#FARM#";
     private final LambdaContext lambdaContext;
     private final DynamoDbTable<ProfileLactancy> table;
+    private final String tableBovines;
 
-    public ProfileLactancyRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient) {
+    public ProfileLactancyRepository(LambdaContext lambdaContext, final DynamoDbEnhancedClient enhancedClient, TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
-        table = enhancedClient.table(TABLE_BOVINES, TableSchema.fromBean(ProfileLactancy.class));
+        this.tableBovines = tablesConfig.getBovines();
+        table = enhancedClient.table(tableBovines, TableSchema.fromBean(ProfileLactancy.class));
     }
 
     public Optional<ProfileLactancy> findById(String pk, String sk) {
@@ -59,7 +61,7 @@ public class ProfileLactancyRepository {
                 return Optional.empty();
             }
 
-            lambdaContext.logInfo(LogType.REPOSITORY, "findAll: " + items.size() + " records found in table: " + TABLE_BOVINES);
+            lambdaContext.logInfo(LogType.REPOSITORY, "findAll: " + items.size() + " records found in table: " + tableBovines);
             return Optional.of(items);
         } catch (DynamoDbException ex) {
             lambdaContext.logException(LogType.REPOSITORY, "Error finding lactancies", ex);

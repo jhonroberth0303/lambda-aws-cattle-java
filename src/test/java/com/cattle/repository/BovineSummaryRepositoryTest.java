@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.bovines.BovineSummary;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -71,7 +72,9 @@ class BovineSummaryRepositoryTest {
     void setUp() {
         openMocks(this);
         when(enhancedClient.table(any(), any(TableSchema.class))).thenReturn(table);
-        repository = new BovineSummaryRepository(lambdaContext, enhancedClient);
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setBovines("Bovines");
+        repository = new BovineSummaryRepository(lambdaContext, enhancedClient, tablesConfig);
     }
 
     @Test

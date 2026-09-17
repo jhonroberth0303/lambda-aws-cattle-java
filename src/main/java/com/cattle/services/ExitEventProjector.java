@@ -1,5 +1,6 @@
 package com.cattle.services;
 
+import com.cattle.config.AppProperties;
 import com.cattle.config.LambdaContext;
 import com.cattle.entities.bovines.ProfileReproductive;
 import com.cattle.enums.BovineEventType;
@@ -31,9 +32,6 @@ public class ExitEventProjector {
     private static final String LIFECYCLE_SK = "PROFILE#LIFECYCLE";
     private static final String REPRODUCTIVE_SK = "PROFILE#REPRODUCTIVE";
     private static final String CLOSE_STATUS = "CLOSE";
-    /** Misma zona operativa que el resto del proyecto (ej. BovineSummaryService.ZONE_ID). */
-    private static final ZoneId ZONE_ID = ZoneId.of(System.getenv().getOrDefault("APP_TIMEZONE", "America/Bogota"));
-
     private static final Map<BovineEventType, LifecycleStatus> EXIT_STATUS = new EnumMap<>(BovineEventType.class);
     static {
         EXIT_STATUS.put(BovineEventType.VENTA, LifecycleStatus.SOLD);
@@ -45,17 +43,21 @@ public class ExitEventProjector {
     private final ProfileLactancyRepository lactancyRepository;
     private final ProfilePregnancyRepository pregnancyRepository;
     private final LambdaContext lambdaContext;
+    /** Misma zona operativa que el resto del proyecto (ej. BovineSummaryService.zoneId). */
+    private final ZoneId zoneId;
 
     public ExitEventProjector(ProfileLifecycleRepository lifecycleRepository,
                               ProfileReproductiveRepository reproductiveRepository,
                               ProfileLactancyRepository lactancyRepository,
                               ProfilePregnancyRepository pregnancyRepository,
-                              LambdaContext lambdaContext) {
+                              LambdaContext lambdaContext,
+                              AppProperties appProperties) {
         this.lifecycleRepository = lifecycleRepository;
         this.reproductiveRepository = reproductiveRepository;
         this.lactancyRepository = lactancyRepository;
         this.pregnancyRepository = pregnancyRepository;
         this.lambdaContext = lambdaContext;
+        this.zoneId = ZoneId.of(appProperties.getTimezone());
     }
 
     /**
@@ -107,7 +109,7 @@ public class ExitEventProjector {
                 return;
             }
             lactancy.setStatus(CLOSE_STATUS);
-            lactancy.setEndDate(eventAt.atZone(ZONE_ID).toLocalDate().toString());
+            lactancy.setEndDate(eventAt.atZone(zoneId).toLocalDate().toString());
             lactancyRepository.save(lactancy);
         });
     }

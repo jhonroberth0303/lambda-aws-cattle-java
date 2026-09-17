@@ -2,6 +2,7 @@ package com.cattle.config;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
@@ -14,10 +15,13 @@ public class BedrockAgentConfig {
 
     private static final String DEFAULT_MODEL_ARN = "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0";
 
+    @Value("${aws.region:us-east-1}")
+    private String awsRegion = "us-east-1";
+
     @Bean
     public BedrockAgentRuntimeClient bedrockAgentRuntimeClient() {
         return BedrockAgentRuntimeClient.builder()
-                .region(Region.US_EAST_1)
+                .region(Region.of(awsRegion))
                 .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
                 .build();
     }

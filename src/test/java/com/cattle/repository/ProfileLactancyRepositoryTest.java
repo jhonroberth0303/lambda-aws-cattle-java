@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.bovines.ProfileLactancy;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -68,7 +69,9 @@ class ProfileLactancyRepositoryTest {
     void setUp() {
         openMocks(this);
         when(enhancedClient.table(any(), any(TableSchema.class))).thenReturn(table);
-        repository = new ProfileLactancyRepository(lambdaContext, enhancedClient);
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setBovines("Bovines");
+        repository = new ProfileLactancyRepository(lambdaContext, enhancedClient, tablesConfig);
     }
 
     @Test
@@ -108,7 +111,7 @@ class ProfileLactancyRepositoryTest {
 
         assertTrue(result.isPresent());
         assertEquals(2, result.get().size());
-        verify(lambdaContext).logInfo(eq(LogType.REPOSITORY), eq("findAll: 2 records found in table: null"));
+        verify(lambdaContext).logInfo(eq(LogType.REPOSITORY), eq("findAll: 2 records found in table: Bovines"));
     }
 
     @Test

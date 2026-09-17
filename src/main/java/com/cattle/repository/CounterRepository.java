@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -14,15 +15,16 @@ import java.util.Map;
 
 @Repository
 public class CounterRepository {
-    private static final String TABLE_COUNTERS = System.getenv("TABLE_COUNTERS");
     public static final String ENTITY_NAME_FIELD = "entityName";
     private final LambdaContext lambdaContext;
     private final DynamoDbClient dynamoDbClient;
+    private final String tableCounters;
 
     public CounterRepository(LambdaContext lambdaContext, DynamoDbEnhancedClient enhancedClient,
-                             @Qualifier ("dynamoDbClientBean") DynamoDbClient dynamoDbClient) {
+                             @Qualifier ("dynamoDbClientBean") DynamoDbClient dynamoDbClient, TablesConfig tablesConfig) {
         this.lambdaContext = lambdaContext;
         this.dynamoDbClient = dynamoDbClient;
+        this.tableCounters = tablesConfig.getCounters();
     }
 
     public String getNextId(String entityName) {
@@ -36,7 +38,7 @@ public class CounterRepository {
         );
 
         UpdateItemRequest request = UpdateItemRequest.builder()
-            .tableName(TABLE_COUNTERS)
+            .tableName(tableCounters)
             .key(key)
             .updateExpression("SET nextId = if_not_exists(nextId, :start) + :inc")
             .expressionAttributeValues(expressionValues)

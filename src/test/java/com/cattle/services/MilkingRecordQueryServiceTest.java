@@ -38,14 +38,7 @@ class MilkingRecordQueryServiceTest {
     @BeforeEach
     void setUp() {
         openMocks(this);
-        milkingQueryService = new MilkingQueryService();
-        try {
-            java.lang.reflect.Field field = MilkingQueryService.class.getDeclaredField("milkingRepository");
-            field.setAccessible(true);
-            field.set(milkingQueryService, milkingRepository);
-        } catch (Exception e) {
-            fail("Failed to inject mock: " + e.getMessage());
-        }
+        milkingQueryService = new MilkingQueryService(milkingRepository);
     }
 
     // ==================== getMonthlyAverageProduction Tests ====================

@@ -1,7 +1,9 @@
 package com.cattle.services;
 
+import com.cattle.dtos.chatbot.IntentContext;
 import com.cattle.dtos.chatbot.MilkingContextDTO;
 import com.cattle.entities.MilkingRecord;
+import com.cattle.enums.QueryIntent;
 import com.cattle.repository.MilkingRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -11,8 +13,10 @@ import org.mockito.Mock;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,12 +34,9 @@ class MilkingQueryServiceTest {
     private MilkingQueryService service;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         openMocks(this);
-        service = new MilkingQueryService();
-        java.lang.reflect.Field field = MilkingQueryService.class.getDeclaredField("milkingRepository");
-        field.setAccessible(true);
-        field.set(service, milkingRepository);
+        service = new MilkingQueryService(milkingRepository);
     }
 
     @Test
@@ -224,6 +225,43 @@ class MilkingQueryServiceTest {
 
                 assertTrue(result.isEmpty());
         }
+
+    // ==================== ChatbotContextProvider ====================
+
+    @Test
+    void supportedIntents_returnsAggregateMilking() {
+        Set<QueryIntent> result = service.supportedIntents();
+
+        assertEquals(Set.of(QueryIntent.AGGREGATE_MILKING), result);
+    }
+
+    @Test
+    void buildContext_aggregateMilking_includesShiftAndTopProducer() {
+        IntentContext intent = IntentContext.builder().intent(QueryIntent.AGGREGATE_MILKING).build();
+        when(milkingRepository.getMilkingBetweenDates(anyString(), anyString(), anyString()))
+                .thenReturn(Optional.of(List.of(
+                        createMilking(10, "2026-04-01", "AM", 30.0),
+                        createMilking(10, "2026-04-02", "PM", 14.2)
+                )));
+
+        String result = service.buildContext(intent, "farm-001");
+
+        assertTrue(result.contains("PRODUCCIÓN DE LECHE"));
+        assertTrue(result.contains("Bovino 10"));
+        assertTrue(result.contains("AM"));
+    }
+
+    @Test
+    void buildContext_aggregateMilking_withoutTopProducer_skipsSection() {
+        IntentContext intent = IntentContext.builder().intent(QueryIntent.AGGREGATE_MILKING).build();
+        when(milkingRepository.getMilkingBetweenDates(anyString(), anyString(), anyString()))
+                .thenReturn(Optional.empty());
+
+        String result = service.buildContext(intent, "farm-001");
+
+        assertTrue(result.contains("PRODUCCIÓN DE LECHE"));
+        assertFalse(result.contains("Top productor"));
+    }
 
     private MilkingRecord createMilking(Integer bovineId, String date, String shift, Double liters) {
         return MilkingRecord.builder()

@@ -1,5 +1,6 @@
 package com.cattle.services;
 
+import com.cattle.config.AppProperties;
 import com.cattle.config.LambdaContext;
 import com.cattle.dtos.BovineSummaryDTO;
 import com.cattle.entities.bovines.*;
@@ -27,7 +28,6 @@ import java.util.stream.Collectors;
 @Service
 public class BovineSummaryService {
 
-    private static final ZoneId ZONE_ID = ZoneId.of(System.getenv().getOrDefault("APP_TIMEZONE", "America/Bogota"));
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_INSTANT;
     public static final String OPEN = "OPEN";
 
@@ -50,6 +50,7 @@ public class BovineSummaryService {
     private final LambdaContext lambdaContext;
     private final LifecycleRecalculationService lifecycleRecalculationService;
     private final ProductiveStateCalculator productiveStateCalculator;
+    private final ZoneId zoneId;
 
     public BovineSummaryService(
             BovineSummaryRepository summaryRepository,
@@ -61,7 +62,8 @@ public class BovineSummaryService {
             BovineSummaryMapper mapper,
             LambdaContext lambdaContext,
             LifecycleRecalculationService lifecycleRecalculationService,
-            ProductiveStateCalculator productiveStateCalculator) {
+            ProductiveStateCalculator productiveStateCalculator,
+            AppProperties appProperties) {
         this.summaryRepository = summaryRepository;
         this.bovineRepository = bovineRepository;
         this.lifecycleRepository = lifecycleRepository;
@@ -72,6 +74,7 @@ public class BovineSummaryService {
         this.lambdaContext = lambdaContext;
         this.lifecycleRecalculationService = lifecycleRecalculationService;
         this.productiveStateCalculator = productiveStateCalculator;
+        this.zoneId = ZoneId.of(appProperties.getTimezone());
     }
 
     /**
@@ -256,7 +259,7 @@ public class BovineSummaryService {
         // Calcular estados productivos y alertas
         // DT-20260909, hallazgo B: un bovino inactivo (vendido/muerto/...) no debe mostrar
         // estado productivo ni alertas de una lactancia/preñez que nunca se cerró.
-        LocalDate today = LocalDate.now(ZONE_ID);
+        LocalDate today = LocalDate.now(zoneId);
         ProductiveStateResult stateResult = inactiveBovine
                 ? NEUTRAL_PRODUCTIVE_STATE
                 : productiveStateCalculator.calculate(
@@ -270,7 +273,7 @@ public class BovineSummaryService {
                 );
 
         // Timestamp actual
-        String updatedAt = ZonedDateTime.now(ZONE_ID).format(ISO_FORMATTER);
+        String updatedAt = ZonedDateTime.now(zoneId).format(ISO_FORMATTER);
 
         return BovineSummary.builder()
                 .pk(pk)

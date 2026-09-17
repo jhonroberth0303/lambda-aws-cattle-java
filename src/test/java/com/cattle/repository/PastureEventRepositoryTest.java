@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.enums.LogType;
 import com.cattle.events.entities.PastureEventItem;
 import com.cattle.exceptions.RepositoryException;
@@ -58,7 +59,9 @@ class PastureEventRepositoryTest {
     void setUp() {
         openMocks(this);
         when(enhancedClient.table(any(), any(TableSchema.class))).thenReturn(table);
-        repository = new PastureEventRepository(lambdaContext, enhancedClient, new ObjectMapper());
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setEvents("Events");
+        repository = new PastureEventRepository(lambdaContext, enhancedClient, new ObjectMapper(), tablesConfig);
     }
 
     private PastureEventItem event(String id) {

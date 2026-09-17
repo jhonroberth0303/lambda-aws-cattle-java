@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.Pasture;
 import com.cattle.enums.LogType;
 import com.cattle.events.EntityPatch;
@@ -69,7 +70,9 @@ class PastureRepositoryTest {
     void setUp() {
         openMocks(this);
         when(enhancedClient.table(any(), any(TableSchema.class))).thenReturn(table);
-        repository = new PastureRepository(lambdaContext, enhancedClient, dynamoDbClient);
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setPasture("Pasture");
+        repository = new PastureRepository(lambdaContext, enhancedClient, dynamoDbClient, tablesConfig);
     }
 
     @SuppressWarnings("unchecked")

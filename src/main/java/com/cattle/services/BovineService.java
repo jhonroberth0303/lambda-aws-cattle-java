@@ -1,6 +1,8 @@
 package com.cattle.services;
 
+import com.cattle.config.AppProperties;
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.bovines.BovineIdentityItem;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -18,17 +20,19 @@ import java.util.Optional;
 @Service
 public class BovineService {
 
-    private static final String TABLE_BOVINES = System.getenv("TABLE_BOVINES");
-    private static final ZoneId ZONE_ID = ZoneId.of(System.getenv().getOrDefault("APP_TIMEZONE", "America/Bogota"));
     private final BovineRepository bovineRepository;
     private final LambdaContext lambdaContext;
     private  final CounterRepository counterRepository;
+    private final String tableBovines;
+    private final ZoneId zoneId;
 
     public BovineService(BovineRepository bovineRepository, LambdaContext lambdaContext,
-                         CounterRepository counterRepository) {
+                         CounterRepository counterRepository, TablesConfig tablesConfig, AppProperties appProperties) {
         this.lambdaContext = lambdaContext;
         this.bovineRepository = bovineRepository;
         this.counterRepository = counterRepository;
+        this.tableBovines = tablesConfig.getBovines();
+        this.zoneId = ZoneId.of(appProperties.getTimezone());
     }
 
     public Optional<List<BovineIdentityItem>> findAll() {
@@ -53,7 +57,7 @@ public class BovineService {
 
     public Optional<BovineIdentityItem> save(BovineIdentityItem bovineIdentityItem) {
         try {
-            String counter = counterRepository.getNextId(TABLE_BOVINES);
+            String counter = counterRepository.getNextId(tableBovines);
             bovineIdentityItem.setBovineId(Integer.parseInt(counter));
             bovineIdentityItem.setPk("BOVINE#" + counter);
             bovineIdentityItem.setSk("IDENTITY");
@@ -70,8 +74,8 @@ public class BovineService {
         }
     }
 
-    private static String getLocalDate() {
-        return ZonedDateTime.now(ZONE_ID).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    private String getLocalDate() {
+        return ZonedDateTime.now(zoneId).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
     public Optional<BovineIdentityItem> update(BovineIdentityItem bovineIdentityItem) {

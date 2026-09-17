@@ -40,14 +40,7 @@ class BovineIdentityItemQueryServiceTest {
     @BeforeEach
     void setUp() {
         openMocks(this);
-        bovineQueryService = new BovineQueryService();
-        try {
-            java.lang.reflect.Field field = BovineQueryService.class.getDeclaredField("bovineRepository");
-            field.setAccessible(true);
-            field.set(bovineQueryService, bovineRepository);
-        } catch (Exception e) {
-            fail("Failed to inject mock: " + e.getMessage());
-        }
+        bovineQueryService = new BovineQueryService(bovineRepository);
     }
 
     // ==================== countAllBovines Tests ====================

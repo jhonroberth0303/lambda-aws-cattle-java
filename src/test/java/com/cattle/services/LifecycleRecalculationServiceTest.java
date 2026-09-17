@@ -2,10 +2,13 @@ package com.cattle.services;
 
 import com.cattle.entities.bovines.BovineIdentityItem;
 import com.cattle.entities.bovines.ProfileLifecycle;
+import com.cattle.enums.BovineEventType;
 import com.cattle.enums.profiles.BovineCategory;
 import com.cattle.enums.profiles.LifeStage;
 import com.cattle.enums.profiles.Source;
+import com.cattle.repository.BovineEventRepository;
 import com.cattle.rules.BovineCategoryRulesConfig;
+import com.cattle.rules.BovineCategoryRulesService;
 import com.cattle.services.LifecycleRecalculationService.RecalculationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests unitarios para LifecycleRecalculationService
@@ -32,13 +37,15 @@ class LifecycleRecalculationServiceTest {
 
     private LifecycleRecalculationService service;
     private BovineCategoryRulesService rulesService;
+    private BovineEventRepository bovineEventRepository;
     private static final DateTimeFormatter ISO_DATE = DateTimeFormatter.ISO_LOCAL_DATE;
 
     @BeforeEach
     void setUp() {
         BovineCategoryRulesConfig config = createTestConfig();
         rulesService = new BovineCategoryRulesService(config);
-        service = new LifecycleRecalculationService(rulesService);
+        bovineEventRepository = mock(BovineEventRepository.class);
+        service = new LifecycleRecalculationService(rulesService, bovineEventRepository);
     }
 
     private BovineCategoryRulesConfig createTestConfig() {
@@ -211,6 +218,55 @@ class LifecycleRecalculationServiceTest {
             // Próximo threshold es 6 meses (WEANED)
             LocalDate bornDate = LocalDate.parse(bovineIdentityItem.getBornDate(), ISO_DATE);
             assertEquals(bornDate.plusMonths(6), result.getNextRecalcDate());
+        }
+    }
+
+    @Nested
+    @DisplayName("Castration Tests")
+    class CastrationTests {
+
+        @Test
+        @DisplayName("Bovino macho con evento CASTRACION infiere categoría OX")
+        void recalculate_castratedMale_infersOxCategory() {
+            BovineIdentityItem bovineIdentityItem = createBovine(30, "male"); // 30 meses, sería BULL sin castrar
+            ProfileLifecycle lifecycle = createLifecycle(LifeStage.GROWER, BovineCategory.YOUNG_BULL, Source.AUTO);
+            when(bovineEventRepository.hasEventOfType("100", BovineEventType.CASTRACION.name())).thenReturn(true);
+
+            RecalculationResult result = service.recalculate(bovineIdentityItem, lifecycle);
+
+            assertTrue(result.isCategoryChanged());
+            assertEquals(BovineCategory.OX, result.getNewCategory());
+        }
+
+        @Test
+        @DisplayName("Bovino macho sin evento CASTRACION infiere categoría normal (BULL/YOUNG_BULL)")
+        void recalculate_notCastrated_infersNormalCategory() {
+            BovineIdentityItem bovineIdentityItem = createBovine(30, "male"); // 30 meses
+            ProfileLifecycle lifecycle = createLifecycle(LifeStage.GROWER, BovineCategory.YOUNG_BULL, Source.AUTO);
+            when(bovineEventRepository.hasEventOfType("100", BovineEventType.CASTRACION.name())).thenReturn(false);
+
+            RecalculationResult result = service.recalculate(bovineIdentityItem, lifecycle);
+
+            assertTrue(result.isCategoryChanged());
+            assertEquals(BovineCategory.BULL, result.getNewCategory());
+        }
+
+        @Test
+        @DisplayName("Bovino sin bovineId no consulta el repositorio de eventos")
+        void recalculate_nullBovineId_doesNotQueryEvents() {
+            BovineIdentityItem bovineIdentityItem = BovineIdentityItem.builder()
+                    .pk("BOVINE#100")
+                    .sk("IDENTITY")
+                    .gender("male")
+                    .bornDate(LocalDate.now().minusMonths(30).format(ISO_DATE))
+                    .farmId("finca1")
+                    .build(); // bovineId no seteado
+
+            RecalculationResult result = service.recalculate(bovineIdentityItem,
+                    createLifecycle(LifeStage.GROWER, BovineCategory.YOUNG_BULL, Source.AUTO));
+
+            org.mockito.Mockito.verifyNoInteractions(bovineEventRepository);
+            assertEquals(BovineCategory.BULL, result.getNewCategory());
         }
     }
 

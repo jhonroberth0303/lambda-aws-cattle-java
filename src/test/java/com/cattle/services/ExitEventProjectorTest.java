@@ -1,5 +1,6 @@
 package com.cattle.services;
 
+import com.cattle.config.AppProperties;
 import com.cattle.config.LambdaContext;
 import com.cattle.entities.bovines.ProfileLactancy;
 import com.cattle.entities.bovines.ProfileLifecycle;
@@ -65,7 +66,7 @@ class ExitEventProjectorTest {
     void setUp() {
         openMocks(this);
         projector = new ExitEventProjector(lifecycleRepository, reproductiveRepository,
-                lactancyRepository, pregnancyRepository, lambdaContext);
+                lactancyRepository, pregnancyRepository, lambdaContext, new AppProperties());
     }
 
     private ProfileLifecycle lifecycle(LifecycleStatus status, Boolean enabled) {

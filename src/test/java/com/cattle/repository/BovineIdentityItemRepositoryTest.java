@@ -5,6 +5,7 @@ import com.cattle.entities.bovines.BovineSummary;
 import com.cattle.utils.TestDataBuilder;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.dtos.commons.MessageDTO;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -74,7 +75,9 @@ class BovineIdentityItemRepositoryTest {
         openMocks(this);
         when(enhancedClient.table(any(), any(TableSchema.class)))
                 .thenReturn((DynamoDbTable) table, (DynamoDbTable) summaryTable);
-        bovineRepository = new BovineRepository(lambdaContext, enhancedClient);
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setBovines("Bovines");
+        bovineRepository = new BovineRepository(lambdaContext, enhancedClient, tablesConfig);
     }
 
     // ==================== findAll Tests ====================

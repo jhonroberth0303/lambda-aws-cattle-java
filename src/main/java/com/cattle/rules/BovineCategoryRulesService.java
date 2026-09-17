@@ -1,10 +1,9 @@
-package com.cattle.services;
+package com.cattle.rules;
 
 import com.cattle.enums.profiles.BovineCategory;
 import com.cattle.enums.profiles.LifeStage;
 import com.cattle.enums.profiles.Sex;
 import com.cattle.enums.profiles.Source;
-import com.cattle.rules.BovineCategoryRulesConfig;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -13,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Service for inferring LifeStage and BovineCategory based on configurable rules.
- * 
+ *
  * Key principles:
  * - LifeStage: 100% derivable from age (always AUTO)
  * - BovineCategory: derivable from age + sex + events (can be AUTO or MANUAL)
@@ -21,7 +20,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class BovineCategoryRulesService {
-    
+
     private static final String DEFAULT_FARM = "default";
     private final BovineCategoryRulesConfig rulesConfig;
 
@@ -58,7 +57,7 @@ public class BovineCategoryRulesService {
         if (farmRules == null || farmRules.getLifeStage() == null) {
             return null;
         }
-        
+
         for (BovineCategoryRulesConfig.LifeStageRule rule : farmRules.getLifeStage()) {
             if (ageMonths >= rule.getMinAge() && ageMonths < rule.getMaxAge()) {
                 return LifeStage.valueOf(rule.getStage());
@@ -75,12 +74,12 @@ public class BovineCategoryRulesService {
         if (farmRules == null) {
             return null;
         }
-        
+
         // OX takes precedence if castrated
         if (isCastrated && farmRules.getOx() != null && farmRules.getOx().isCastrated()) {
             return BovineCategory.valueOf(farmRules.getOx().getCategory());
         }
-        
+
         if (sex == Sex.FEMALE && farmRules.getFemale() != null) {
             for (BovineCategoryRulesConfig.CategoryRule rule : farmRules.getFemale()) {
                 if (ageMonths >= rule.getMinAge() && ageMonths < rule.getMaxAge()) {
@@ -105,7 +104,7 @@ public class BovineCategoryRulesService {
 
     /**
      * Full inference: calculates lifeStage, category, and next recalculation date.
-     * 
+     *
      * @param farm Farm ID for rules lookup
      * @param bornDate Birth date of the bovine
      * @param sex Biological sex
@@ -113,20 +112,20 @@ public class BovineCategoryRulesService {
      * @param categorySource Current category source (AUTO/MANUAL)
      * @return InferenceResult with all calculated values
      */
-    public InferenceResult inferAll(String farm, LocalDate bornDate, Sex sex, 
+    public InferenceResult inferAll(String farm, LocalDate bornDate, Sex sex,
                                      boolean isCastrated, Source categorySource) {
         int ageMonths = calculateAgeInMonths(bornDate);
-        
+
         LifeStage lifeStage = inferLifeStage(farm, ageMonths);
-        
+
         // Only infer category if source is AUTO (respect manual decisions)
         BovineCategory category = null;
         if (categorySource == null || categorySource == Source.AUTO) {
             category = inferCategory(farm, sex, ageMonths, isCastrated);
         }
-        
+
         LocalDate nextRecalcDate = calculateNextRecalcDate(farm, bornDate, ageMonths);
-        
+
         return new InferenceResult(lifeStage, category, nextRecalcDate);
     }
 
@@ -149,10 +148,10 @@ public class BovineCategoryRulesService {
         if (farmRules == null || bornDate == null) {
             return LocalDate.now().plusMonths(1); // Default: check monthly
         }
-        
+
         // Find the next threshold from lifeStage rules
         int nextThreshold = Integer.MAX_VALUE;
-        
+
         if (farmRules.getLifeStage() != null) {
             for (BovineCategoryRulesConfig.LifeStageRule rule : farmRules.getLifeStage()) {
                 if (rule.getMaxAge() > currentAgeMonths && rule.getMaxAge() < nextThreshold) {
@@ -160,12 +159,12 @@ public class BovineCategoryRulesService {
                 }
             }
         }
-        
+
         if (nextThreshold == Integer.MAX_VALUE || nextThreshold >= 999) {
             // Already adult, check annually
             return LocalDate.now().plusYears(1);
         }
-        
+
         // Calculate date when bovine reaches next threshold
         return bornDate.plusMonths(nextThreshold);
     }

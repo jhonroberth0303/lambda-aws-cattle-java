@@ -1,6 +1,7 @@
 package com.cattle.repository;
 
 import com.cattle.config.LambdaContext;
+import com.cattle.config.TablesConfig;
 import com.cattle.entities.bovines.ProfileReproductive;
 import com.cattle.enums.LogType;
 import com.cattle.exceptions.RepositoryException;
@@ -59,7 +60,9 @@ class ProfileReproductiveRepositoryTest {
     void setUp() {
         openMocks(this);
         when(enhancedClient.table(any(), any(TableSchema.class))).thenReturn(table);
-        repository = new ProfileReproductiveRepository(lambdaContext, enhancedClient);
+        TablesConfig tablesConfig = new TablesConfig();
+        tablesConfig.setBovines("Bovines");
+        repository = new ProfileReproductiveRepository(lambdaContext, enhancedClient, tablesConfig);
     }
 
     @Test
