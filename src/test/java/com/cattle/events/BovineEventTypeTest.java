@@ -13,7 +13,7 @@ class BovineEventTypeTest {
 
     @Test
     void values_containsAllExpectedTypes() {
-        assertEquals(22, BovineEventType.values().length);
+        assertEquals(25, BovineEventType.values().length);
     }
 
     @Test

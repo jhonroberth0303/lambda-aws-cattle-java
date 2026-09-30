@@ -31,6 +31,9 @@ domains:
       - { code: ABORTO,             label: "Aborto",                group: REPRODUCCION }
       - { code: DESTETE,            label: "Destete",               group: REPRODUCCION }
       - { code: SECADO,             label: "Secado",                group: REPRODUCCION }
+      - { code: CELO,               label: "Celo",                  group: REPRODUCCION }
+      - { code: PREPARTO,           label: "Preparto",              group: REPRODUCCION }
+      - { code: CONTROL_POSPARTO,   label: "Control posparto",      group: REPRODUCCION }
       - { code: PRODUCCION_LECHE,   label: "Producción de leche",   group: PRODUCCION }
       - { code: CASTRACION,         label: "Castración",            group: SANIDAD }
       - { code: DESCORNE,           label: "Descorne",              group: SANIDAD }
@@ -96,3 +99,4 @@ domains:
   notification-types:
     entries:
       - { code: MILKING_AM_REMINDER, label: "Ordeño", icon: "🥛", tone: "warn" }
+      - { code: REPRODUCTIVE_TASKS_DIGEST, label: "Agenda reproductiva", icon: "📋", tone: "info" }

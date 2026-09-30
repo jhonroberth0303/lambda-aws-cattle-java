@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  *
  * <p>Guardia anti-deriva: si un dominio declara {@code enum:} sus claves deben
  * coincidir EXACTAMENTE con las constantes de ese enum Java (ni de más ni de
- * menos); el arranque falla en caso contrario. Los 22 tipos de
+ * menos); el arranque falla en caso contrario. Los 25 tipos de
  * {@code BovineEventType} están migrados a schema-driven (EP-20260909, Fase 2).
  */
 @Service

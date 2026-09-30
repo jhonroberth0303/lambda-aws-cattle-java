@@ -80,6 +80,31 @@ class BovineIdentityItemRepositoryTest {
         bovineRepository = new BovineRepository(lambdaContext, enhancedClient, tablesConfig);
     }
 
+    // ==================== findAllIdentities Tests (HU-20260929) ====================
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findAllIdentities_readsEveryPage() {
+        Page<BovineIdentityItem> second = mock(Page.class);
+        when(table.index(anyString())).thenReturn(gsi1Index);
+        when(gsi1Index.query(any(java.util.function.Consumer.class))).thenReturn(pageIterable);
+        when(pageIterable.iterator()).thenReturn(List.of(page, second).iterator());
+        when(page.items()).thenReturn(createBovineList(15));
+        when(second.items()).thenReturn(createBovineList(4));
+
+        assertEquals(19, bovineRepository.findAllIdentities().size());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void findAllIdentities_dynamoDbException_throwsRepositoryException() {
+        when(table.index(anyString())).thenReturn(gsi1Index);
+        when(gsi1Index.query(any(java.util.function.Consumer.class)))
+                .thenThrow(DynamoDbException.builder().message("DynamoDB error").build());
+
+        assertThrows(RepositoryException.class, () -> bovineRepository.findAllIdentities());
+    }
+
     // ==================== findAll Tests ====================
 
     @Test

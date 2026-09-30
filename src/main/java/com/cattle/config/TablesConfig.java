@@ -23,4 +23,5 @@ public class TablesConfig {
     private String events;
     private String siteSettings;
     private String notifications;
+    private String tasks;
 }

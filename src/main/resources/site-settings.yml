@@ -26,6 +26,81 @@ settings:
     min: 150
     max: 400
 
+  # --- Tareas del ciclo reproductivo (HU-20260929-tareas-ciclo-reproductivo) ---
+  # Valores por defecto referenciales; confirmar con el veterinario de la finca (P5).
+
+  - key: PREGNANCY_CHECK_DAYS
+    type: NUMBER
+    default: 40
+    label: "Días tras el servicio para diagnosticar preñez"
+    group: reproduccion
+    min: 25
+    max: 90
+
+  - key: PREGNANCY_RECHECK_DAYS
+    type: NUMBER
+    default: 15
+    label: "Días para repetir un diagnóstico de preñez dudoso"
+    group: reproduccion
+    min: 7
+    max: 60
+
+  - key: DRY_OFF_BEFORE_CALVING_DAYS
+    type: NUMBER
+    default: 60
+    label: "Días antes del parto para secar la vaca"
+    group: reproduccion
+    min: 30
+    max: 90
+
+  - key: PREPARTUM_BEFORE_CALVING_DAYS
+    type: NUMBER
+    default: 21
+    label: "Días antes del parto para el manejo preparto"
+    group: reproduccion
+    min: 7
+    max: 45
+
+  - key: POSTPARTUM_CHECK_DAYS
+    type: NUMBER
+    default: 21
+    label: "Días después del parto para el control posparto"
+    group: reproduccion
+    min: 7
+    max: 60
+
+  - key: VOLUNTARY_WAITING_DAYS
+    type: NUMBER
+    default: 60
+    label: "Periodo voluntario de espera tras parto o aborto (días)"
+    group: reproduccion
+    min: 30
+    max: 120
+
+  - key: SERVICE_FOLLOWUP_ORANGE_DAYS
+    type: NUMBER
+    default: 42
+    label: "Semáforo post-servicio: días para pasar a naranja"
+    group: reproduccion
+    min: 21
+    max: 120
+
+  - key: SERVICE_FOLLOWUP_RED_DAYS
+    type: NUMBER
+    default: 63
+    label: "Semáforo post-servicio: días para pasar a rojo"
+    group: reproduccion
+    min: 22
+    max: 180
+
+  - key: REPEAT_BREEDER_SERVICES
+    type: NUMBER
+    default: 3
+    label: "Servicios sin preñez desde el último parto para marcar repetidora"
+    group: reproduccion
+    min: 2
+    max: 10
+
   - key: ROTATION_SEMAPHORE_YELLOW_DAYS
     type: NUMBER
     default: 3

@@ -15,6 +15,7 @@ import com.cattle.repository.ProfileLifecycleRepository;
 import com.cattle.services.BovineEventService;
 import com.cattle.services.EventFormCatalog;
 import com.cattle.services.ExitEventProjector;
+import com.cattle.tasks.service.ReproductiveTaskSynchronizer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,6 +66,9 @@ class BovineEventProcessorTest {
     @Mock
     private ExitEventProjector exitEventProjector;
 
+    @Mock
+    private ReproductiveTaskSynchronizer reproductiveTaskSynchronizer;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private BovineEventProcessor processor;
@@ -76,7 +80,8 @@ class BovineEventProcessorTest {
         openMocks(this);
         eventFormCatalog = new EventFormCatalog(lambdaContext);
         processor = new BovineEventProcessor(bovineEventService, objectMapper, lambdaContext,
-                eventFormCatalog, payloadValidator, bovineRepository, lifecycleRepository, exitEventProjector);
+                eventFormCatalog, payloadValidator, bovineRepository, lifecycleRepository, exitEventProjector,
+                reproductiveTaskSynchronizer);
     }
 
     /** Stubbea el perfil de ciclo de vida de un bovino con un estado/enabled dados. */
@@ -330,6 +335,64 @@ class BovineEventProcessorTest {
         verify(lambdaContext).logException(eq(LogType.PROCESSOR), anyString(), any(RuntimeException.class));
     }
 
+    // ==================== Tareas reproductivas (HU-20260929) ====================
+
+    @Test
+    void applyEvent_reproductiveEvent_syncsTasksAfterSave() {
+        processor.applyEvent("F1", "B1", request("CELO", Map.of("intensity", "FUERTE")));
+
+        org.mockito.InOrder order = org.mockito.Mockito.inOrder(bovineEventService, reproductiveTaskSynchronizer);
+        order.verify(bovineEventService).save(any());
+        order.verify(reproductiveTaskSynchronizer).sync("F1", "B1");
+    }
+
+    @Test
+    void applyEvent_exitEvent_alsoSyncsTasks() {
+        processor.applyEvent("F1", "B1", request("MUERTE", Map.of("cause", "senil")));
+
+        verify(reproductiveTaskSynchronizer).sync("F1", "B1");
+    }
+
+    @Test
+    void applyEvent_nonReproductiveEvent_doesNotSyncTasks() {
+        processor.applyEvent("F1", "B1", request("SEGUIMIENTO", Map.of("notes", "n")));
+
+        verify(reproductiveTaskSynchronizer, never()).sync(anyString(), anyString());
+    }
+
+    /** RT2: el fallo de la agenda no rompe el registro; la reconciliación diaria lo cubre. */
+    @Test
+    void applyEvent_taskSyncFails_stillReturnsSuccessResponse() {
+        org.mockito.Mockito.doThrow(new RuntimeException("tasks table unavailable"))
+                .when(reproductiveTaskSynchronizer).sync(anyString(), anyString());
+
+        BovineEventResponseDTO response = assertDoesNotThrow(() -> processor.applyEvent("F1", "B1",
+                request("CONTROL_POSPARTO", Map.of("uterineStatus", "NORMAL"))));
+
+        assertEquals("CONTROL_POSPARTO", response.getEventType());
+        verify(lambdaContext).logException(eq(LogType.PROCESSOR), anyString(), any(RuntimeException.class));
+    }
+
+    @Test
+    void applyEvent_controlPosparto_requiresUterineStatus() {
+        assertThrows(IllegalArgumentException.class,
+                () -> processor.applyEvent("F1", "B1", request("CONTROL_POSPARTO", Map.of())));
+    }
+
+    @Test
+    void applyEvent_diagnostico_validatesGestationDaysRange() {
+        assertThrows(IllegalArgumentException.class, () -> processor.applyEvent("F1", "B1",
+                request("DIAGNOSTICO_PRENEZ", Map.of("result", "PRENIADA", "gestationDays", 400))));
+        assertDoesNotThrow(() -> processor.applyEvent("F1", "B1",
+                request("DIAGNOSTICO_PRENEZ", Map.of("result", "PRENIADA", "gestationDays", 90))));
+    }
+
+    @Test
+    void applyEvent_celo_rejectsUnknownIntensity() {
+        assertThrows(IllegalArgumentException.class,
+                () -> processor.applyEvent("F1", "B1", request("CELO", Map.of("intensity", "ALTA"))));
+    }
+
     @Test
     void applyEvent_activeBovine_proceeds() {
         stubLifecycle("B1", LifecycleStatus.OPEN, true);
@@ -435,7 +498,7 @@ class BovineEventProcessorTest {
         when(failing.writeValueAsString(any())).thenThrow(new JsonProcessingException("boom") {});
         BovineEventProcessor failingProcessor = new BovineEventProcessor(bovineEventService, failing,
                 lambdaContext, eventFormCatalog, payloadValidator, bovineRepository, lifecycleRepository,
-                exitEventProjector);
+                exitEventProjector, reproductiveTaskSynchronizer);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> failingProcessor.applyEvent("F1", "B1", request("SEGUIMIENTO", Map.of("notes", "n"))));

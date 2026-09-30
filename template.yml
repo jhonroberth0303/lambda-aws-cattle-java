@@ -107,6 +107,11 @@ Parameters:
     Default: notifications-prod
     Description: Nombre de la tabla DynamoDB de notificaciones in-app (creada fuera del stack, como el resto)
 
+  TableTasks:
+    Type: String
+    Default: tasks-prod
+    Description: Nombre de la tabla DynamoDB de la agenda de tareas de la finca (creada fuera del stack; HU-20260929)
+
 Globals:
   Api:
     EndpointConfiguration: REGIONAL
@@ -203,6 +208,7 @@ Resources:
           TABLE_SITE_SETTINGS: !Ref TableSiteSettings
           TABLE_EVENTS: !Ref TableEvents
           TABLE_NOTIFICATIONS: !Ref TableNotifications
+          TABLE_TASKS: !Ref TableTasks
       Events:
         ProxyResource:
           Type: Api
@@ -236,6 +242,7 @@ Resources:
           TABLE_SITE_SETTINGS: !Ref TableSiteSettings
           TABLE_EVENTS: !Ref TableEvents
           TABLE_NOTIFICATIONS: !Ref TableNotifications
+          TABLE_TASKS: !Ref TableTasks
 
   SummaryRefreshSchedulerDlq:
     Type: AWS::SQS::Queue
@@ -315,6 +322,7 @@ Resources:
           TABLE_SITE_SETTINGS: !Ref TableSiteSettings
           TABLE_EVENTS: !Ref TableEvents
           TABLE_NOTIFICATIONS: !Ref TableNotifications
+          TABLE_TASKS: !Ref TableTasks
           NOTIFICATION_MILKING_SITE_ID: !Ref NotificationMilkingSiteId
           NOTIFICATION_MILKING_FARM_ID: !Ref NotificationMilkingFarmId
 
