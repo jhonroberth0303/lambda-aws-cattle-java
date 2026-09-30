@@ -142,6 +142,23 @@ class BovineEventRepositoryTest {
     }
 
     @Test
+    void findAllByBovine_returnsWholeHistoryWithoutCap() {
+        List<BovineEventItem> stored = IntStream.range(0, 250).mapToObj(i -> event("B" + i)).toList();
+        stubQuery(stored);
+
+        assertEquals(250, repository.findAllByBovine("B1").size());
+    }
+
+    @Test
+    void findAllByBovine_dynamoDbException_throwsRepositoryException() {
+        when(table.query(any(Consumer.class)))
+                .thenThrow(DynamoDbException.builder().message("boom").build());
+
+        RepositoryException ex = assertThrows(RepositoryException.class, () -> repository.findAllByBovine("B1"));
+        assertTrue(ex.getMessage().contains("full event history"));
+    }
+
+    @Test
     void findByBovine_emptyResult_returnsEmptyList() {
         stubQuery(List.of());
 

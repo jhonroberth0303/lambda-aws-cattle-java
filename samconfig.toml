@@ -23,6 +23,7 @@ parameter_overrides = """
   TableSiteSettings="site-settings-prod" \
   TableEvents="events-prod" \
   TableNotifications="notifications-prod" \
+  TableTasks="tasks-prod" \
   NotificationMilkingSiteId="001" \
   NotificationMilkingFarmId="F001"
 """
@@ -49,6 +50,7 @@ parameter_overrides = """
   TableSiteSettings="site-settings-prod" \
   TableEvents="events-prod" \
   TableNotifications="notifications-prod" \
+  TableTasks="tasks-prod" \
   NotificationMilkingSiteId="001" \
   NotificationMilkingFarmId="F001"
 """
@@ -72,6 +74,7 @@ parameter_overrides = """
   TableSiteSettings="site-settings-prod" \
   TableEvents="events-prod" \
   TableNotifications="notifications-prod" \
+  TableTasks="tasks-prod" \
   NotificationMilkingSiteId="001" \
   NotificationMilkingFarmId="F001"
 """

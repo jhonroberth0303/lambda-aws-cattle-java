@@ -91,6 +91,28 @@ public class BovineEventRepository {
         }
     }
 
+    /**
+     * Historial completo del bovino en orden cronológico, sin límite: el replay de tareas
+     * reproductivas (HU-20260929) necesita todos los eventos, no solo los más recientes.
+     */
+    public List<BovineEventItem> findAllByBovine(String bovineId) {
+        try {
+            QueryConditional queryConditional = QueryConditional.sortBeginsWith(
+                    Key.builder()
+                            .partitionValue("BOVINE#" + bovineId)
+                            .sortValue("EVT#")
+                            .build()
+            );
+            return StreamSupport.stream(
+                            table.query(r -> r.queryConditional(queryConditional)).items().spliterator(), false)
+                    .collect(Collectors.toList());
+        } catch (Exception ex) {
+            String message = "Error querying full event history. bovineId=" + bovineId;
+            lambdaContext.logException(LogType.REPOSITORY, message, ex);
+            throw new RepositoryException(message, ex);
+        }
+    }
+
     public List<BovineEventItem> findByBovine(String bovineId, int limit) {
         try {
             lambdaContext.logInfo(LogType.REPOSITORY, "Finding events for bovineId: " + bovineId + " limit: " + limit);

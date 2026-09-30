@@ -10,6 +10,7 @@ import com.cattle.repository.ProfileLactancyRepository;
 import com.cattle.repository.ProfileLifecycleRepository;
 import com.cattle.repository.ProfilePregnancyRepository;
 import com.cattle.repository.ProfileReproductiveRepository;
+import com.cattle.utils.EventDates;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -109,7 +110,7 @@ public class ExitEventProjector {
                 return;
             }
             lactancy.setStatus(CLOSE_STATUS);
-            lactancy.setEndDate(eventAt.atZone(zoneId).toLocalDate().toString());
+            lactancy.setEndDate(EventDates.toOperationalDate(eventAt, zoneId).toString());
             lactancyRepository.save(lactancy);
         });
     }

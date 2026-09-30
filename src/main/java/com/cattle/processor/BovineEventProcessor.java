@@ -15,6 +15,7 @@ import com.cattle.repository.ProfileLifecycleRepository;
 import com.cattle.services.BovineEventService;
 import com.cattle.services.EventFormCatalog;
 import com.cattle.services.ExitEventProjector;
+import com.cattle.tasks.service.ReproductiveTaskSynchronizer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
@@ -45,11 +46,22 @@ public class BovineEventProcessor {
     private final BovineRepository bovineRepository;
     private final ProfileLifecycleRepository lifecycleRepository;
     private final ExitEventProjector exitEventProjector;
+    private final ReproductiveTaskSynchronizer reproductiveTaskSynchronizer;
+
+    /**
+     * Eventos que cambian la agenda reproductiva (HU-20260929): la generan, la cumplen o la
+     * cancelan (VENTA/MUERTE, C4).
+     */
+    private static final Set<BovineEventType> REPRODUCTIVE_TASK_EVENTS = EnumSet.of(
+            BovineEventType.MONTA, BovineEventType.INSEMINACION, BovineEventType.DIAGNOSTICO_PRENEZ,
+            BovineEventType.CELO, BovineEventType.PREPARTO, BovineEventType.SECADO, BovineEventType.PARTO,
+            BovineEventType.CONTROL_POSPARTO, BovineEventType.ABORTO, BovineEventType.VENTA, BovineEventType.MUERTE);
 
     public BovineEventProcessor(BovineEventService bovineEventService, ObjectMapper objectMapper,
                                 LambdaContext lambdaContext, EventFormCatalog eventFormCatalog,
                                 EventPayloadValidator payloadValidator, BovineRepository bovineRepository,
-                                ProfileLifecycleRepository lifecycleRepository, ExitEventProjector exitEventProjector) {
+                                ProfileLifecycleRepository lifecycleRepository, ExitEventProjector exitEventProjector,
+                                ReproductiveTaskSynchronizer reproductiveTaskSynchronizer) {
         this.bovineEventService = bovineEventService;
         this.objectMapper = objectMapper;
         this.lambdaContext = lambdaContext;
@@ -58,6 +70,7 @@ public class BovineEventProcessor {
         this.bovineRepository = bovineRepository;
         this.lifecycleRepository = lifecycleRepository;
         this.exitEventProjector = exitEventProjector;
+        this.reproductiveTaskSynchronizer = reproductiveTaskSynchronizer;
     }
 
     public BovineEventResponseDTO applyEvent(String farmId, String bovineId, BovineEventRequestDTO request) {
@@ -106,6 +119,9 @@ public class BovineEventProcessor {
         if (EXIT_EVENTS.contains(eventType)) {
             projectExitEvent(bovineId, eventType, eventAt);
         }
+        if (REPRODUCTIVE_TASK_EVENTS.contains(eventType)) {
+            syncReproductiveTasks(farmId, bovineId, eventType);
+        }
 
         return BovineEventResponseDTO.builder()
                 .eventId(eventId)
@@ -125,6 +141,19 @@ public class BovineEventProcessor {
             exitEventProjector.project(bovineId, eventType, eventAt);
         } catch (Exception ex) {
             lambdaContext.logException(LogType.PROCESSOR, "Fallo al proyectar evento de salida. bovineId: "
+                    + bovineId + ", eventType: " + eventType, ex);
+        }
+    }
+
+    /**
+     * Actualiza la agenda reproductiva con el mismo aislamiento que {@link #projectExitEvent}:
+     * el evento ya está guardado y la reconciliación diaria cubre un fallo aquí (HU-20260929, RT2).
+     */
+    private void syncReproductiveTasks(String farmId, String bovineId, BovineEventType eventType) {
+        try {
+            reproductiveTaskSynchronizer.sync(farmId, bovineId);
+        } catch (Exception ex) {
+            lambdaContext.logException(LogType.PROCESSOR, "Fallo al sincronizar tareas reproductivas. bovineId: "
                     + bovineId + ", eventType: " + eventType, ex);
         }
     }
@@ -187,7 +216,7 @@ public class BovineEventProcessor {
 
     /**
      * Valida el payload contra el esquema del tipo de evento (EP-20260909, Fase 2).
-     * Los 22 tipos de {@link BovineEventType} tienen esquema en {@code event-forms.yml};
+     * Los 25 tipos de {@link BovineEventType} tienen esquema en {@code event-forms.yml};
      * {@link EventFormCatalog} garantiza esa cobertura al arrancar.
      */
     private void validatePayloadByType(BovineEventType eventType, Map<String, Object> payload) {

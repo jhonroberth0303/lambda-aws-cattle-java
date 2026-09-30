@@ -67,6 +67,28 @@ public class BovineRepository {
     }
 
 
+    /**
+     * Todas las identidades de bovino, recorriendo todas las páginas de GSI1. A diferencia de
+     * {@link #findAll()}, que devuelve solo la primera página de 15, el batch de tareas
+     * reproductivas (HU-20260929) necesita el hato completo.
+     */
+    public List<BovineIdentityItem> findAllIdentities() {
+        try {
+            QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+                    .partitionValue(IDENTITY)
+                    .build());
+            List<BovineIdentityItem> result = new ArrayList<>();
+            var pages = table.index(GSI1_BOVINES).query(r -> r.queryConditional(queryConditional)).iterator();
+            while (pages.hasNext()) {
+                result.addAll(pages.next().items());
+            }
+            return result;
+        } catch (Exception ex) {
+            lambdaContext.logException(LogType.REPOSITORY, "Error finding all bovine identities", ex);
+            throw new RepositoryException("Unexpected error finding all bovine identities", ex);
+        }
+    }
+
     public Optional<BovineIdentityItem> findById(Integer id) {
         try {
             lambdaContext.logInfo(LogType.REPOSITORY, "Received request to find bovine with ID: " + id);

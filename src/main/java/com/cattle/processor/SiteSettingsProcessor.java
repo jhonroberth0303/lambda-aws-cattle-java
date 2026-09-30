@@ -8,6 +8,7 @@ import com.cattle.entities.SiteSettingItem;
 import com.cattle.enums.LogType;
 import com.cattle.enums.SiteSettingValueType;
 import com.cattle.exceptions.NotFoundException;
+import com.cattle.services.SiteSettingResolver;
 import com.cattle.services.SiteSettingService;
 import com.cattle.services.SiteSettingsCatalog;
 import com.cattle.services.SiteSettingsCatalog.Definition;
@@ -151,7 +152,7 @@ public class SiteSettingsProcessor {
     }
 
     private SiteSettingDTO toDTO(String siteId, Definition def, SiteSettingItem stored) {
-        Object value = stored != null ? extractValue(stored) : def.getDefaultValue();
+        Object value = stored != null ? SiteSettingResolver.extractValue(stored) : def.getDefaultValue();
         return SiteSettingDTO.builder()
                 .siteId(siteId)
                 .key(def.getKey())
@@ -167,26 +168,6 @@ public class SiteSettingsProcessor {
                 .updatedAt(stored != null ? stored.getUpdatedAt() : null)
                 .updatedBy(stored != null ? stored.getUpdatedBy() : null)
                 .build();
-    }
-
-    private Object extractValue(SiteSettingItem item) {
-        SiteSettingValueType type;
-        try {
-            type = SiteSettingValueType.valueOf(String.valueOf(item.getValueType()).toUpperCase());
-        } catch (IllegalArgumentException e) {
-            type = SiteSettingValueType.STRING;
-        }
-        switch (type) {
-            case NUMBER:
-                return item.getValueNumber();
-            case BOOLEAN:
-                return item.getValueBoolean();
-            case JSON:
-                return item.getValueJson();
-            case STRING:
-            default:
-                return item.getValueString();
-        }
     }
 
     private void validateSiteId(String siteId) {

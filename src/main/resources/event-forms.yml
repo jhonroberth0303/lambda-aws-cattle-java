@@ -8,7 +8,7 @@
 #
 # Regla anti-deriva: las claves de un dominio con `enum:` DEBEN coincidir
 # EXACTAMENTE con las constantes de ese enum Java (EventFormCatalog aborta el
-# arranque si divergen). Los 22 tipos de BovineEventType están migrados.
+# arranque si divergen). Los 25 tipos de BovineEventType están migrados.
 #
 # Campos por `type`:
 #   text     -> <input> / <select> si trae `options`
@@ -179,6 +179,8 @@ domains:
             - { value: "", label: "Sin especificar" }
             - { value: PALPA, label: "Palpación" }
             - { value: ECOGRAFIA, label: "Ecografía" }
+        # HU-20260929, P1 (opción A): permite programar la gestación cuando no hay servicio registrado.
+        - { name: gestationDays, label: "Días de gestación estimados (opcional)", type: number, min: 1, max: 300, step: 1, placeholder: "Ej. 90", hint: "Úsalo si no está registrada la monta o inseminación: con este dato se calcula la fecha de parto." }
 
     PARTO:
       title: "Registrar parto"
@@ -222,6 +224,63 @@ domains:
       submitLabel: "Guardar secado"
       fields:
         - { name: lastMilkLiters, label: "Litros último ordeño (opcional)", type: number, min: 0, step: 0.1, placeholder: "Ej. 4.5" }
+
+    # HU-20260929-tareas-ciclo-reproductivo (P3): cierran tareas del ciclo reproductivo.
+    CELO:
+      title: "Registrar celo"
+      submitLabel: "Guardar celo"
+      fields:
+        - name: intensity
+          label: "Intensidad"
+          type: text
+          required: true
+          options:
+            - { value: DEBIL, label: "Débil" }
+            - { value: MODERADO, label: "Moderado" }
+            - { value: FUERTE, label: "Fuerte (se deja montar)" }
+        - { name: cycleNumber, label: "Número de ciclo (opcional)", type: number, min: 1, step: 1, placeholder: "Ej. 2" }
+
+    PREPARTO:
+      title: "Registrar preparto"
+      submitLabel: "Guardar preparto"
+      fields:
+        - { name: expectedCalvingDate, label: "Fecha de parto esperada (opcional)", type: date, minField: eventAt, hint: "Informativa: no reprograma la tarea de parto esperado." }
+        - name: conditionScore
+          label: "Condición corporal 1-5 (opcional)"
+          type: number
+          options:
+            - { value: "1", label: "1 - Muy flaco" }
+            - { value: "2", label: "2 - Flaco" }
+            - { value: "3", label: "3 - Normal" }
+            - { value: "4", label: "4 - Gordo" }
+            - { value: "5", label: "5 - Muy gordo" }
+
+    CONTROL_POSPARTO:
+      title: "Registrar control posparto"
+      submitLabel: "Guardar control"
+      appendNotes: false
+      fields:
+        - name: uterineStatus
+          label: "Estado uterino"
+          type: text
+          required: true
+          options:
+            - { value: NORMAL, label: "Normal" }
+            - { value: INVOLUCION_RETARDADA, label: "Involución retardada" }
+            - { value: RETENCION_PLACENTARIA, label: "Retención placentaria" }
+            - { value: METRITIS, label: "Metritis" }
+            - { value: OTRO, label: "Otro" }
+        - name: conditionScore
+          label: "Condición corporal 1-5 (opcional)"
+          type: number
+          options:
+            - { value: "1", label: "1 - Muy flaco" }
+            - { value: "2", label: "2 - Flaco" }
+            - { value: "3", label: "3 - Normal" }
+            - { value: "4", label: "4 - Gordo" }
+            - { value: "5", label: "5 - Muy gordo" }
+        - { name: milkLitersPerDay, label: "Producción de leche (litros/día, opcional)", type: number, min: 0, step: 0.1, placeholder: "Ej. 14" }
+        - { name: notes, label: "Observaciones (opcional)", type: textarea, maxLength: 1000, placeholder: "Hallazgos del control" }
 
     # --- Manejo --------------------------------------------------------
     MARCACION:

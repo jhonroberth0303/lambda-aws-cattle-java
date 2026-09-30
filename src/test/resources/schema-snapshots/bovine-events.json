@@ -89,6 +89,47 @@
     "submitLabel" : "Guardar castración",
     "title" : "Registrar castración"
   },
+  "CELO" : {
+    "appendNotes" : true,
+    "code" : "CELO",
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Intensidad",
+        "name" : "intensity",
+        "options" : [
+          {
+            "label" : "Débil",
+            "value" : "DEBIL"
+          },
+          {
+            "label" : "Moderado",
+            "value" : "MODERADO"
+          },
+          {
+            "label" : "Fuerte (se deja montar)",
+            "value" : "FUERTE"
+          }
+        ],
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Número de ciclo (opcional)",
+        "min" : 1.0,
+        "name" : "cycleNumber",
+        "options" : [ ],
+        "placeholder" : "Ej. 2",
+        "required" : false,
+        "step" : 1.0,
+        "type" : "number"
+      }
+    ],
+    "requireOneOf" : [ ],
+    "submitLabel" : "Guardar celo",
+    "title" : "Registrar celo"
+  },
   "COMPRA" : {
     "appendNotes" : true,
     "code" : "COMPRA",
@@ -125,6 +166,94 @@
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar compra",
     "title" : "Registrar compra"
+  },
+  "CONTROL_POSPARTO" : {
+    "appendNotes" : false,
+    "code" : "CONTROL_POSPARTO",
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "label" : "Estado uterino",
+        "name" : "uterineStatus",
+        "options" : [
+          {
+            "label" : "Normal",
+            "value" : "NORMAL"
+          },
+          {
+            "label" : "Involución retardada",
+            "value" : "INVOLUCION_RETARDADA"
+          },
+          {
+            "label" : "Retención placentaria",
+            "value" : "RETENCION_PLACENTARIA"
+          },
+          {
+            "label" : "Metritis",
+            "value" : "METRITIS"
+          },
+          {
+            "label" : "Otro",
+            "value" : "OTRO"
+          }
+        ],
+        "required" : true,
+        "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Condición corporal 1-5 (opcional)",
+        "name" : "conditionScore",
+        "options" : [
+          {
+            "label" : "1 - Muy flaco",
+            "value" : "1"
+          },
+          {
+            "label" : "2 - Flaco",
+            "value" : "2"
+          },
+          {
+            "label" : "3 - Normal",
+            "value" : "3"
+          },
+          {
+            "label" : "4 - Gordo",
+            "value" : "4"
+          },
+          {
+            "label" : "5 - Muy gordo",
+            "value" : "5"
+          }
+        ],
+        "required" : false,
+        "type" : "number"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Producción de leche (litros/día, opcional)",
+        "min" : 0.0,
+        "name" : "milkLitersPerDay",
+        "options" : [ ],
+        "placeholder" : "Ej. 14",
+        "required" : false,
+        "step" : 0.1,
+        "type" : "number"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Observaciones (opcional)",
+        "maxLength" : 1000,
+        "name" : "notes",
+        "options" : [ ],
+        "placeholder" : "Hallazgos del control",
+        "required" : false,
+        "type" : "textarea"
+      }
+    ],
+    "requireOneOf" : [ ],
+    "submitLabel" : "Guardar control",
+    "title" : "Registrar control posparto"
   },
   "DESCORNE" : {
     "appendNotes" : true,
@@ -262,6 +391,19 @@
         ],
         "required" : false,
         "type" : "text"
+      },
+      {
+        "calvingEstimate" : false,
+        "hint" : "Úsalo si no está registrada la monta o inseminación: con este dato se calcula la fecha de parto.",
+        "label" : "Días de gestación estimados (opcional)",
+        "max" : 300.0,
+        "min" : 1.0,
+        "name" : "gestationDays",
+        "options" : [ ],
+        "placeholder" : "Ej. 90",
+        "required" : false,
+        "step" : 1.0,
+        "type" : "number"
       }
     ],
     "requireOneOf" : [ ],
@@ -530,6 +672,54 @@
     "requireOneOf" : [ ],
     "submitLabel" : "Guardar pesaje",
     "title" : "Registrar pesaje"
+  },
+  "PREPARTO" : {
+    "appendNotes" : true,
+    "code" : "PREPARTO",
+    "fields" : [
+      {
+        "calvingEstimate" : false,
+        "hint" : "Informativa: no reprograma la tarea de parto esperado.",
+        "label" : "Fecha de parto esperada (opcional)",
+        "minField" : "eventAt",
+        "name" : "expectedCalvingDate",
+        "options" : [ ],
+        "required" : false,
+        "type" : "date"
+      },
+      {
+        "calvingEstimate" : false,
+        "label" : "Condición corporal 1-5 (opcional)",
+        "name" : "conditionScore",
+        "options" : [
+          {
+            "label" : "1 - Muy flaco",
+            "value" : "1"
+          },
+          {
+            "label" : "2 - Flaco",
+            "value" : "2"
+          },
+          {
+            "label" : "3 - Normal",
+            "value" : "3"
+          },
+          {
+            "label" : "4 - Gordo",
+            "value" : "4"
+          },
+          {
+            "label" : "5 - Muy gordo",
+            "value" : "5"
+          }
+        ],
+        "required" : false,
+        "type" : "number"
+      }
+    ],
+    "requireOneOf" : [ ],
+    "submitLabel" : "Guardar preparto",
+    "title" : "Registrar preparto"
   },
   "PRODUCCION_LECHE" : {
     "appendNotes" : true,

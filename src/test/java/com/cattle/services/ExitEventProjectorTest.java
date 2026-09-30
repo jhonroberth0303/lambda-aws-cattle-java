@@ -208,6 +208,27 @@ class ExitEventProjectorTest {
     }
 
     @Test
+    @DisplayName("Fecha explícita (medianoche UTC) cierra la lactancia ese mismo día, no el anterior — RT1")
+    void project_closeLactancy_explicitDateKeepsSameCalendarDay() {
+        // resolveEventAt guarda "2026-04-10" como 2026-04-10T00:00:00Z; en Bogotá sería 2026-04-09.
+        Instant explicitDate = Instant.parse("2026-04-10T00:00:00Z");
+        when(lifecycleRepository.findById(PK, "PROFILE#LIFECYCLE"))
+                .thenReturn(Optional.of(lifecycle(LifecycleStatus.OPEN, true)));
+        ProfileReproductive reproductive = ProfileReproductive.builder()
+                .pk(PK).sk("PROFILE#REPRODUCTIVE").currentLactationId("LACT#01").build();
+        when(reproductiveRepository.findById(PK, "PROFILE#REPRODUCTIVE")).thenReturn(Optional.of(reproductive));
+        ProfileLactancy lactancy = ProfileLactancy.builder().pk(PK).sk("LACT#01").status("LACTATING").build();
+        when(lactancyRepository.findById(PK, "LACT#01")).thenReturn(Optional.of(lactancy));
+        when(pregnancyRepository.findById(any(), any())).thenReturn(Optional.empty());
+
+        projector.project("B1", BovineEventType.VENTA, explicitDate);
+
+        ArgumentCaptor<ProfileLactancy> captor = ArgumentCaptor.forClass(ProfileLactancy.class);
+        verify(lactancyRepository).save(captor.capture());
+        assertEquals("2026-04-10", captor.getValue().getEndDate());
+    }
+
+    @Test
     @DisplayName("Evento que no es de salida no hace nada")
     void project_nonExitEvent_doesNothing() {
         projector.project("B1", BovineEventType.PESAJE, EVENT_AT);
