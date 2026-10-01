@@ -5,9 +5,7 @@ import com.cattle.config.LambdaContext;
 import com.cattle.entities.bovines.BovineIdentityItem;
 import com.cattle.entities.bovines.ProfileLactancy;
 import com.cattle.entities.bovines.ProfileLifecycle;
-import com.cattle.enums.BovineEventType;
 import com.cattle.enums.LogType;
-import com.cattle.events.entities.BovineEventItem;
 import com.cattle.repository.BovineEventRepository;
 import com.cattle.repository.BovineRepository;
 import com.cattle.repository.ProfileLactancyRepository;
@@ -24,9 +22,6 @@ import com.cattle.tasks.planner.ReproductivePlan;
 import com.cattle.tasks.planner.ReproductiveTaskPlanner;
 import com.cattle.tasks.planner.ReproductiveTaskSettings;
 import com.cattle.tasks.repository.ReproductiveTaskRepository;
-import com.cattle.utils.EventDates;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -67,7 +62,7 @@ public class ReproductiveTaskSynchronizer {
     private final ReproductiveTaskRepository taskRepository;
     private final ReproductiveTaskPlanner planner;
     private final ReproductiveTaskSettingsProvider settingsProvider;
-    private final ObjectMapper objectMapper;
+    private final PlannerEventMapper eventMapper;
     private final LambdaContext lambdaContext;
     private final ZoneId zoneId;
 
@@ -79,7 +74,7 @@ public class ReproductiveTaskSynchronizer {
                                         ReproductiveTaskRepository taskRepository,
                                         ReproductiveTaskPlanner planner,
                                         ReproductiveTaskSettingsProvider settingsProvider,
-                                        ObjectMapper objectMapper,
+                                        PlannerEventMapper eventMapper,
                                         LambdaContext lambdaContext,
                                         AppProperties appProperties) {
         this.bovineRepository = bovineRepository;
@@ -90,7 +85,7 @@ public class ReproductiveTaskSynchronizer {
         this.taskRepository = taskRepository;
         this.planner = planner;
         this.settingsProvider = settingsProvider;
-        this.objectMapper = objectMapper;
+        this.eventMapper = eventMapper;
         this.lambdaContext = lambdaContext;
         this.zoneId = ZoneId.of(appProperties.getTimezone());
     }
@@ -138,10 +133,7 @@ public class ReproductiveTaskSynchronizer {
         String pk = "BOVINE#" + bovineId;
         BovineReproductiveContext context = new BovineReproductiveContext(
                 bovineId, farmId, true, isActive(pk), isLactating(pk));
-        List<PlannerEvent> events = bovineEventRepository.findAllByBovine(bovineId).stream()
-                .map(this::toPlannerEvent)
-                .filter(Objects::nonNull)
-                .toList();
+        List<PlannerEvent> events = eventMapper.toPlannerEvents(bovineEventRepository.findAllByBovine(bovineId));
 
         ReproductivePlan plan = planner.plan(context, events, settings, today);
         SyncResult result = applyTasks(context, plan.tasks());
@@ -282,33 +274,6 @@ public class ReproductiveTaskSynchronizer {
 
     private static boolean isLactating(ProfileLactancy lactancy) {
         return LACTATING.equalsIgnoreCase(lactancy.getStatus()) && lactancy.getEndDate() == null;
-    }
-
-    private PlannerEvent toPlannerEvent(BovineEventItem item) {
-        BovineEventType type;
-        try {
-            type = BovineEventType.valueOf(item.getEventType());
-        } catch (IllegalArgumentException | NullPointerException ex) {
-            return null;
-        }
-        LocalDate date = EventDates.toOperationalDate(item.getEventAt(), zoneId);
-        if (date == null) {
-            return null;
-        }
-        return new PlannerEvent(item.getEventId(), type, date, item.getCreatedAt(), parsePayload(item));
-    }
-
-    private Map<String, Object> parsePayload(BovineEventItem item) {
-        if (item.getPayloadJson() == null || item.getPayloadJson().isBlank()) {
-            return Map.of();
-        }
-        try {
-            return objectMapper.readValue(item.getPayloadJson(), new TypeReference<Map<String, Object>>() { });
-        } catch (Exception ex) {
-            lambdaContext.logException(LogType.SERVICE, "Payload de evento ilegible; se ignora. eventId="
-                    + item.getEventId(), ex);
-            return Map.of();
-        }
     }
 
     private static ReproductiveTaskStatus parseStatus(String status) {

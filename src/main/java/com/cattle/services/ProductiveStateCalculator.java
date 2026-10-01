@@ -37,6 +37,16 @@ public class ProductiveStateCalculator {
     private static final int HEAT_WATCH_THRESHOLD_DAYS = 45;
 
     /**
+     * Umbrales de alertas que sí son parámetros de la finca (HU-20260930, PE7): los mismos días
+     * de preparto y secado que usa la agenda, para que alerta y tarea aparezcan el mismo día.
+     * Posparto y vigilar celo siguen fijos (P1).
+     */
+    public record AlertThresholds(int prepartumDays, int dryOffDays) {
+        public static final AlertThresholds DEFAULT =
+                new AlertThresholds(PREPARTUM_THRESHOLD_DAYS, DRY_OFF_THRESHOLD_DAYS);
+    }
+
+    /**
      * Resultado del cálculo de estados productivos.
      * Inmutable para garantizar thread-safety.
      */
@@ -69,7 +79,19 @@ public class ProductiveStateCalculator {
             String expectedDueDate,
             String calvingDate,
             LocalDate today) {
-        
+        return calculateReproductiveState(isPregnant, pregnancyStatus, expectedDueDate, calvingDate, today,
+                AlertThresholds.DEFAULT);
+    }
+
+    /** Variante con los umbrales de la finca (HU-20260930, PE7). */
+    public ReproductiveState calculateReproductiveState(
+            Boolean isPregnant,
+            String pregnancyStatus,
+            String expectedDueDate,
+            String calvingDate,
+            LocalDate today,
+            AlertThresholds thresholds) {
+
         // Sin preñez activa
         if (isPregnant == null || !isPregnant || !"ACTIVE".equalsIgnoreCase(pregnancyStatus)) {
             // Verificar si es postparto reciente
@@ -85,7 +107,7 @@ public class ProductiveStateCalculator {
         // Preñez activa - calcular proximidad al parto
         if (expectedDueDate != null && !expectedDueDate.isEmpty()) {
             long daysUntilDue = daysUntil(expectedDueDate, today);
-            if (daysUntilDue <= PREPARTUM_THRESHOLD_DAYS) {
+            if (daysUntilDue <= thresholds.prepartumDays()) {
                 return ReproductiveState.PRE_PARTO;
             }
         }
@@ -141,7 +163,24 @@ public class ProductiveStateCalculator {
             String lactationStatus,
             ReproductiveState reproductiveState,
             LocalDate today) {
-        
+        return calculateAlerts(isPregnant, expectedDueDate, calvingDate, lactationStatus, reproductiveState, today,
+                AlertThresholds.DEFAULT, false);
+    }
+
+    /**
+     * Variante con umbrales de la finca (PE7) y seguimiento post-servicio (PE6): una hembra
+     * servida sin preñez confirmada no muestra HEAT_WATCH; su referencia es el semáforo.
+     */
+    public List<AlertType> calculateAlerts(
+            Boolean isPregnant,
+            String expectedDueDate,
+            String calvingDate,
+            String lactationStatus,
+            ReproductiveState reproductiveState,
+            LocalDate today,
+            AlertThresholds thresholds,
+            boolean servedInFollowUp) {
+
         List<AlertType> alerts = new ArrayList<>();
         
         // OVERDUE - Parto atrasado
@@ -149,7 +188,7 @@ public class ProductiveStateCalculator {
             long daysUntilDue = daysUntil(expectedDueDate, today);
             if (daysUntilDue < 0) {
                 alerts.add(AlertType.OVERDUE);
-            } else if (daysUntilDue <= PREPARTUM_THRESHOLD_DAYS) {
+            } else if (daysUntilDue <= thresholds.prepartumDays()) {
                 alerts.add(AlertType.PREPARTUM);
             }
         }
@@ -159,7 +198,7 @@ public class ProductiveStateCalculator {
             Boolean.TRUE.equals(isPregnant) && 
             expectedDueDate != null) {
             long daysUntilDue = daysUntil(expectedDueDate, today);
-            if (daysUntilDue > 0 && daysUntilDue <= DRY_OFF_THRESHOLD_DAYS) {
+            if (daysUntilDue > 0 && daysUntilDue <= thresholds.dryOffDays()) {
                 alerts.add(AlertType.DRY_OFF_SOON);
             }
         }
@@ -173,7 +212,7 @@ public class ProductiveStateCalculator {
         }
         
         // HEAT_WATCH - Vigilar celo
-        if (reproductiveState == ReproductiveState.OPEN && calvingDate != null) {
+        if (reproductiveState == ReproductiveState.OPEN && calvingDate != null && !servedInFollowUp) {
             long daysSinceCalving = daysBetween(calvingDate, today);
             if (daysSinceCalving >= HEAT_WATCH_THRESHOLD_DAYS) {
                 alerts.add(AlertType.HEAT_WATCH);
@@ -195,7 +234,22 @@ public class ProductiveStateCalculator {
             String lactationStatus,
             String lactationStartDate,
             LocalDate today) {
-        
+        return calculate(isPregnant, pregnancyStatus, expectedDueDate, calvingDate, lactationStatus,
+                lactationStartDate, today, AlertThresholds.DEFAULT, false);
+    }
+
+    /** Variante con umbrales de la finca (PE7) y seguimiento post-servicio (PE6). */
+    public ProductiveStateResult calculate(
+            Boolean isPregnant,
+            String pregnancyStatus,
+            String expectedDueDate,
+            String calvingDate,
+            String lactationStatus,
+            String lactationStartDate,
+            LocalDate today,
+            AlertThresholds thresholds,
+            boolean servedInFollowUp) {
+
         // Determinar la fecha del último parto:
         // Preferir lactationStartDate (inicio de lactancia = fecha del parto)
         // ya que cuando hay nueva preñez, el calvingDate puede ser de una preñez diferente
@@ -205,7 +259,7 @@ public class ProductiveStateCalculator {
         
         // Calcular estados
         ReproductiveState reproductiveState = calculateReproductiveState(
-            isPregnant, pregnancyStatus, expectedDueDate, effectiveCalvingDate, today);
+            isPregnant, pregnancyStatus, expectedDueDate, effectiveCalvingDate, today, thresholds);
         
         ProductiveState productiveState = calculateProductiveState(
             reproductiveState, lactationStatus);
@@ -213,7 +267,7 @@ public class ProductiveStateCalculator {
         // Calcular alertas
         List<AlertType> alerts = calculateAlerts(
             isPregnant, expectedDueDate, effectiveCalvingDate, 
-            lactationStatus, reproductiveState, today);
+            lactationStatus, reproductiveState, today, thresholds, servedInFollowUp);
         
         // Calcular días
         Integer daysUntilDue = null;

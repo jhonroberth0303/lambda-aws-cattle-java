@@ -14,7 +14,9 @@ import com.cattle.repository.BovineRepository;
 import com.cattle.repository.ProfileLifecycleRepository;
 import com.cattle.services.BovineEventService;
 import com.cattle.services.EventFormCatalog;
+import com.cattle.services.BovineSummaryService;
 import com.cattle.services.ExitEventProjector;
+import com.cattle.services.ReproductiveProfileProjector;
 import com.cattle.tasks.service.ReproductiveTaskSynchronizer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,6 +71,12 @@ class BovineEventProcessorTest {
     @Mock
     private ReproductiveTaskSynchronizer reproductiveTaskSynchronizer;
 
+    @Mock
+    private ReproductiveProfileProjector reproductiveProfileProjector;
+
+    @Mock
+    private BovineSummaryService bovineSummaryService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private BovineEventProcessor processor;
@@ -81,7 +89,7 @@ class BovineEventProcessorTest {
         eventFormCatalog = new EventFormCatalog(lambdaContext);
         processor = new BovineEventProcessor(bovineEventService, objectMapper, lambdaContext,
                 eventFormCatalog, payloadValidator, bovineRepository, lifecycleRepository, exitEventProjector,
-                reproductiveTaskSynchronizer);
+                reproductiveTaskSynchronizer, reproductiveProfileProjector, bovineSummaryService);
     }
 
     /** Stubbea el perfil de ciclo de vida de un bovino con un estado/enabled dados. */
@@ -373,6 +381,62 @@ class BovineEventProcessorTest {
         verify(lambdaContext).logException(eq(LogType.PROCESSOR), anyString(), any(RuntimeException.class));
     }
 
+    // ==================== Perfiles y tarjeta (HU-20260930) ====================
+
+    private void existingBovine(int id) {
+        when(bovineRepository.findById(id))
+                .thenReturn(java.util.Optional.of(new com.cattle.entities.bovines.BovineIdentityItem()));
+    }
+
+    @Test
+    void applyEvent_calving_projectsProfilesThenTasksThenSummary() {
+        existingBovine(167);
+        processor.applyEvent("F1", "167", request("PARTO", Map.of("calfGender", "HEMBRA", "birthType", "NORMAL")));
+
+        org.mockito.InOrder order = org.mockito.Mockito.inOrder(bovineEventService, reproductiveProfileProjector,
+                reproductiveTaskSynchronizer, bovineSummaryService);
+        order.verify(bovineEventService).save(any());
+        order.verify(reproductiveProfileProjector).project(eq("167"), any(BovineEventItem.class));
+        order.verify(reproductiveTaskSynchronizer).sync("F1", "167");
+        order.verify(bovineSummaryService).refreshSummary(167);
+    }
+
+    @Test
+    void applyEvent_serviceEvent_doesNotProjectProfilesButRefreshesSummary() {
+        existingBovine(167);
+        processor.applyEvent("F1", "167", request("INSEMINACION", Map.of("bullId", "T1")));
+
+        verify(reproductiveProfileProjector, never()).project(any(), any());
+        verify(bovineSummaryService).refreshSummary(167);
+    }
+
+    /** CA11 / PE10: si fallan perfiles o tarjeta, el evento sigue registrado y la respuesta es exitosa. */
+    @Test
+    void applyEvent_profileAndSummaryFailures_stillReturnSuccess() {
+        existingBovine(167);
+        org.mockito.Mockito.doThrow(new RuntimeException("profiles down"))
+                .when(reproductiveProfileProjector).project(any(), any());
+        org.mockito.Mockito.doThrow(new RuntimeException("summary down"))
+                .when(bovineSummaryService).refreshSummary(any());
+
+        BovineEventResponseDTO response = assertDoesNotThrow(() -> processor.applyEvent("F1", "167",
+                request("SECADO", Map.of())));
+
+        assertEquals("SECADO", response.getEventType());
+        verify(reproductiveTaskSynchronizer).sync("F1", "167");
+        verify(lambdaContext).logException(eq(LogType.PROCESSOR), org.mockito.ArgumentMatchers.contains("perfiles"),
+                any(RuntimeException.class));
+        verify(lambdaContext).logException(eq(LogType.PROCESSOR), org.mockito.ArgumentMatchers.contains("summary"),
+                any(RuntimeException.class));
+    }
+
+    @Test
+    void applyEvent_nonNumericId_skipsSummaryRefresh() {
+        processor.applyEvent("F1", "B1", request("SECADO", Map.of()));
+
+        verify(bovineSummaryService, never()).refreshSummary(any());
+    }
+
     @Test
     void applyEvent_controlPosparto_requiresUterineStatus() {
         assertThrows(IllegalArgumentException.class,
@@ -498,7 +562,7 @@ class BovineEventProcessorTest {
         when(failing.writeValueAsString(any())).thenThrow(new JsonProcessingException("boom") {});
         BovineEventProcessor failingProcessor = new BovineEventProcessor(bovineEventService, failing,
                 lambdaContext, eventFormCatalog, payloadValidator, bovineRepository, lifecycleRepository,
-                exitEventProjector, reproductiveTaskSynchronizer);
+                exitEventProjector, reproductiveTaskSynchronizer, reproductiveProfileProjector, bovineSummaryService);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> failingProcessor.applyEvent("F1", "B1", request("SEGUIMIENTO", Map.of("notes", "n"))));

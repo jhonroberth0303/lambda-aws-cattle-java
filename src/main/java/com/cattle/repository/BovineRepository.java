@@ -40,30 +40,18 @@ public class BovineRepository {
         summaryTable = enhancedClient.table(tableBovines, TableSchema.fromBean(BovineSummary.class));
     }
 
+    /**
+     * Todos los bovinos del hato. Antes leía solo la primera página de 15 (DT-20260930, ítem 2):
+     * el refresh diario de summaries y {@code GET /farms/{farmId}/bovines} dejaban bovinos fuera.
+     */
     public Optional<List<BovineIdentityItem>> findAll() {
-        try {
-            lambdaContext.logInfo(LogType.REPOSITORY, "Received request to find all bovines");
-            QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
-                    .partitionValue(IDENTITY)
-                    .build());
-
-            Page<BovineIdentityItem> result = table
-                    .index(GSI1_BOVINES) // apuntamos al índice
-                    .query(r -> r.limit(15).queryConditional(queryConditional))
-                    .iterator().next();
-
-            List<BovineIdentityItem> bovineIdentityItems = new ArrayList<>(result.items());
-
-            if(bovineIdentityItems.isEmpty()){
-                return Optional.empty();
-            }
-
-            lambdaContext.logInfo(LogType.REPOSITORY, "findAll: " + bovineIdentityItems.size() + " records found in table: " + tableBovines);
-            return Optional.of(bovineIdentityItems);
-        } catch (DynamoDbException ex) {
-            lambdaContext.logException(LogType.REPOSITORY, "Error finding bovines", ex);
-            throw new RepositoryException("Unexpected error finding bovines", ex);
+        lambdaContext.logInfo(LogType.REPOSITORY, "Received request to find all bovines");
+        List<BovineIdentityItem> bovineIdentityItems = findAllIdentities();
+        if (bovineIdentityItems.isEmpty()) {
+            return Optional.empty();
         }
+        lambdaContext.logInfo(LogType.REPOSITORY, "findAll: " + bovineIdentityItems.size() + " records found in table: " + tableBovines);
+        return Optional.of(bovineIdentityItems);
     }
 
 

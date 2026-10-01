@@ -7,6 +7,7 @@ import com.cattle.dtos.settings.SiteSettingsResponseDTO;
 import com.cattle.entities.SiteSettingItem;
 import com.cattle.enums.SiteSettingValueType;
 import com.cattle.exceptions.NotFoundException;
+import com.cattle.services.SiteSettingResolver;
 import com.cattle.services.SiteSettingService;
 import com.cattle.services.SiteSettingsCatalog;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +45,8 @@ class SiteSettingsProcessorTest {
         openMocks(this);
         // Catálogo real desde site-settings.yml (fuente de verdad de las claves).
         SiteSettingsCatalog catalog = new SiteSettingsCatalog(lambdaContext);
-        processor = new SiteSettingsProcessor(catalog, siteSettingService, lambdaContext);
+        processor = new SiteSettingsProcessor(catalog, siteSettingService,
+                new SiteSettingResolver(catalog, siteSettingService), lambdaContext);
     }
 
     @Test
@@ -107,6 +109,45 @@ class SiteSettingsProcessorTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> processor.updateByKey("001", "GESTATION_DAYS", request));
         assertTrue(ex.getMessage().contains("menor"));
+    }
+
+    // ==================== Validación cruzada (HU-20260930 TT2 / DT-20260930 ítem 3) ====================
+
+    @Test
+    void updateByKey_redNotAfterOrange_isRejected() {
+        // CA8: naranja vigente en 42 (default); intentar rojo en 40.
+        SiteSettingUpdateRequestDTO request = SiteSettingUpdateRequestDTO.builder().value(40).build();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> processor.updateByKey("001", "SERVICE_FOLLOWUP_RED_DAYS", request));
+
+        assertTrue(ex.getMessage().contains("rojo"));
+        verify(siteSettingService, org.mockito.Mockito.never()).upsertSetting(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void updateByKey_orangeUsesStoredRed() {
+        // Rojo guardado en 50: naranja en 55 se rechaza aunque el default de rojo sea 63.
+        SiteSettingItem storedRed = SiteSettingItem.builder()
+                .settingKey("SERVICE_FOLLOWUP_RED_DAYS").valueType("NUMBER").valueNumber(50.0).build();
+        when(siteSettingService.findAllCurrent("001")).thenReturn(java.util.List.of(storedRed));
+        SiteSettingUpdateRequestDTO request = SiteSettingUpdateRequestDTO.builder().value(55).build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> processor.updateByKey("001", "SERVICE_FOLLOWUP_ORANGE_DAYS", request));
+    }
+
+    @Test
+    void updateByKey_coherentThreshold_isSaved() {
+        SiteSettingItem persisted = SiteSettingItem.builder()
+                .settingKey("SERVICE_FOLLOWUP_RED_DAYS").valueType("NUMBER").valueNumber(70.0).version(1).build();
+        when(siteSettingService.upsertSetting(eq("001"), eq("SERVICE_FOLLOWUP_RED_DAYS"),
+                eq(SiteSettingValueType.NUMBER), any(), any(), any())).thenReturn(persisted);
+
+        SiteSettingDTO result = processor.updateByKey("001", "SERVICE_FOLLOWUP_RED_DAYS",
+                SiteSettingUpdateRequestDTO.builder().value(70).build());
+
+        assertEquals(70.0, result.getValue());
     }
 
     @Test

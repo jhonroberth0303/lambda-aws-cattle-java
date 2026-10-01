@@ -7,9 +7,7 @@ import com.cattle.tasks.ReproductiveTaskType;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,11 +34,7 @@ public class ReproductiveTaskPlanner {
     private static final String RESULT_PREGNANT = "PRENIADA";
     private static final String RESULT_OPEN = "VACIA";
     private static final String RESULT_DOUBTFUL = "DUDOSA";
-    private static final String CALVING_ESTIMATE_FIELD = "estimatedCalvingDate";
-    private static final String GESTATION_ESTIMATE_FIELD = "gestationDays";
 
-    private static final Set<BovineEventType> SERVICE_EVENTS =
-            EnumSet.of(BovineEventType.MONTA, BovineEventType.INSEMINACION);
     private static final Set<BovineEventType> CYCLE_OPENING_EVENTS = EnumSet.of(
             BovineEventType.MONTA, BovineEventType.INSEMINACION, BovineEventType.PARTO, BovineEventType.ABORTO);
     private static final Set<ReproductiveTaskType> GESTATION_TASKS = EnumSet.of(
@@ -54,9 +48,7 @@ public class ReproductiveTaskPlanner {
         Replay replay = new Replay(context, settings);
         List<PlannerEvent> sorted = events.stream()
                 .filter(e -> e.type() != null && e.date() != null)
-                .sorted(Comparator.comparing(PlannerEvent::date)
-                        .thenComparing(e -> e.createdAt() == null ? "" : e.createdAt())
-                        .thenComparing(e -> e.eventId() == null ? "" : e.eventId()))
+                .sorted(GestationCalendar.CHRONOLOGICAL)
                 .toList();
         for (PlannerEvent event : sorted) {
             replay.apply(event);
@@ -139,7 +131,9 @@ public class ReproductiveTaskPlanner {
             String result = e.payloadString("result");
             if (RESULT_PREGNANT.equalsIgnoreCase(result)) {
                 // El servicio registrado es el dato más exacto; sin él, la estimación del diagnóstico (P1).
-                LocalDate calving = lastService != null ? expectedCalving(lastService) : calvingFromGestationEstimate(e);
+                LocalDate calving = lastService != null
+                        ? GestationCalendar.expectedCalving(lastService, settings.gestationDays())
+                        : GestationCalendar.calvingFromGestationEstimate(e, settings.gestationDays());
                 if (calving == null) {
                     diagnosisWithoutService = true; // CA17: sin servicio ni estimación no hay gestación que programar.
                 } else if (!hasOpen(ReproductiveTaskType.PARTO_ESPERADO)) {
@@ -212,30 +206,6 @@ public class ReproductiveTaskPlanner {
             closeFollowUp(e.eventId());
             lastService = null;
             lastCalvingOrAbortion = e.date();
-        }
-
-        /**
-         * P1 (opción A): fecha probable de parto a partir de los días de gestación que estimó el
-         * veterinario al diagnosticar = diagnóstico − días estimados + días de gestación.
-         */
-        private LocalDate calvingFromGestationEstimate(PlannerEvent diagnosis) {
-            Integer estimatedDays = diagnosis.payloadPositiveInt(GESTATION_ESTIMATE_FIELD);
-            if (estimatedDays == null) {
-                return null;
-            }
-            return diagnosis.date().minusDays(estimatedDays).plusDays(settings.gestationDays());
-        }
-
-        private LocalDate expectedCalving(PlannerEvent service) {
-            String estimate = service.payloadString(CALVING_ESTIMATE_FIELD);
-            if (estimate != null) {
-                try {
-                    return LocalDate.parse(estimate);
-                } catch (DateTimeParseException ignored) {
-                    // Fecha inválida en el payload: se usa la gestación configurada.
-                }
-            }
-            return service.date().plusDays(settings.gestationDays());
         }
 
         private void add(ReproductiveTaskRule rule, PlannerEvent origin, LocalDate due, LocalDate windowEnd) {

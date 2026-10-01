@@ -36,14 +36,51 @@ public class SiteSettingsProcessor {
 
     private final SiteSettingsCatalog catalog;
     private final SiteSettingService siteSettingService;
+    private final SiteSettingResolver siteSettingResolver;
     private final LambdaContext lambdaContext;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public SiteSettingsProcessor(SiteSettingsCatalog catalog, SiteSettingService siteSettingService,
-                                 LambdaContext lambdaContext) {
+                                 SiteSettingResolver siteSettingResolver, LambdaContext lambdaContext) {
         this.catalog = catalog;
         this.siteSettingService = siteSettingService;
+        this.siteSettingResolver = siteSettingResolver;
         this.lambdaContext = lambdaContext;
+    }
+
+    /**
+     * Coherencia entre parámetros reproductivos (DT-20260930 ítem 3 / H5, HU-20260930 TT2):
+     * {@code lower} debe quedar estrictamente por debajo de {@code upper}.
+     */
+    private record CrossRule(String lower, String upper, String message) {
+    }
+
+    private static final List<CrossRule> CROSS_RULES = List.of(
+            new CrossRule("SERVICE_FOLLOWUP_ORANGE_DAYS", "SERVICE_FOLLOWUP_RED_DAYS",
+                    "El semáforo en rojo debe empezar después del naranja (días en rojo > días en naranja)"),
+            new CrossRule("DRY_OFF_BEFORE_CALVING_DAYS", "GESTATION_DAYS",
+                    "Los días de secado antes del parto deben ser menores que los días de gestación"),
+            new CrossRule("PREPARTUM_BEFORE_CALVING_DAYS", "GESTATION_DAYS",
+                    "Los días de preparto antes del parto deben ser menores que los días de gestación"));
+
+    /** Valida las reglas que involucran {@code key} usando el valor propuesto y los vigentes del sitio. */
+    private void validateCrossRules(String siteId, String key, Object normalized) {
+        List<CrossRule> rules = CROSS_RULES.stream()
+                .filter(rule -> rule.lower().equals(key) || rule.upper().equals(key))
+                .toList();
+        if (rules.isEmpty()) {
+            return;
+        }
+        Map<String, Object> values = new java.util.HashMap<>(siteSettingResolver.resolveAll(siteId));
+        values.put(key, normalized);
+        for (CrossRule rule : rules) {
+            Object lower = values.get(rule.lower());
+            Object upper = values.get(rule.upper());
+            if (lower instanceof Number l && upper instanceof Number u && l.doubleValue() >= u.doubleValue()) {
+                throw new IllegalArgumentException(rule.message()
+                        + " (" + rule.lower() + "=" + l + ", " + rule.upper() + "=" + u + ")");
+            }
+        }
     }
 
     public SiteSettingsResponseDTO getAll(String siteId) {
@@ -81,6 +118,7 @@ public class SiteSettingsProcessor {
         }
 
         Object normalized = normalizeAndValidate(def, request.getValue());
+        validateCrossRules(siteId, key, normalized);
         String changeReason = request.getChangeReason() != null && !request.getChangeReason().isBlank()
                 ? request.getChangeReason()
                 : DEFAULT_CHANGE_REASON;

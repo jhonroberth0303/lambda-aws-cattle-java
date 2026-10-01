@@ -32,7 +32,6 @@ public class ExitEventProjector {
 
     private static final String LIFECYCLE_SK = "PROFILE#LIFECYCLE";
     private static final String REPRODUCTIVE_SK = "PROFILE#REPRODUCTIVE";
-    private static final String CLOSE_STATUS = "CLOSE";
     private static final Map<BovineEventType, LifecycleStatus> EXIT_STATUS = new EnumMap<>(BovineEventType.class);
     static {
         EXIT_STATUS.put(BovineEventType.VENTA, LifecycleStatus.SOLD);
@@ -106,10 +105,10 @@ public class ExitEventProjector {
             return;
         }
         lactancyRepository.findById(pk, lactationId).ifPresent(lactancy -> {
-            if (CLOSE_STATUS.equalsIgnoreCase(lactancy.getStatus())) {
+            if (ReproductiveProfileStatus.isClosed(lactancy.getStatus())) {
                 return;
             }
-            lactancy.setStatus(CLOSE_STATUS);
+            lactancy.setStatus(ReproductiveProfileStatus.LACTATION_CLOSED);
             lactancy.setEndDate(EventDates.toOperationalDate(eventAt, zoneId).toString());
             lactancyRepository.save(lactancy);
         });
@@ -120,10 +119,10 @@ public class ExitEventProjector {
             return;
         }
         pregnancyRepository.findById(pk, pregnancyId).ifPresent(pregnancy -> {
-            if (CLOSE_STATUS.equalsIgnoreCase(pregnancy.getStatus())) {
+            if (ReproductiveProfileStatus.isClosed(pregnancy.getStatus())) {
                 return;
             }
-            pregnancy.setStatus(CLOSE_STATUS);
+            pregnancy.setStatus(ReproductiveProfileStatus.PREGNANCY_CLOSED);
             pregnancyRepository.save(pregnancy);
         });
     }
