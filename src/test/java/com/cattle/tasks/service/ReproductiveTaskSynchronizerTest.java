@@ -69,7 +69,8 @@ class ReproductiveTaskSynchronizerTest {
         openMocks(this);
         synchronizer = new ReproductiveTaskSynchronizer(bovineRepository, lifecycleRepository, reproductiveRepository,
                 lactancyRepository, bovineEventRepository, taskRepository, new ReproductiveTaskPlanner(),
-                settingsProvider, new ObjectMapper(), lambdaContext, new AppProperties());
+                settingsProvider, new PlannerEventMapper(new ObjectMapper(), lambdaContext, new AppProperties()), lambdaContext,
+                new AppProperties());
         when(bovineRepository.findById(7)).thenReturn(Optional.of(identity("female", "F001")));
         when(lifecycleRepository.findById(PK, "PROFILE#LIFECYCLE")).thenReturn(Optional.empty());
         when(reproductiveRepository.findById(PK, "PROFILE#REPRODUCTIVE")).thenReturn(Optional.empty());

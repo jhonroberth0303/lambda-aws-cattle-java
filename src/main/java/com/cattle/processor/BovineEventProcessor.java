@@ -14,7 +14,9 @@ import com.cattle.repository.BovineRepository;
 import com.cattle.repository.ProfileLifecycleRepository;
 import com.cattle.services.BovineEventService;
 import com.cattle.services.EventFormCatalog;
+import com.cattle.services.BovineSummaryService;
 import com.cattle.services.ExitEventProjector;
+import com.cattle.services.ReproductiveProfileProjector;
 import com.cattle.tasks.service.ReproductiveTaskSynchronizer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,6 +49,8 @@ public class BovineEventProcessor {
     private final ProfileLifecycleRepository lifecycleRepository;
     private final ExitEventProjector exitEventProjector;
     private final ReproductiveTaskSynchronizer reproductiveTaskSynchronizer;
+    private final ReproductiveProfileProjector reproductiveProfileProjector;
+    private final BovineSummaryService bovineSummaryService;
 
     /**
      * Eventos que cambian la agenda reproductiva (HU-20260929): la generan, la cumplen o la
@@ -61,7 +65,9 @@ public class BovineEventProcessor {
                                 LambdaContext lambdaContext, EventFormCatalog eventFormCatalog,
                                 EventPayloadValidator payloadValidator, BovineRepository bovineRepository,
                                 ProfileLifecycleRepository lifecycleRepository, ExitEventProjector exitEventProjector,
-                                ReproductiveTaskSynchronizer reproductiveTaskSynchronizer) {
+                                ReproductiveTaskSynchronizer reproductiveTaskSynchronizer,
+                                ReproductiveProfileProjector reproductiveProfileProjector,
+                                BovineSummaryService bovineSummaryService) {
         this.bovineEventService = bovineEventService;
         this.objectMapper = objectMapper;
         this.lambdaContext = lambdaContext;
@@ -71,6 +77,8 @@ public class BovineEventProcessor {
         this.lifecycleRepository = lifecycleRepository;
         this.exitEventProjector = exitEventProjector;
         this.reproductiveTaskSynchronizer = reproductiveTaskSynchronizer;
+        this.reproductiveProfileProjector = reproductiveProfileProjector;
+        this.bovineSummaryService = bovineSummaryService;
     }
 
     public BovineEventResponseDTO applyEvent(String farmId, String bovineId, BovineEventRequestDTO request) {
@@ -119,8 +127,14 @@ public class BovineEventProcessor {
         if (EXIT_EVENTS.contains(eventType)) {
             projectExitEvent(bovineId, eventType, eventAt);
         }
+        // HU-20260930: perfiles antes que tareas (la regla SECAR lee la lactancia vigente) y la
+        // tarjeta al final para que refleje ambos. Cada paso está aislado (PE10).
+        if (ReproductiveProfileProjector.PROFILE_EVENTS.contains(eventType)) {
+            projectReproductiveProfiles(bovineId, eventType, item);
+        }
         if (REPRODUCTIVE_TASK_EVENTS.contains(eventType)) {
             syncReproductiveTasks(farmId, bovineId, eventType);
+            refreshSummary(bovineId, eventType);
         }
 
         return BovineEventResponseDTO.builder()
@@ -150,10 +164,41 @@ public class BovineEventProcessor {
      * el evento ya está guardado y la reconciliación diaria cubre un fallo aquí (HU-20260929, RT2).
      */
     private void syncReproductiveTasks(String farmId, String bovineId, BovineEventType eventType) {
+        long start = System.nanoTime();
         try {
             reproductiveTaskSynchronizer.sync(farmId, bovineId);
+            // TT3 (H6): duración real de la sincronización en línea, para medirla en CloudWatch.
+            lambdaContext.logInfo(LogType.PROCESSOR, "Tareas reproductivas sincronizadas. bovineId: " + bovineId
+                    + ", eventType: " + eventType + ", durationMs: " + (System.nanoTime() - start) / 1_000_000);
         } catch (Exception ex) {
             lambdaContext.logException(LogType.PROCESSOR, "Fallo al sincronizar tareas reproductivas. bovineId: "
+                    + bovineId + ", eventType: " + eventType, ex);
+        }
+    }
+
+    /** HU-20260930 (PE1–PE5): preñez y lactancia desde el evento; aislado como la proyección de salida (PE10). */
+    private void projectReproductiveProfiles(String bovineId, BovineEventType eventType, BovineEventItem item) {
+        try {
+            reproductiveProfileProjector.project(bovineId, item);
+        } catch (Exception ex) {
+            lambdaContext.logException(LogType.PROCESSOR, "Fallo al proyectar perfiles reproductivos. bovineId: "
+                    + bovineId + ", eventType: " + eventType, ex);
+        }
+    }
+
+    /**
+     * HU-20260930 (D3): regenera la tarjeta para que refleje el evento sin esperar al job de las
+     * 03:00. Ids no numéricos (legacy) no tienen summary.
+     */
+    private void refreshSummary(String bovineId, BovineEventType eventType) {
+        Integer numericId = parseNumericId(bovineId);
+        if (numericId == null) {
+            return;
+        }
+        try {
+            bovineSummaryService.refreshSummary(numericId);
+        } catch (Exception ex) {
+            lambdaContext.logException(LogType.PROCESSOR, "Fallo al refrescar el summary. bovineId: "
                     + bovineId + ", eventType: " + eventType, ex);
         }
     }

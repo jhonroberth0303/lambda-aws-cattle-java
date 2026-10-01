@@ -113,7 +113,7 @@ class ExitEventProjectorTest {
 
         ArgumentCaptor<ProfileLactancy> lactancyCaptor = ArgumentCaptor.forClass(ProfileLactancy.class);
         verify(lactancyRepository).save(lactancyCaptor.capture());
-        assertEquals("CLOSE", lactancyCaptor.getValue().getStatus());
+        assertEquals("CLOSED", lactancyCaptor.getValue().getStatus());
         assertEquals("2026-04-10", lactancyCaptor.getValue().getEndDate());
     }
 
@@ -150,6 +150,24 @@ class ExitEventProjectorTest {
         when(pregnancyRepository.findById(any(), any())).thenReturn(Optional.empty());
 
         projector.project("B1", BovineEventType.MUERTE, EVENT_AT);
+
+        verify(lactancyRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("D1 (HU-20260930): una lactancia histórica 'CLOSED' también cuenta como cerrada")
+    void project_historicClosedLactancy_isNotOverwritten() {
+        when(lifecycleRepository.findById(PK, "PROFILE#LIFECYCLE"))
+                .thenReturn(Optional.of(lifecycle(LifecycleStatus.OPEN, true)));
+        ProfileReproductive reproductive = ProfileReproductive.builder()
+                .pk(PK).sk("PROFILE#REPRODUCTIVE").currentLactationId("LACT#001").build();
+        when(reproductiveRepository.findById(PK, "PROFILE#REPRODUCTIVE")).thenReturn(Optional.of(reproductive));
+        ProfileLactancy lactancy = ProfileLactancy.builder().pk(PK).sk("LACT#001").status("CLOSED")
+                .endDate("2026-04-10").build();
+        when(lactancyRepository.findById(PK, "LACT#001")).thenReturn(Optional.of(lactancy));
+        when(pregnancyRepository.findById(any(), any())).thenReturn(Optional.empty());
+
+        projector.project("B1", BovineEventType.VENTA, EVENT_AT);
 
         verify(lactancyRepository, never()).save(any());
     }

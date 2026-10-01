@@ -12,6 +12,9 @@ import com.cattle.exceptions.ServiceException;
 import com.cattle.mapper.BovineSummaryMapper;
 import com.cattle.repository.*;
 import com.cattle.services.ProductiveStateCalculator.ProductiveStateResult;
+import com.cattle.tasks.planner.ReproductiveTaskSettings;
+import com.cattle.tasks.repository.ReproductiveTaskRepository;
+import com.cattle.tasks.service.ReproductiveTaskSettingsProvider;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -50,6 +53,8 @@ public class BovineSummaryService {
     private final LambdaContext lambdaContext;
     private final LifecycleRecalculationService lifecycleRecalculationService;
     private final ProductiveStateCalculator productiveStateCalculator;
+    private final ReproductiveTaskSettingsProvider reproductiveSettingsProvider;
+    private final ReproductiveTaskRepository reproductiveTaskRepository;
     private final ZoneId zoneId;
 
     public BovineSummaryService(
@@ -63,6 +68,8 @@ public class BovineSummaryService {
             LambdaContext lambdaContext,
             LifecycleRecalculationService lifecycleRecalculationService,
             ProductiveStateCalculator productiveStateCalculator,
+            ReproductiveTaskSettingsProvider reproductiveSettingsProvider,
+            ReproductiveTaskRepository reproductiveTaskRepository,
             AppProperties appProperties) {
         this.summaryRepository = summaryRepository;
         this.bovineRepository = bovineRepository;
@@ -74,6 +81,8 @@ public class BovineSummaryService {
         this.lambdaContext = lambdaContext;
         this.lifecycleRecalculationService = lifecycleRecalculationService;
         this.productiveStateCalculator = productiveStateCalculator;
+        this.reproductiveSettingsProvider = reproductiveSettingsProvider;
+        this.reproductiveTaskRepository = reproductiveTaskRepository;
         this.zoneId = ZoneId.of(appProperties.getTimezone());
     }
 
@@ -131,7 +140,7 @@ public class BovineSummaryService {
             BovineIdentityItem bovineIdentityItem = bovineOpt.get();
 
             // Construir summary
-            BovineSummary summary = buildSummary(bovineIdentityItem);
+            BovineSummary summary = buildSummary(bovineIdentityItem, currentAlertThresholds());
 
             // Guardar y retornar
             BovineSummary saved = summaryRepository.save(summary);
@@ -158,10 +167,11 @@ public class BovineSummaryService {
 
             List<BovineIdentityItem> bovineIdentityItems = bovinesOpt.get();
             List<BovineSummary> summaries = new ArrayList<>();
+            ProductiveStateCalculator.AlertThresholds thresholds = currentAlertThresholds(); // una carga por lote
 
             for (BovineIdentityItem bovineIdentityItem : bovineIdentityItems) {
                 try {
-                    BovineSummary summary = buildSummary(bovineIdentityItem);
+                    BovineSummary summary = buildSummary(bovineIdentityItem, thresholds);
                     summaries.add(summary);
                 } catch (Exception e) {
                     lambdaContext.logException(LogType.SERVICE, 
@@ -181,7 +191,40 @@ public class BovineSummaryService {
     /**
      * Construye un BovineSummary a partir de un Bovine y sus perfiles relacionados.
      */
-    private BovineSummary buildSummary(BovineIdentityItem bovineIdentityItem) {
+    /** PE7: umbrales de preparto y secado de la finca, los mismos de la agenda. */
+    private ProductiveStateCalculator.AlertThresholds currentAlertThresholds() {
+        try {
+            ReproductiveTaskSettings settings = reproductiveSettingsProvider.current();
+            return new ProductiveStateCalculator.AlertThresholds(
+                    settings.prepartumBeforeCalvingDays(), settings.dryOffBeforeCalvingDays());
+        } catch (Exception e) {
+            lambdaContext.logException(LogType.SERVICE,
+                    "No se pudieron leer los parámetros reproductivos; se usan los umbrales por defecto", e);
+            return ProductiveStateCalculator.AlertThresholds.DEFAULT;
+        }
+    }
+
+    /**
+     * PE6: hembra servida sin preñez confirmada (seguimiento post-servicio abierto en la agenda).
+     * Un fallo al leer la agenda no impide construir la tarjeta.
+     */
+    private boolean isServedInFollowUp(Integer bovineId) {
+        if (bovineId == null) {
+            return false;
+        }
+        try {
+            return reproductiveTaskRepository.findFollowUp(String.valueOf(bovineId))
+                    .map(followUp -> Boolean.TRUE.equals(followUp.getOpen()))
+                    .orElse(false);
+        } catch (Exception e) {
+            lambdaContext.logException(LogType.SERVICE,
+                    "No se pudo leer el seguimiento post-servicio. bovineId=" + bovineId, e);
+            return false;
+        }
+    }
+
+    private BovineSummary buildSummary(BovineIdentityItem bovineIdentityItem,
+                                       ProductiveStateCalculator.AlertThresholds thresholds) {
         String pk = bovineIdentityItem.getPk();
         Integer bovineId = bovineIdentityItem.getBovineId();
         Optional<ProfileLifecycle> lifecycleOpt = lifecycleRepository.findById(pk, "PROFILE#LIFECYCLE");
@@ -269,7 +312,9 @@ public class BovineSummaryService {
                     calvingDate,
                     lactationStatus,
                     lactationStartDate,
-                    today
+                    today,
+                    thresholds,
+                    isServedInFollowUp(bovineId)
                 );
 
         // Timestamp actual

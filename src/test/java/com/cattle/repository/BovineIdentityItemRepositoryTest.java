@@ -108,6 +108,23 @@ class BovineIdentityItemRepositoryTest {
     // ==================== findAll Tests ====================
 
     @Test
+    @SuppressWarnings("unchecked")
+    void findAll_moreThan15Bovines_readsEveryPage() {
+        // CA12 (HU-20260930 / DT-20260930 ítem 2): antes solo se leía la primera página de 15.
+        Page<BovineIdentityItem> second = mock(Page.class);
+        when(table.index(anyString())).thenReturn(gsi1Index);
+        when(gsi1Index.query(any(java.util.function.Consumer.class))).thenReturn(pageIterable);
+        when(pageIterable.iterator()).thenReturn(List.of(page, second).iterator());
+        when(page.items()).thenReturn(createBovineList(15));
+        when(second.items()).thenReturn(createBovineList(5));
+
+        Optional<List<BovineIdentityItem>> result = bovineRepository.findAll();
+
+        assertTrue(result.isPresent());
+        assertEquals(20, result.get().size());
+    }
+
+    @Test
     void findAll_withBovines_returnsList() {
         // Arrange
         List<BovineIdentityItem> bovineIdentityItems = createBovineList(5);

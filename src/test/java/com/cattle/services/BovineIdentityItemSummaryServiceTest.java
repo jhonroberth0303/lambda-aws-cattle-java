@@ -12,6 +12,10 @@ import com.cattle.exceptions.RepositoryException;
 import com.cattle.exceptions.ServiceException;
 import com.cattle.mapper.BovineSummaryMapper;
 import com.cattle.repository.*;
+import com.cattle.tasks.entity.ServiceFollowUpItem;
+import com.cattle.tasks.planner.ReproductiveTaskSettings;
+import com.cattle.tasks.repository.ReproductiveTaskRepository;
+import com.cattle.tasks.service.ReproductiveTaskSettingsProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -68,6 +72,12 @@ class BovineIdentityItemSummaryServiceTest {
     @Mock
     private LifecycleRecalculationService lifecycleRecalculationService;
 
+    @Mock
+    private ReproductiveTaskSettingsProvider reproductiveSettingsProvider;
+
+    @Mock
+    private ReproductiveTaskRepository reproductiveTaskRepository;
+
     private ProductiveStateCalculator productiveStateCalculator;
 
     private BovineSummaryService service;
@@ -76,6 +86,8 @@ class BovineIdentityItemSummaryServiceTest {
     void setUp() {
         openMocks(this);
         productiveStateCalculator = new ProductiveStateCalculator();
+        when(reproductiveSettingsProvider.current()).thenReturn(ReproductiveTaskSettings.defaults());
+        when(reproductiveTaskRepository.findFollowUp(anyString())).thenReturn(Optional.empty());
         service = new BovineSummaryService(
             summaryRepository,
             bovineRepository,
@@ -87,6 +99,8 @@ class BovineIdentityItemSummaryServiceTest {
             lambdaContext,
             lifecycleRecalculationService,
             productiveStateCalculator,
+            reproductiveSettingsProvider,
+            reproductiveTaskRepository,
             new AppProperties()
         );
     }
@@ -644,6 +658,87 @@ class BovineIdentityItemSummaryServiceTest {
             when(bovineRepository.findAll()).thenThrow(new RepositoryException("findAll failed", null));
 
             assertThrows(ServiceException.class, () -> service.refreshAllSummaries());
+        }
+    }
+
+    // ==================== HU-20260930: alertas coherentes con la agenda ====================
+
+    @Nested
+    @DisplayName("Alertas con parámetros de la finca y seguimiento post-servicio")
+    class ReproductiveAlertsTests {
+
+        private final java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneId.of("America/Bogota"));
+
+        private BovineSummary refresh(Integer bovineId, ProfileReproductive reproductive) {
+            String pk = "BOVINE#" + bovineId;
+            ArgumentCaptor<BovineSummary> captor = ArgumentCaptor.forClass(BovineSummary.class);
+            when(bovineRepository.findById(bovineId)).thenReturn(Optional.of(createTestBovine(bovineId)));
+            when(lifecycleRepository.findById(pk, "PROFILE#LIFECYCLE")).thenReturn(Optional.of(createTestLifecycle(pk)));
+            when(reproductiveRepository.findById(pk, "PROFILE#REPRODUCTIVE")).thenReturn(Optional.of(reproductive));
+            when(summaryRepository.save(any(BovineSummary.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(mapper.toDTO(any(BovineSummary.class))).thenReturn(createTestSummaryDTO(bovineId));
+            when(lifecycleRecalculationService.recalculate(any(), any())).thenReturn(
+                    new LifecycleRecalculationService.RecalculationResult(false, false, LifeStage.ADULT, BovineCategory.COW, null));
+            when(lifecycleRecalculationService.applyRecalculation(any(), any())).thenAnswer(inv -> inv.getArgument(0));
+            service.refreshSummary(bovineId);
+            verify(summaryRepository, atLeastOnce()).save(captor.capture());
+            return captor.getValue();
+        }
+
+        /** Vaca como la 167: vacía, lactando desde hace 100 días (más de 45 → HEAT_WATCH). */
+        private ProfileReproductive openLactatingCow(Integer bovineId) {
+            String pk = "BOVINE#" + bovineId;
+            ProfileLactancy lactation = ProfileLactancy.builder().pk(pk).sk("LACT#002").status("LACTATING")
+                    .startDate(today.minusDays(100).toString()).build();
+            when(lactancyRepository.findById(pk, "LACT#002")).thenReturn(Optional.of(lactation));
+            return ProfileReproductive.builder().pk(pk).sk("PROFILE#REPRODUCTIVE").currentLactationId("LACT#002").build();
+        }
+
+        @Test
+        @DisplayName("CA4 / PE6: servida en seguimiento no muestra HEAT_WATCH (caso 167)")
+        void servedInFollowUp_hidesHeatWatch() {
+            ServiceFollowUpItem followUp = new ServiceFollowUpItem();
+            followUp.setOpen(true);
+            when(reproductiveTaskRepository.findFollowUp("167")).thenReturn(Optional.of(followUp));
+
+            BovineSummary summary = refresh(167, openLactatingCow(167));
+
+            assertFalse(summary.getAlerts().contains("HEAT_WATCH"));
+        }
+
+        @Test
+        @DisplayName("Control: sin seguimiento abierto la misma vaca sí muestra HEAT_WATCH")
+        void withoutFollowUp_showsHeatWatch() {
+            BovineSummary summary = refresh(175, openLactatingCow(175));
+
+            assertTrue(summary.getAlerts().contains("HEAT_WATCH"));
+        }
+
+        @Test
+        @DisplayName("CA7 / PE7: con 30 días de preparto configurados, faltando 25 días hay PREPARTUM")
+        void prepartumUsesFarmSettings() {
+            ReproductiveTaskSettings d = ReproductiveTaskSettings.defaults();
+            when(reproductiveSettingsProvider.current()).thenReturn(new ReproductiveTaskSettings(d.gestationDays(),
+                    d.pregnancyCheckDays(), d.pregnancyRecheckDays(), d.dryOffBeforeCalvingDays(), 30,
+                    d.postpartumCheckDays(), d.voluntaryWaitingDays(), d.followUpOrangeDays(), d.followUpRedDays(),
+                    d.repeatBreederServices()));
+            String pk = "BOVINE#176";
+            ProfilePregnancy pregnancy = ProfilePregnancy.builder().pk(pk).sk("PREG#X").status("ACTIVE")
+                    .expectedDueDate(today.plusDays(25).toString()).build();
+            when(pregnancyRepository.findById(pk, "PREG#X")).thenReturn(Optional.of(pregnancy));
+
+            BovineSummary summary = refresh(176, ProfileReproductive.builder().pk(pk).sk("PROFILE#REPRODUCTIVE")
+                    .currentPregnancyId("PREG#X").build());
+
+            assertTrue(summary.getAlerts().contains("PREPARTUM"));
+        }
+
+        @Test
+        @DisplayName("Si no se pueden leer los parámetros, se usan los umbrales por defecto")
+        void settingsFailure_usesDefaults() {
+            when(reproductiveSettingsProvider.current()).thenThrow(new IllegalStateException("settings down"));
+
+            assertDoesNotThrow(() -> refresh(175, openLactatingCow(175)));
         }
     }
 }
