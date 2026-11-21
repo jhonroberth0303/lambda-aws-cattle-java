@@ -1,6 +1,6 @@
 farms:
-  # Farm with ID FARM#001 - Main farm
-  "FARM#001":
+  # Finca F001 (formato canónico de finca, HU-20261120). Antes "FARM#001".
+  "F001":
     # LifeStage rules: 100% derivable from age (months)
     lifeStage:
       - minAge: 0

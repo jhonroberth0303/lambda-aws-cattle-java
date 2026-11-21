@@ -43,7 +43,7 @@ public class MilkingController {
     })
     @PostMapping
     public ResponseEntity<MilkingDTO> createMilking(
-            @Parameter(description = "ID de la finca", required = true, example = "FARM#001")
+            @Parameter(description = "ID del sitio", required = true, example = "001")
             @PathVariable("siteId") String siteId,
             @Valid @RequestBody MilkingDTO milkingDTO) {
         lambdaContext.logInfo(LogType.CONTROLLER, "Creating milking for site: " + siteId);
@@ -63,7 +63,7 @@ public class MilkingController {
     })
     @GetMapping
     public ResponseEntity<List<CowWithLactationsDTO>> getCowsWithLactations(
-            @Parameter(description = "ID de la finca", required = true, example = "FARM#001")
+            @Parameter(description = "ID del sitio", required = true, example = "001")
             @PathVariable("siteId") String siteId) {
         lambdaContext.logInfo(LogType.CONTROLLER, "Received request to find milking cows for site: " + siteId);
         return milkingProcessor.getCowsWithLactations(siteId)
@@ -82,7 +82,7 @@ public class MilkingController {
     })
     @GetMapping("/history")
     public ResponseEntity<List<CowWithLactationsDTO>> getCowsWithLactationsHistory(
-            @Parameter(description = "ID de la finca", required = true, example = "FARM#001")
+            @Parameter(description = "ID del sitio", required = true, example = "001")
             @PathVariable("siteId") String siteId) {
         lambdaContext.logInfo(LogType.CONTROLLER, "Received request to find milking cows history for site: " + siteId);
         return milkingProcessor.getCowsWithLactationsHistory(siteId)
@@ -101,7 +101,7 @@ public class MilkingController {
     })
     @GetMapping("/{idBovine}")
     public ResponseEntity<List<MilkingDTO>> milkingData(
-            @Parameter(description = "ID de la finca", required = true, example = "FARM#001")
+            @Parameter(description = "ID del sitio", required = true, example = "001")
             @PathVariable("siteId") String siteId,
             @Parameter(description = "ID del bovino", required = true, example = "123")
             @PathVariable("idBovine") Integer idBovine,
@@ -129,7 +129,7 @@ public class MilkingController {
     })
     @GetMapping("/{idBovine}/lactation/{lactationNumber}")
     public ResponseEntity<List<MilkingDTO>> getMilkingByLactation(
-            @Parameter(description = "ID de la finca", required = true, example = "FARM#001")
+            @Parameter(description = "ID del sitio", required = true, example = "001")
             @PathVariable("siteId") String siteId,
             @Parameter(description = "ID del bovino", required = true, example = "172")
             @PathVariable("idBovine") Integer idBovine,

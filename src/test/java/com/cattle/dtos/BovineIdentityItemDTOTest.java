@@ -172,4 +172,55 @@ class BovineIdentityItemDTOTest {
         assertEquals(created, dto.getCreatedAt());
         assertEquals(updated, dto.getUpdatedAt());
     }
+
+    // ==================== HU-20261120: validación Bean Validation real ====================
+
+    private static final jakarta.validation.Validator VALIDATOR =
+            jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+
+    /** Payload como el que envía hoy el formulario: sin origin, farmId ni padres por ID. */
+    private static BovineDTO formPayload() {
+        BovineDTO dto = new BovineDTO();
+        dto.setName("Prueba");
+        dto.setGender("female");
+        dto.setBornDate("2024-01-01");
+        dto.setBreed("Native");
+        return dto;
+    }
+
+    @Test
+    void validation_formPayloadWithoutOrigin_hasNoViolationsAndDoesNotThrow() {
+        // Antes: @NotBlank sobre el enum origin lanzaba UnexpectedTypeException (HV000030) en toda validación
+        assertTrue(VALIDATOR.validate(formPayload()).isEmpty());
+    }
+
+    @Test
+    void validation_withOrigin_hasNoViolations() {
+        BovineDTO dto = formPayload();
+        dto.setOrigin(BovineOrigin.BOUGHT);
+        assertTrue(VALIDATOR.validate(dto).isEmpty());
+    }
+
+    @Test
+    void validation_genderIsCaseInsensitive() {
+        BovineDTO dto = formPayload();
+        dto.setGender("MALE");
+        assertTrue(VALIDATOR.validate(dto).isEmpty());
+        dto.setGender("Female");
+        assertTrue(VALIDATOR.validate(dto).isEmpty());
+    }
+
+    @Test
+    void validation_invalidGender_isRejected() {
+        BovineDTO dto = formPayload();
+        dto.setGender("vaca");
+        assertEquals(1, VALIDATOR.validate(dto).size());
+    }
+
+    @Test
+    void validation_missingName_isRejected() {
+        BovineDTO dto = formPayload();
+        dto.setName(null);
+        assertFalse(VALIDATOR.validate(dto).isEmpty());
+    }
 }

@@ -34,7 +34,7 @@ public class BovineSummaryDTO {
     @Schema(description = "Fecha de nacimiento (YYYY-MM-DD)", example = "2022-03-15")
     private String bornDate;
 
-    @Schema(description = "ID de la finca", example = "FARM#001")
+    @Schema(description = "ID de la finca", example = "F001")
     private String farmId;
 
     // ==== LIFECYCLE ====

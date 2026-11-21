@@ -382,5 +382,84 @@ class LifecycleRecalculationServiceTest {
             // Sin gender no puede inferir category
             assertNull(result.getNewCategory());
         }
+
+        @Test
+        @DisplayName("CA6 (HU-20261120): bovino sin farmId se categoriza con reglas default")
+        void recalculate_withoutFarmId_usesDefaultRules() {
+            BovineIdentityItem sinFinca = createBovine(7, "female");
+            sinFinca.setFarmId(null);
+            ProfileLifecycle lifecycle = createLifecycle(LifeStage.CALF, BovineCategory.CALF, Source.AUTO);
+
+            List<String> warns = captureWarns(() -> {
+                RecalculationResult result = service.recalculate(sinFinca, lifecycle);
+                // Mismo resultado que con finca: las reglas "default" del config de prueba son iguales
+                assertTrue(result.isLifeStageChanged());
+                assertEquals(LifeStage.WEANED, result.getNewLifeStage());
+            });
+
+            // CA6: queda un aviso con el ID del bovino (revisión H6)
+            assertEquals(1, warns.size(), "Se esperaba un aviso: " + warns);
+            assertTrue(warns.get(0).contains("sin farmId"));
+            assertTrue(warns.get(0).contains("bovineId=100"));
+        }
+
+        @Test
+        @DisplayName("CA6 (HU-20261120): farmId en blanco se trata como ausente")
+        void recalculate_blankFarmId_usesDefaultRules() {
+            BovineIdentityItem fincaEnBlanco = createBovine(7, "female");
+            fincaEnBlanco.setFarmId("  ");
+            ProfileLifecycle lifecycle = createLifecycle(LifeStage.CALF, BovineCategory.CALF, Source.AUTO);
+
+            List<String> warns = captureWarns(() ->
+                    assertEquals(LifeStage.WEANED, service.recalculate(fincaEnBlanco, lifecycle).getNewLifeStage()));
+
+            assertEquals(1, warns.size());
+            assertTrue(warns.get(0).contains("sin farmId"));
+        }
+
+        @Test
+        @DisplayName("Revisión H7: finca sin reglas propias avisa y usa default")
+        void recalculate_farmWithoutOwnRules_warnsAndUsesDefault() {
+            BovineIdentityItem formatoViejo = createBovine(7, "female");
+            formatoViejo.setFarmId("FARM#001");
+            ProfileLifecycle lifecycle = createLifecycle(LifeStage.CALF, BovineCategory.CALF, Source.AUTO);
+
+            List<String> warns = captureWarns(() ->
+                    assertEquals(LifeStage.WEANED, service.recalculate(formatoViejo, lifecycle).getNewLifeStage()));
+
+            assertEquals(1, warns.size());
+            assertTrue(warns.get(0).contains("sin reglas propias"));
+            assertTrue(warns.get(0).contains("farmId=FARM#001"));
+        }
+
+        @Test
+        @DisplayName("Revisión H7: finca con reglas propias no avisa")
+        void recalculate_farmWithOwnRules_doesNotWarn() {
+            BovineIdentityItem conFinca = createBovine(7, "female"); // farmId "finca1" existe en el config de prueba
+            ProfileLifecycle lifecycle = createLifecycle(LifeStage.CALF, BovineCategory.CALF, Source.AUTO);
+
+            assertTrue(captureWarns(() -> service.recalculate(conFinca, lifecycle)).isEmpty());
+        }
+    }
+
+    /** Captura los WARN de LifecycleRecalculationService (Logback es el proveedor SLF4J en los tests). */
+    private static List<String> captureWarns(Runnable action) {
+        org.slf4j.Logger slf4j = org.slf4j.LoggerFactory.getLogger(LifecycleRecalculationService.class);
+        org.junit.jupiter.api.Assumptions.assumeTrue(slf4j instanceof ch.qos.logback.classic.Logger,
+                "Logback no es el proveedor SLF4J en este classpath");
+        ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) slf4j;
+        ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> appender =
+                new ch.qos.logback.core.read.ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            action.run();
+        } finally {
+            logger.detachAppender(appender);
+        }
+        return appender.list.stream()
+                .filter(e -> e.getLevel() == ch.qos.logback.classic.Level.WARN)
+                .map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage)
+                .toList();
     }
 }

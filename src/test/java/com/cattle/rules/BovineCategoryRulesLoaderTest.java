@@ -26,13 +26,13 @@ class BovineCategoryRulesLoaderTest {
 
         assertNotNull(config);
         assertNotNull(config.getFarms());
-        assertTrue(config.getFarms().containsKey("FARM#001"));
+        assertTrue(config.getFarms().containsKey("F001"));
     }
 
     @Test
     void loadRules_existingFile_populatesLifeStageAndCategoryRules() {
         BovineCategoryRulesConfig config = BovineCategoryRulesLoader.loadRules(RULES_FILE);
-        BovineCategoryRulesConfig.FarmRules farm = config.getFarms().get("FARM#001");
+        BovineCategoryRulesConfig.FarmRules farm = config.getFarms().get("F001");
 
         assertNotNull(farm.getLifeStage());
         assertFalse(farm.getLifeStage().isEmpty());
@@ -50,5 +50,24 @@ class BovineCategoryRulesLoaderTest {
                 () -> BovineCategoryRulesLoader.loadRules("no-existe/reglas.yaml"));
 
         assertTrue(ex.getMessage().contains("no-existe/reglas.yaml"));
+    }
+
+    @Test
+    void loadRules_canonicalFarmKey_isF001AndOldKeyIsGone() {
+        // HU-20261120 (D1): formato canónico de finca F001
+        BovineCategoryRulesConfig config = BovineCategoryRulesLoader.loadRules(RULES_FILE);
+
+        assertTrue(config.getFarms().containsKey("F001"));
+        assertFalse(config.getFarms().containsKey("FARM#001"));
+    }
+
+    @Test
+    void loadRules_f001RulesEqualDefault_soRenamingDoesNotChangeCategories() throws Exception {
+        // CA7: cambiar la clave no altera ninguna categoría porque las reglas son idénticas a "default"
+        BovineCategoryRulesConfig config = BovineCategoryRulesLoader.loadRules(RULES_FILE);
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
+        assertEquals(mapper.writeValueAsString(config.getFarms().get("default")),
+                mapper.writeValueAsString(config.getFarms().get("F001")));
     }
 }

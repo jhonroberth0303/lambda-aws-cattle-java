@@ -47,7 +47,7 @@ public class PastureController {
     })
     @GetMapping
     public ResponseEntity<List<RotationSemaphoreItemDTO>> getRotationSemaphore(
-            @Parameter(description = "ID de la finca", required = true, example = "FARM#001")
+            @Parameter(description = "ID de la finca", required = true, example = "F001")
             @PathVariable("farmId") String farmId) {
         lambdaContext.logInfo(LogType.CONTROLLER, "Obteniendo semáforo de rotación para finca: " + farmId);
         return ResponseEntity.ok(rotationPlanProcessor.getRotationSemaphoreItems(farmId).orElse(List.of()));

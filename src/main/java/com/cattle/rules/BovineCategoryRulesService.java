@@ -169,6 +169,11 @@ public class BovineCategoryRulesService {
         return bornDate.plusMonths(nextThreshold);
     }
 
+    /** true si la finca tiene reglas propias (sin caer en "default"). Revisión H7 de HU-20261120. */
+    public boolean hasFarmRules(String farm) {
+        return farm != null && rulesConfig.getFarms() != null && rulesConfig.getFarms().containsKey(farm);
+    }
+
     private BovineCategoryRulesConfig.FarmRules getFarmRules(String farm) {
         if (rulesConfig.getFarms() == null) {
             return null;

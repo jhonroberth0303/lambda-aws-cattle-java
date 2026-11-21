@@ -27,6 +27,7 @@ import java.time.format.DateTimeFormatter;
  * NOTE: sex and ageInMonths are obtained from Bovine (Identity), not stored in ProfileLifecycle.
  */
 @Service
+@lombok.extern.slf4j.Slf4j
 public class LifecycleRecalculationService {
 
     private final BovineCategoryRulesService rulesService;
@@ -83,7 +84,16 @@ public class LifecycleRecalculationService {
         Sex sex = resolveSexFromIdentity(bovineIdentityItem);
         boolean isCastrated = isCastrated(bovineIdentityItem.getBovineId());
         Source categorySource = lifecycle.getCategorySource();
-        String farmId = bovineIdentityItem.getFarmId() != null ? bovineIdentityItem.getFarmId() : "default";
+        String farmId = bovineIdentityItem.getFarmId();
+        if (farmId == null || farmId.isBlank()) {
+            // RF5 (HU-20261120): se categoriza con reglas "default", pero ya no en silencio.
+            log.warn("Bovino sin farmId: se categoriza con reglas 'default'. bovineId={}", bovineIdentityItem.getBovineId());
+            farmId = "default";
+        } else if (!rulesService.hasFarmRules(farmId)) {
+            // H7: una finca sin reglas propias (formato viejo o valor inválido) también cae en "default".
+            log.warn("Finca sin reglas propias: se categoriza con reglas 'default'. farmId={} bovineId={}",
+                    farmId, bovineIdentityItem.getBovineId());
+        }
 
         // Perform inference (age calculation is done internally by rulesService)
         InferenceResult inference = rulesService.inferAll(farmId, bornDate, sex, isCastrated, categorySource);

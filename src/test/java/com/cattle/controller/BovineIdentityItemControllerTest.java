@@ -25,7 +25,7 @@ import static org.mockito.MockitoAnnotations.openMocks;
 @Tag("controller")
 class BovineIdentityItemControllerTest {
 
-    private static final String FARM_ID = "FARM#TEST";
+    private static final String FARM_ID = "F001"; // formato canónico (HU-20261120)
 
     @Mock
     private BovineProcessor bovineProcessor;
@@ -257,6 +257,95 @@ class BovineIdentityItemControllerTest {
 
     // ==================== Summary Endpoints Tests ====================
     // Las pruebas de endpoints de resumen han sido migradas a BovinesSummaryControllerTest.
+    // ==================== HU-20261120: la finca de la ruta es la fuente de verdad ====================
+
+    @Test
+    void save_setsFarmIdFromPath_overridingBody() {
+        // CA1 / CA4
+        BovineDTO inputDTO = createBovineDTO(null);
+        inputDTO.setFarmId("OTRA-FINCA");
+        when(bovineProcessor.save(any(BovineDTO.class))).thenReturn(Optional.of(createBovineDTO(1)));
+
+        bovineController.save("F001", inputDTO);
+
+        org.mockito.ArgumentCaptor<BovineDTO> captor = org.mockito.ArgumentCaptor.forClass(BovineDTO.class);
+        verify(bovineProcessor).save(captor.capture());
+        assertEquals("F001", captor.getValue().getFarmId());
+    }
+
+    @Test
+    void save_bodyWithoutFarmId_getsFarmIdFromPath() {
+        BovineDTO inputDTO = createBovineDTO(null);
+        inputDTO.setFarmId(null);
+        when(bovineProcessor.save(any(BovineDTO.class))).thenReturn(Optional.of(createBovineDTO(1)));
+
+        bovineController.save("F001", inputDTO);
+
+        org.mockito.ArgumentCaptor<BovineDTO> captor = org.mockito.ArgumentCaptor.forClass(BovineDTO.class);
+        verify(bovineProcessor).save(captor.capture());
+        assertEquals("F001", captor.getValue().getFarmId());
+    }
+
+    @Test
+    void update_setsFarmIdFromPath_overridingBody() {
+        // CA4
+        BovineDTO dto = new BovineDTO();
+        dto.setBovineId(9010);
+        dto.setFarmId("FARM#001");
+        when(bovineProcessor.update(any(BovineDTO.class))).thenReturn(Optional.of(dto));
+
+        bovineController.update("F001", 9010L, dto);
+
+        org.mockito.ArgumentCaptor<BovineDTO> captor = org.mockito.ArgumentCaptor.forClass(BovineDTO.class);
+        verify(bovineProcessor).update(captor.capture());
+        assertEquals("F001", captor.getValue().getFarmId());
+    }
+
+    // ==================== HU-20261120 (revisión H2): formato de finca validado ====================
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"FARM#001", "f001", "F01", "F0001", "001", "default", " "})
+    void save_invalidFarmIdFormat_returnsBadRequestWithoutSaving(String invalidFarmId) {
+        ResponseEntity<BovineDTO> response = bovineController.save(invalidFarmId, createBovineDTO(null));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verify(bovineProcessor, never()).save(any(BovineDTO.class));
+    }
+
+    @Test
+    void save_nullFarmId_returnsBadRequest() {
+        assertEquals(HttpStatus.BAD_REQUEST, bovineController.save(null, createBovineDTO(null)).getStatusCode());
+        verify(bovineProcessor, never()).save(any(BovineDTO.class));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"FARM#001", "F1", "X001"})
+    void update_invalidFarmIdFormat_returnsBadRequestWithoutUpdating(String invalidFarmId) {
+        BovineDTO dto = new BovineDTO();
+        dto.setBovineId(9011);
+
+        ResponseEntity<BovineDTO> response = bovineController.update(invalidFarmId, 9011L, dto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verify(bovineProcessor, never()).update(any(BovineDTO.class));
+    }
+
+    @Test
+    void isCanonicalFarmId_acceptsOnlyFPlusThreeDigits() {
+        assertTrue(BovineController.isCanonicalFarmId("F001"));
+        assertTrue(BovineController.isCanonicalFarmId("F123"));
+        assertFalse(BovineController.isCanonicalFarmId("FARM#001"));
+        assertFalse(BovineController.isCanonicalFarmId(null));
+    }
+
+    @Test
+    void sanitizeForLog_removesLineBreaksAndTruncates() {
+        assertEquals("F001_INFO_falso", BovineController.sanitizeForLog("F001\nINFO falso"));
+        assertEquals("FARM#001", BovineController.sanitizeForLog("FARM#001"));
+        assertEquals("null", BovineController.sanitizeForLog(null));
+        assertEquals(21, BovineController.sanitizeForLog("A".repeat(50)).length());
+    }
+
     // ==================== Helper Methods ====================
 
     private BovineDTO createBovineDTO(Integer id) {

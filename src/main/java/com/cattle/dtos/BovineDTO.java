@@ -22,7 +22,8 @@ public class BovineDTO {
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private Integer bovineId;
 
-    @Schema( requiredMode = Schema.RequiredMode.REQUIRED)
+    // La fija el controlador con la finca de la ruta (/farms/{farmId}/bovines); el valor del cuerpo se ignora.
+    @Schema(description = "Finca del bovino; se toma de la ruta", example = "F001", accessMode = Schema.AccessMode.READ_ONLY)
     private String farmId;
 
     @NotBlank(message = "El nombre es requerido")
@@ -31,7 +32,8 @@ public class BovineDTO {
     private String name;
 
     @NotBlank(message = "El género es requerido")
-    @Pattern(regexp = "MALE|FEMALE", message = "El género debe ser 'MALE' o 'FEMALE'")
+    // Acepta mayúsculas o minúsculas (el formulario envía "female"/"male"); BovineService lo guarda en mayúsculas (RF6).
+    @Pattern(regexp = "(?i)MALE|FEMALE", message = "El género debe ser 'MALE' o 'FEMALE'")
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private String gender;
 
@@ -50,8 +52,9 @@ public class BovineDTO {
     @Schema(description = "Color del pelaje", example = "Colorado")
     private String color;
 
-    @NotBlank(message = "El origen es requerido")
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    // Opcional: el formulario aún no lo captura. Antes tenía @NotBlank, que sobre un enum hace fallar
+    // toda validación del DTO (HV000030) — HU-20261120, DT3.
+    @Schema(description = "Origen del bovino", example = "BOUGHT")
     private BovineOrigin origin;
 
     private String fatherId;
